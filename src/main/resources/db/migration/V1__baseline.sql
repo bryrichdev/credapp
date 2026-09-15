@@ -17,7 +17,7 @@ CREATE TABLE providers
 CREATE TABLE licenses
 (
     id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    provider_id     BIGINT      NOT NULL REFERENCES providers (id),
+    provider_id     BIGINT      NOT NULL REFERENCES providers (id) ON DELETE CASCADE,
     state           TEXT        NOT NULL CHECK ( state ~ '^[A-Z]{2}$' ),
     license_number  TEXT        NOT NULL,
     license_type    TEXT        NOT NULL,
