@@ -51,10 +51,6 @@ public class License {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public Provider getProvider() {
         return provider;
     }
@@ -123,15 +119,7 @@ public class License {
         return createdAt;
     }
 
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
     public Instant getUpdatedAt() {
         return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
     }
 }

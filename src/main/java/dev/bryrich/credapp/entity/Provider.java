@@ -46,10 +46,6 @@ public class Provider {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public String getFirstName() {
         return firstName;
     }
@@ -110,10 +106,6 @@ public class Provider {
         return createdAt;
     }
 
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
     public String getPhoneNumber() {
         return phoneNumber;
     }
@@ -124,10 +116,6 @@ public class Provider {
 
     public Instant getUpdatedAt() {
         return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     public List<License> getLicenses() {
