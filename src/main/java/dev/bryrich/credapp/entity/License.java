@@ -47,6 +47,15 @@ public class License {
 
     protected License() {}
 
+    public License(String state, String licenseNumber, String licenseType,
+                   LocalDate expirationDate, String status) {
+        this.state = state;
+        this.licenseNumber = licenseNumber;
+        this.licenseType = licenseType;
+        this.expirationDate = expirationDate;
+        this.status = status;
+    }
+
     public Long getId() {
         return id;
     }

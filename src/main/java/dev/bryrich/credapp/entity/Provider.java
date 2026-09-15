@@ -42,6 +42,11 @@ public class Provider {
 
     protected Provider() {}
 
+    public Provider(String firstName, String lastName) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
+
     public Long getId() {
         return id;
     }
@@ -130,10 +135,5 @@ public class Provider {
     public void removeLicense(License license) {
         licenses.remove(license);
         license.setProvider(null);
-    }
-
-    public Provider(String firstName, String lastName) {
-        this.firstName = firstName;
-        this.lastName = lastName;
     }
 }
