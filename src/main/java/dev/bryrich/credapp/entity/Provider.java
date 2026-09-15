@@ -122,7 +122,13 @@ public class Provider {
         return licenses;
     }
 
-    public void setLicenses(List<License> licenses) {
-        this.licenses = licenses;
+    public void addLicense(License license) {
+        licenses.add(license);
+        license.setProvider(this);
+    }
+
+    public void removeLicense(License license) {
+        licenses.remove(license);
+        license.setProvider(null);
     }
 }
