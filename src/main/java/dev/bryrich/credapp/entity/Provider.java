@@ -131,4 +131,9 @@ public class Provider {
         licenses.remove(license);
         license.setProvider(null);
     }
+
+    public Provider(String firstName, String lastName) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
 }
