@@ -2,6 +2,7 @@ package dev.bryrich.credapp.service;
 
 import dev.bryrich.credapp.entity.License;
 import dev.bryrich.credapp.entity.Provider;
+import dev.bryrich.credapp.exception.LicenseNotFoundException;
 import dev.bryrich.credapp.repository.LicenseRepository;
 import dev.bryrich.credapp.repository.ProviderRepository;
 import dev.bryrich.credapp.exception.ProviderNotFoundException;
@@ -38,8 +39,14 @@ public class LicenseService {
     @Transactional(readOnly = true)
     public List<License> findExpiringSoon(int days) {
         LocalDate today = LocalDate.now();
-        return licenseRepository.findByStatusAndExpirationDateBetween(
+        return licenseRepository.findExpiringWithProvider(
                 "active", today, today.plusDays(days));
+    }
+
+    @Transactional(readOnly = true)
+    public License findByIdAndProviderId(Long id, Long providerId) {
+        return licenseRepository.findByIdAndProviderId(id, providerId)
+                .orElseThrow(() -> new LicenseNotFoundException(id, providerId));
     }
 
 }

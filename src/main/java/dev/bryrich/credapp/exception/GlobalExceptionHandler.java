@@ -10,7 +10,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ProviderNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public String handleNotFound(ProviderNotFoundException ex) {
+    public String handleProviderNotFound(ProviderNotFoundException ex) {
         return ex.getMessage();
     }
+
+    @ExceptionHandler(LicenseNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public String handleLicenseNotFound(LicenseNotFoundException ex) {
+        return ex.getMessage();
+    }
+
+
 }

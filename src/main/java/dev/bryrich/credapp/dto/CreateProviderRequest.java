@@ -1,5 +1,6 @@
 package dev.bryrich.credapp.dto;
 
+import dev.bryrich.credapp.entity.Provider;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
@@ -13,4 +14,14 @@ public record CreateProviderRequest(
         @Pattern(regexp = "^[0-9]{10}$") String npi,
         String sex,
         String phoneNumber
-) {}
+) {
+    public Provider toEntity() {
+        Provider p = new Provider(firstName, lastName);
+        p.setDob(dob);
+        p.setPlaceOfBirth(placeOfBirth);
+        p.setNpi(npi);
+        p.setSex(sex);
+        p.setPhoneNumber(phoneNumber);
+        return p;
+    }
+}

@@ -1,6 +1,5 @@
 package dev.bryrich.credapp;
 
-import dev.bryrich.credapp.TestcontainersConfiguration;
 import dev.bryrich.credapp.entity.License;
 import dev.bryrich.credapp.entity.Provider;
 import dev.bryrich.credapp.repository.LicenseRepository;
@@ -91,7 +90,7 @@ class ProviderRepositoryTest {
         entityManager.flush();
         entityManager.clear();
 
-        List<License> expiring = licenseRepository.findByStatusAndExpirationDateBetween(
+        List<License> expiring = licenseRepository.findExpiringWithProvider(
                 "active", LocalDate.now(), LocalDate.now().plusDays(30));
 
         assertThat(expiring)
