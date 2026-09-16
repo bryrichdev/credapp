@@ -8,7 +8,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
       DB_HOST: db
-      APP: ${APP:-credapp}
+      DB_NAME: ${DB_NAME:-credapp}
       DB_USERNAME: ${DB_USERNAME:-credapp}
       DB_PASSWORD: ${DB_PASSWORD:-pass}
       DEV_PASSWORD: ${DEV_PASSWORD:-devpass}
@@ -21,7 +21,7 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
     environment:
-      POSTGRES_DB: ${APP:-credapp}
+      POSTGRES_DB: ${DB_NAME:-credapp}
       POSTGRES_USER: ${DB_USERNAME:-credapp}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-pass}
     volumes:
