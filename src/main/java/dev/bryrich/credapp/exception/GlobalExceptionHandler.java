@@ -1,24 +1,53 @@
 package dev.bryrich.credapp.exception;
 
-import org.springframework.http.HttpStatus;
+import org.jspecify.annotations.Nullable;
+import org.springframework.data.core.PropertyReferenceException;
+import org.springframework.http.*;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler(ProviderNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public String handleProviderNotFound(ProviderNotFoundException ex) {
-        return ex.getMessage();
+    @ExceptionHandler({ProviderNotFoundException.class, LicenseNotFoundException.class})
+    public ProblemDetail handleNotFound(RuntimeException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND, ex.getMessage());
+        problem.setTitle("Resource not found");
+        return problem;
     }
 
-    @ExceptionHandler(LicenseNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public String handleLicenseNotFound(LicenseNotFoundException ex) {
-        return ex.getMessage();
+    @ExceptionHandler(PropertyReferenceException.class)
+    public ProblemDetail handleBadProperty(PropertyReferenceException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                "Unknown property: " + ex.getPropertyName());
+        problem.setTitle("Invalid request parameter");
+        return problem;
     }
 
+    @Override
+    protected @Nullable ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
+                                                                            HttpHeaders headers, HttpStatusCode status,
+                                                                            WebRequest request) {
+        ProblemDetail problem = ex.getBody();
+        problem.setTitle("Validation failed");
 
+        Map<String, List<String>> errors = ex.getBindingResult().getFieldErrors().stream()
+                .collect(Collectors.groupingBy(
+                        FieldError::getField,
+                        Collectors.mapping(FieldError::getDefaultMessage, Collectors.toList())));
+
+        problem.setProperty("errors", errors);
+        return ResponseEntity.status(status).headers(headers).body(problem);
+    }
 }

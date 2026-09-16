@@ -6,6 +6,8 @@ import dev.bryrich.credapp.exception.LicenseNotFoundException;
 import dev.bryrich.credapp.repository.LicenseRepository;
 import dev.bryrich.credapp.repository.ProviderRepository;
 import dev.bryrich.credapp.exception.ProviderNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +27,9 @@ public class LicenseService {
 
     @Transactional(readOnly = true)
     public List<License> findByProviderId(Long providerId) {
+        if (!providerRepository.existsById(providerId)) {
+            throw new ProviderNotFoundException(providerId);
+        }
         return licenseRepository.findByProviderId(providerId);
     }
 
@@ -38,15 +43,22 @@ public class LicenseService {
 
     @Transactional(readOnly = true)
     public List<License> findExpiringSoon(int days) {
+        if (days < 1) {
+            throw new IllegalArgumentException("days must be at least 1, was " + days);
+        }
         LocalDate today = LocalDate.now();
-        return licenseRepository.findExpiringWithProvider(
-                "active", today, today.plusDays(days));
+        return licenseRepository.findExpiringWithProvider("active", today, today.plusDays(days));
     }
 
     @Transactional(readOnly = true)
     public License findByIdAndProviderId(Long id, Long providerId) {
         return licenseRepository.findByIdAndProviderId(id, providerId)
                 .orElseThrow(() -> new LicenseNotFoundException(id, providerId));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<License> findAll(Pageable pageable) {
+        return licenseRepository.findAll(pageable);
     }
 
 }
