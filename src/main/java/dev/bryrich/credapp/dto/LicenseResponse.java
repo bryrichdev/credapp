@@ -1,6 +1,7 @@
 package dev.bryrich.credapp.dto;
 
 import dev.bryrich.credapp.entity.License;
+import dev.bryrich.credapp.entity.LicenseStatus;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -13,7 +14,7 @@ public record LicenseResponse(
         String licenseType,
         LocalDate issueDate,
         LocalDate expirationDate,
-        String status,
+        LicenseStatus status,
         String restrictions,
         Instant createdAt,
         Instant updatedAt

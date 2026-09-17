@@ -3,18 +3,16 @@ package dev.bryrich.credapp.entity;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
-import java.util.Locale;
-
 @Converter(autoApply = true)
 public class RoleConverter implements AttributeConverter<Role, String> {
 
     @Override
     public String convertToDatabaseColumn(Role role) {
-        return role == null ? null : role.name().toLowerCase(Locale.ROOT);
+        return role == null ? null : role.getValue();
     }
 
     @Override
     public Role convertToEntityAttribute(String value) {
-        return value == null ? null : Role.valueOf(value.toUpperCase(Locale.ROOT));
+        return value == null ? null : Role.fromValue(value);
     }
 }

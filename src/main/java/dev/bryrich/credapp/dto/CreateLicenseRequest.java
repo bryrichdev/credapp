@@ -1,6 +1,7 @@
 package dev.bryrich.credapp.dto;
 
 import dev.bryrich.credapp.entity.License;
+import dev.bryrich.credapp.entity.LicenseStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -13,9 +14,8 @@ public record CreateLicenseRequest(
         @NotBlank String licenseType,
         LocalDate issueDate,
         @NotNull LocalDate expirationDate,
-        @NotBlank
-        @Pattern(regexp = "^(active|expired|suspended|revoked|surrendered|probation|inactive|pending)$")
-        String status,
+        @NotNull
+        LicenseStatus status,
         String restrictions
 ) {
     public License toEntity() {

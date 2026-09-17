@@ -1,6 +1,7 @@
 package dev.bryrich.credapp;
 
 import dev.bryrich.credapp.entity.License;
+import dev.bryrich.credapp.entity.LicenseStatus;
 import dev.bryrich.credapp.entity.Provider;
 import dev.bryrich.credapp.repository.LicenseRepository;
 import dev.bryrich.credapp.repository.ProviderRepository;
@@ -37,7 +38,7 @@ class ProviderRepositoryTest {
     }
 
     private License newLicense(String state, String number, LocalDate expiration) {
-        return new License(state, number, "MD", expiration, "active");
+        return new License(state, number, "MD", expiration, LicenseStatus.ACTIVE);
     }
 
     @Test
@@ -91,7 +92,7 @@ class ProviderRepositoryTest {
         entityManager.clear();
 
         List<License> expiring = licenseRepository.findExpiringWithProvider(
-                "active", LocalDate.now(), LocalDate.now().plusDays(30));
+                LicenseStatus.ACTIVE, LocalDate.now(), LocalDate.now().plusDays(30));
 
         assertThat(expiring)
                 .hasSize(1)

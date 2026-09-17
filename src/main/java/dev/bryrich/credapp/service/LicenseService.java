@@ -1,6 +1,7 @@
 package dev.bryrich.credapp.service;
 
 import dev.bryrich.credapp.entity.License;
+import dev.bryrich.credapp.entity.LicenseStatus;
 import dev.bryrich.credapp.entity.Provider;
 import dev.bryrich.credapp.exception.LicenseNotFoundException;
 import dev.bryrich.credapp.repository.LicenseRepository;
@@ -47,7 +48,7 @@ public class LicenseService {
             throw new IllegalArgumentException("days must be at least 1, was " + days);
         }
         LocalDate today = LocalDate.now();
-        return licenseRepository.findExpiringWithProvider("active", today, today.plusDays(days));
+        return licenseRepository.findExpiringWithProvider(LicenseStatus.ACTIVE, today, today.plusDays(days));
     }
 
     @Transactional(readOnly = true)

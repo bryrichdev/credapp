@@ -2,6 +2,7 @@ package dev.bryrich.credapp.repository;
 
 import dev.bryrich.credapp.entity.License;
 
+import dev.bryrich.credapp.entity.LicenseStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,7 +19,7 @@ public interface LicenseRepository extends JpaRepository<License, Long> {
     Optional<License> findByIdAndProviderId(Long id, Long providerId);
 
     @Query("SELECT l FROM License l JOIN FETCH l.provider WHERE l.status = :status AND l.expirationDate BETWEEN :from AND :to ORDER BY l.expirationDate")
-    List<License> findExpiringWithProvider(@Param("status") String status,
+    List<License> findExpiringWithProvider(@Param("status") LicenseStatus status,
                                            @Param("from") LocalDate from,
                                            @Param("to") LocalDate to);
 

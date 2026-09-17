@@ -34,7 +34,7 @@ public class License {
     private LocalDate expirationDate;
 
     @Column(nullable = false)
-    private String status;
+    private LicenseStatus status;
 
     private String restrictions;
 
@@ -48,7 +48,7 @@ public class License {
     protected License() {}
 
     public License(String state, String licenseNumber, String licenseType,
-                   LocalDate expirationDate, String status) {
+                   LocalDate expirationDate, LicenseStatus status) {
         this.state = state;
         this.licenseNumber = licenseNumber;
         this.licenseType = licenseType;
@@ -108,11 +108,11 @@ public class License {
         this.expirationDate = expirationDate;
     }
 
-    public String getStatus() {
+    public LicenseStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(LicenseStatus status) {
         this.status = status;
     }
 

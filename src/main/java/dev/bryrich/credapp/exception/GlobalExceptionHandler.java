@@ -3,12 +3,14 @@ package dev.bryrich.credapp.exception;
 import org.jspecify.annotations.Nullable;
 import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.*;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import tools.jackson.databind.exc.MismatchedInputException;
 
 import java.util.List;
 import java.util.Map;
@@ -48,6 +50,25 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                         Collectors.mapping(FieldError::getDefaultMessage, Collectors.toList())));
 
         problem.setProperty("errors", errors);
+        return ResponseEntity.status(status).headers(headers).body(problem);
+    }
+
+    @Override
+    protected @Nullable ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
+                                                                            HttpHeaders headers, HttpStatusCode status,
+                                                                            WebRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, "Request body could not be read.");
+        problem.setTitle("Malformed request");
+
+        if (ex.getCause() instanceof MismatchedInputException mismatch
+                && !mismatch.getPath().isEmpty()
+                && mismatch.getPath().getLast().getPropertyName() != null) {
+            String field = mismatch.getPath().getLast().getPropertyName();
+            problem.setTitle("Validation failed");
+            problem.setDetail("Invalid request content.");
+            problem.setProperty("errors", Map.of(field, List.of("invalid value")));
+        }
+
         return ResponseEntity.status(status).headers(headers).body(problem);
     }
 }
