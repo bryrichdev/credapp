@@ -142,10 +142,20 @@
             <plugin>
                 <groupId>org.flywaydb</groupId>
                 <artifactId>flyway-maven-plugin</artifactId>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.flywaydb</groupId>
+                        <artifactId>flyway-database-postgresql</artifactId>
+                        <version>${flyway.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                        <version>${postgresql.version}</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
-                    <url>jdbc:postgresql://localhost:5432/credapp</url>
                     <user>credapp</user>
-                    <password>pass</password>
                     <cleanDisabled>false</cleanDisabled>
                 </configuration>
             </plugin>

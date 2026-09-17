@@ -11,6 +11,8 @@ CREATE TABLE users
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE UNIQUE INDEX users_email_lower_unique ON users (LOWER(email));
+
 
 CREATE TABLE documents
 (

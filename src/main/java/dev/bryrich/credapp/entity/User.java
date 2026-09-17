@@ -52,8 +52,12 @@ public class User {
         return email;
     }
 
+    public static String normalizeEmail(String email) {
+        return Objects.requireNonNull(email, "email is required").trim().toLowerCase(Locale.ROOT);
+    }
+
     public void setEmail(String email) {
-        this.email = Objects.requireNonNull(email, "email is required").trim().toLowerCase(Locale.ROOT);
+        this.email = normalizeEmail(email);
     }
 
     public String getPasswordHash() {
