@@ -1,6 +1,7 @@
 package dev.bryrich.credapp.dto;
 
 import dev.bryrich.credapp.entity.Provider;
+import dev.bryrich.credapp.entity.Sex;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -23,7 +24,7 @@ public class ProviderForm {
     @Pattern(regexp = "^$|^[0-9]{10}$", message = "NPI must be exactly 10 digits")
     private String npi;
 
-    private String sex;
+    private Sex sex;
 
     private String phoneNumber;
 
@@ -77,11 +78,11 @@ public class ProviderForm {
         this.npi = npi;
     }
 
-    public String getSex() {
+    public Sex getSex() {
         return sex;
     }
 
-    public void setSex(String sex) {
+    public void setSex(Sex sex) {
         this.sex = sex;
     }
 

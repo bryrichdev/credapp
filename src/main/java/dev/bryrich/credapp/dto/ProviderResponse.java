@@ -1,6 +1,7 @@
 package dev.bryrich.credapp.dto;
 
 import dev.bryrich.credapp.entity.Provider;
+import dev.bryrich.credapp.entity.Sex;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -11,7 +12,7 @@ public record ProviderResponse(
         String lastName,
         LocalDate dob,
         String npi,
-        String sex,
+        Sex sex,
         String phoneNumber,
         Instant createdAt
 ) {

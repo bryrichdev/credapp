@@ -43,4 +43,11 @@ public class ProviderService {
         return providerRepository.save(provider);
     }
 
+    @Transactional
+    public void delete(Long id) {
+        Provider provider = providerRepository.findById(id)
+                .orElseThrow(() -> new ProviderNotFoundException(id));
+        providerRepository.delete(provider);
+    }
+
 }

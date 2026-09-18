@@ -61,7 +61,14 @@
 
                 <label class="field">
                     <span class="field__label">Sex</span>
-                    <input class="field__input" type="text" th:field="*{sex}">
+                    <select class="field__input" th:field="*{sex}"
+                            th:classappend="${#fields.hasErrors('sex')} ? 'field__input--invalid'">
+                        <option value="">Not recorded</option>
+                        <option th:each="option : ${sexes}"
+                                th:value="${option}"
+                                th:text="${option.label}"></option>
+                    </select>
+                    <span class="field__error" th:if="${#fields.hasErrors('sex')}" th:errors="*{sex}"></span>
                 </label>
 
                 <label class="field">

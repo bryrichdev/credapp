@@ -43,4 +43,10 @@ public class ProviderController {
                 .toUri();
         return ResponseEntity.created(location).body(ProviderResponse.from(saved));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        providerService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
 }

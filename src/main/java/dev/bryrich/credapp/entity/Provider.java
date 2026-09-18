@@ -27,7 +27,7 @@ public class Provider {
     private String placeOfBirth;
     private String npi;
     private String ssn;
-    private String sex;
+    private Sex sex;
     private String phoneNumber;
 
     @CreationTimestamp
@@ -99,11 +99,11 @@ public class Provider {
         this.ssn = ssn;
     }
 
-    public String getSex() {
+    public Sex getSex() {
         return sex;
     }
 
-    public void setSex(String sex) {
+    public void setSex(Sex sex) {
         this.sex = sex;
     }
 

@@ -46,4 +46,10 @@ public class LicenseController {
                 .toUri();
         return ResponseEntity.created(location).body(LicenseResponse.from(saved));
     }
+
+    @DeleteMapping("/{licenseId}")
+    public ResponseEntity<Void> delete(@PathVariable Long providerId, @PathVariable Long licenseId) {
+        licenseService.delete(licenseId, providerId);
+        return ResponseEntity.noContent().build();
+    }
 }

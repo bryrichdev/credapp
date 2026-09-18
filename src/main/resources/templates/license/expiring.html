@@ -23,7 +23,7 @@
     <nav class="filters">
         <span class="filters__label">Window</span>
         <a class="filter-chip" th:each="option : ${#arrays.toIntegerArray({30, 60, 90, 180})}"
-           th:href="@{/licenses(days=${option})}"
+           th:href="@{/licenses/expiring(days=${option})}"
            th:classappend="${option == days} ? 'filter-chip--active'"
            th:text="${option} + ' days'">30 days</a>
     </nav>

@@ -34,13 +34,13 @@
             <dd th:text="${provider.dob} ?: '—'">1985-04-12</dd>
 
             <dt>Place of birth</dt>
-            <dd th:text="${provider.placeOfBirth} ?: '—'">—</dd>
+            <dd th:text="${provider.placeOfBirth} ?: '—'">123</dd>
 
             <dt>Sex</dt>
-            <dd th:text="${provider.sex} ?: '—'">F</dd>
+            <dd th:text="${provider.sex != null} ? ${provider.sex.label} : '—'"></dd>
 
             <dt>Phone</dt>
-            <dd th:text="${provider.phoneNumber} ?: '—'">—</dd>
+            <dd th:text="${provider.phoneNumber} ?: '—'">123</dd>
 
             <dt>NPI</dt>
             <dd th:text="${provider.npi} ?: '—'">1234567890</dd>
@@ -67,6 +67,7 @@
                 <th>Issued</th>
                 <th>Expires</th>
                 <th>Status</th>
+                <th class="table__actions"></th>
             </tr>
             </thead>
             <tbody>
@@ -83,6 +84,13 @@
                               : (s == 'EXPIRED' or s == 'REVOKED' or s == 'SUSPENDED' ? 'badge--alert'
                               : 'badge--inactive'))}"
                           th:text="${license.status.value}">active</span>
+                </td>
+                <td class="table__actions">
+                    <form th:action="@{/providers/{pid}/licenses/{lid}/delete(pid=${provider.id}, lid=${license.id})}"
+                          method="post"
+                          onsubmit="return confirm('Delete this license?');">
+                        <button class="button button--danger button--small" type="submit">Delete</button>
+                    </form>
                 </td>
             </tr>
             </tbody>
@@ -107,6 +115,19 @@
            th:if="${#lists.isEmpty(licenses.?[restrictions != null and !restrictions.isBlank()])}">
             None recorded.
         </p>
+    </section>
+
+    <section class="card danger-zone">
+        <div>
+            <h2>Delete provider</h2>
+            <p class="empty__hint">
+                This removes the provider and every license, document and history record attached to them.
+            </p>
+        </div>
+        <form th:action="@{/providers/{id}/delete(id=${provider.id})}" method="post"
+              onsubmit="return confirm('Delete this provider and all of their licenses? This cannot be undone.');">
+            <button class="button button--danger" type="submit">Delete provider</button>
+        </form>
     </section>
 
 </main>

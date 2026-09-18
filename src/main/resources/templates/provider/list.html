@@ -45,6 +45,7 @@
                 <th>NPI</th>
                 <th>Date of birth</th>
                 <th>Phone</th>
+                <th class="table__actions"></th>
             </tr>
             </thead>
             <tbody>
@@ -64,6 +65,12 @@
                 <td>
                     <a class="rowlink" th:href="@{/providers/{id}(id=${provider.id})}"
                        th:text="${provider.phoneNumber} ?: '—'"></a>
+                </td>
+                <td class="table__actions">
+                    <form th:action="@{/providers/{id}/delete(id=${provider.id})}" method="post"
+                          onsubmit="return confirm('Delete this provider and all of their licenses?');">
+                        <button class="button button--danger button--small" type="submit">Delete</button>
+                    </form>
                 </td>
             </tr>
             </tbody>

@@ -4,6 +4,7 @@ import dev.bryrich.credapp.TestcontainersConfiguration;
 import dev.bryrich.credapp.entity.License;
 import dev.bryrich.credapp.entity.LicenseStatus;
 import dev.bryrich.credapp.entity.Provider;
+import dev.bryrich.credapp.entity.Sex;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -32,7 +33,7 @@ class ProviderRepositoryTest {
         Provider provider = new Provider("Alice", "Nguyen");
         provider.setNpi("1234567890");
         provider.setDob(LocalDate.of(1985, 4, 12));
-        provider.setSex("F");
+        provider.setSex(Sex.FEMALE);
         return provider;
     }
 

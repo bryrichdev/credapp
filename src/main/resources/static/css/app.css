@@ -181,11 +181,17 @@ a {
     color: var(--slate-700);
 }
 
-.field__input {
+.field__input,
+input.field__input,
+select.field__input,
+textarea.field__input {
+    box-sizing: border-box;
     width: 100%;
-    padding: 0.6rem 0.7rem;
-    font-size: 0.95rem;
+    height: 2.55rem;
+    padding: 0 0.7rem;
     font-family: inherit;
+    font-size: 0.95rem;
+    line-height: 1.4;
     color: var(--slate-900);
     background-color: #ffffff;
     border: 1px solid var(--slate-300);
@@ -197,6 +203,28 @@ a {
     outline: none;
     border-color: var(--teal-600);
     box-shadow: 0 0 0 3px rgba(26, 127, 129, 0.15);
+}
+
+select.field__input {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 2.1rem;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%236b7884' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 11px 8px;
+}
+
+input[type="date"].field__input::-webkit-calendar-picker-indicator {
+    margin-left: 0.35rem;
+    opacity: 0.55;
+    cursor: pointer;
+}
+
+textarea.field__input {
+    height: auto;
+    padding: 0.55rem 0.7rem;
+    resize: vertical;
 }
 
 .button {
@@ -667,3 +695,47 @@ a {
         grid-template-columns: 1fr;
     }
 }
+
+
+/* ---------- destructive actions ---------- */
+
+.button--danger {
+    color: var(--red-700);
+    background-color: #ffffff;
+    border-color: var(--slate-300);
+}
+
+.button--danger:hover {
+    color: #ffffff;
+    background-color: var(--red-700);
+    border-color: var(--red-700);
+}
+
+.button--small {
+    padding: 0.3rem 0.65rem;
+    font-size: 0.8rem;
+}
+
+.table__actions {
+    width: 1%;
+    white-space: nowrap;
+    text-align: right;
+}
+
+.table td.table__actions {
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+}
+
+.danger-zone {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    border-color: rgba(155, 44, 44, 0.25);
+}
+
+.danger-zone h2 {
+    margin-bottom: 0.2rem;
+}
+

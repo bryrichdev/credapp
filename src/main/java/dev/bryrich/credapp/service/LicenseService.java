@@ -63,6 +63,13 @@ public class LicenseService {
         return licenseRepository.findAll(pageable);
     }
 
+    @Transactional
+    public void delete(Long id, Long providerId) {
+        License license = licenseRepository.findByIdAndProviderId(id, providerId)
+                .orElseThrow(() -> new LicenseNotFoundException(id, providerId));
+        licenseRepository.delete(license);
+    }
+
     @Transactional(readOnly = true)
     public Page<License> searchByProviderName(@Param("providerName") String providerName, Pageable pageable) {
         return licenseRepository.searchByProviderName(providerName, pageable);
