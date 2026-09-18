@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler({ProviderNotFoundException.class, LicenseNotFoundException.class})
+    @ExceptionHandler({ProviderNotFoundException.class, LicenseNotFoundException.class, UserNotFoundException.class})
     public ProblemDetail handleNotFound(RuntimeException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.NOT_FOUND, ex.getMessage());
@@ -34,6 +34,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 "Unknown property: " + ex.getPropertyName());
         problem.setTitle("Invalid request parameter");
+        return problem;
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ProblemDetail handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Email already exists");
         return problem;
     }
 
