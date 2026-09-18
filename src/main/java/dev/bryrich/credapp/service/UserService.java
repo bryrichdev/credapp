@@ -52,6 +52,10 @@ public class UserService {
             throw new EmailAlreadyExistsException(normalized);
         }
 
+        if (password == null || password.length() < 12) {
+            throw new IllegalArgumentException("password must be at least 12 characters");
+        }
+
         User user = new User(normalized, passwordEncoder.encode(password));
         user.setFullName(fullName);
         if (role != null) {
