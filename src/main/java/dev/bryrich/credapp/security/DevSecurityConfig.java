@@ -3,6 +3,7 @@ package dev.bryrich.credapp.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -13,8 +14,10 @@ import org.springframework.security.web.SecurityFilterChain;
 public class DevSecurityConfig {
 
     @Bean
-    public SecurityFilterChain devSecurityFilterChain(HttpSecurity http) throws Exception {
+    @Order(1)
+    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
+                .securityMatcher("/api/**", "/actuator/**")
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -24,6 +27,21 @@ public class DevSecurityConfig {
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults());
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
+    public SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/login", "/css/**").permitAll()
+                        .anyRequest().authenticated())
+                .formLogin(form -> form
+                        .loginPage("/login")
+                        .defaultSuccessUrl("/", true)
+                        .permitAll())
+                .logout(logout -> logout.logoutSuccessUrl("/login?logout"));
         return http.build();
     }
 }

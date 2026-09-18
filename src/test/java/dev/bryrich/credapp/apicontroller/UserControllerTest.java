@@ -1,4 +1,4 @@
-package dev.bryrich.credapp.controller;
+package dev.bryrich.credapp.apicontroller;
 
 import dev.bryrich.credapp.entity.Role;
 import dev.bryrich.credapp.entity.User;

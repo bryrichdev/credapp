@@ -1,4 +1,4 @@
-package dev.bryrich.credapp.controller;
+package dev.bryrich.credapp.apicontroller;
 
 import dev.bryrich.credapp.dto.CreateLicenseRequest;
 import dev.bryrich.credapp.dto.LicenseResponse;

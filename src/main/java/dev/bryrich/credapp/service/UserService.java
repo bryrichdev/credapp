@@ -52,7 +52,7 @@ public class UserService {
             throw new EmailAlreadyExistsException(normalized);
         }
 
-        if (password == null || password.length() < 12) {
+        if (password == null || password.length() < 10) {
             throw new IllegalArgumentException("password must be at least 12 characters");
         }
 

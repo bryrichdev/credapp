@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sign in &middot; Credapp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="signin">
+
+<main class="signin__card">
+    <div class="signin__brand">
+        <span class="topbar__mark">CP</span>
+        <span class="topbar__brand">Credapp</span>
+    </div>
+
+    <h1 class="signin__title">Sign in</h1>
+    <p class="signin__hint">Credentialing workspace</p>
+
+    <div class="alert alert--error" th:if="${param.error}">
+        Invalid email or password.
+    </div>
+    <div class="alert alert--info" th:if="${param.logout}">
+        You have been signed out.
+    </div>
+
+    <form th:action="@{/login}" method="post">
+        <label class="field">
+            <span class="field__label">Email</span>
+            <input class="field__input" type="email" name="username" autocomplete="username" required autofocus>
+        </label>
+
+        <label class="field">
+            <span class="field__label">Password</span>
+            <input class="field__input" type="password" name="password" autocomplete="current-password" required>
+        </label>
+
+        <button class="button button--block" type="submit">Sign in</button>
+    </form>
+</main>
+
+</body>
+</html>

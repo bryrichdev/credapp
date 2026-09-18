@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Home &middot; Credapp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<header class="topbar">
+    <div class="topbar__brand">
+        <span class="topbar__mark">CP</span>
+        <span>Credapp</span>
+    </div>
+
+    <div class="topbar__right">
+        <span class="topbar__user" th:text="${user.email}">user@example.com</span>
+        <form th:action="@{/logout}" method="post">
+            <button class="button button--quiet" type="submit">Sign out</button>
+        </form>
+    </div>
+</header>
+
+<main class="page">
+    <div class="page__header">
+        <h1 th:text="'Welcome, ' + ${user.fullName}">Welcome</h1>
+        <p class="page__subtitle">Provider credentialing and license tracking.</p>
+    </div>
+
+    <section class="card">
+        <h2>Your account</h2>
+        <dl class="detail-list">
+            <dt>Name</dt>
+            <dd th:text="${user.fullName}">Dev Admin</dd>
+
+            <dt>Email</dt>
+            <dd th:text="${user.email}">user@example.com</dd>
+
+            <dt>Role</dt>
+            <dd>
+                <span class="badge badge--active" th:text="${user.role.value}">admin</span>
+            </dd>
+
+            <dt>Status</dt>
+            <dd>
+                <span class="badge"
+                      th:classappend="${user.enabled} ? 'badge--active' : 'badge--alert'"
+                      th:text="${user.enabled} ? 'Enabled' : 'Disabled'">Enabled</span>
+            </dd>
+        </dl>
+    </section>
+</main>
+
+</body>
+</html>
