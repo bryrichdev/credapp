@@ -120,7 +120,7 @@ a {
     border: 1px solid var(--slate-200);
     border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
-    padding: 1.5rem;
+    padding: 1.25rem;
 }
 
 .card + .card {
@@ -340,4 +340,330 @@ a {
 .badge--alert {
     color: var(--red-700);
     background-color: var(--red-50);
+}
+
+/* ---------- toolbar / search ---------- */
+
+.toolbar {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 1.25rem;
+}
+
+.toolbar__input {
+    flex: 1 1 auto;
+    max-width: 340px;
+}
+
+/* ---------- card variants ---------- */
+
+.card--flush {
+    padding: 0;
+    overflow: hidden;
+}
+
+.card--flush > .table {
+    margin: 0;
+}
+
+.card__header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1.1rem 1.25rem;
+    border-bottom: 1px solid var(--slate-200);
+}
+
+.card__header h2 {
+    margin: 0;
+}
+
+.count-pill {
+    display: inline-block;
+    min-width: 1.6rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background-color: var(--slate-100);
+    color: var(--slate-700);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* table inside a flush card needs its own edge padding */
+
+.card--flush .table th:first-child,
+.card--flush .table td:first-child {
+    padding-left: 1.25rem;
+}
+
+.card--flush .table th:last-child,
+.card--flush .table td:last-child {
+    padding-right: 1.25rem;
+}
+
+.card--flush .table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ---------- links ---------- */
+
+.link-strong {
+    color: var(--teal-700);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.link-strong:hover {
+    text-decoration: underline;
+}
+
+.backlink {
+    display: inline-block;
+    margin-bottom: 1rem;
+    color: var(--slate-500);
+    font-size: 0.875rem;
+    text-decoration: none;
+}
+
+.backlink:hover {
+    color: var(--teal-700);
+}
+
+/* ---------- empty states ---------- */
+
+.empty {
+    padding: 2.5rem 1.25rem;
+    text-align: center;
+}
+
+.empty__title {
+    margin: 0 0 0.25rem;
+    font-weight: 600;
+    color: var(--slate-700);
+}
+
+.empty__hint {
+    margin: 0;
+    color: var(--slate-500);
+    font-size: 0.9rem;
+}
+
+/* ---------- pagination ---------- */
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1.25rem;
+}
+
+.pagination__status {
+    color: var(--slate-500);
+    font-size: 0.875rem;
+}
+
+/* ---------- misc ---------- */
+
+.plain-list {
+    margin: 0;
+    padding-left: 1.1rem;
+}
+
+.plain-list li {
+    margin-bottom: 0.4rem;
+}
+
+/* ---------- top nav ---------- */
+
+.topbar__left {
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+}
+
+.topbar__brand {
+    text-decoration: none;
+}
+
+.topnav {
+    display: flex;
+    gap: 0.35rem;
+}
+
+.topnav__link {
+    padding: 0.35rem 0.7rem;
+    border-radius: var(--radius);
+    color: var(--slate-700);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.topnav__link:hover {
+    background-color: var(--slate-100);
+    color: var(--teal-700);
+}
+
+.topnav__link--active {
+    background-color: var(--teal-50);
+    color: var(--teal-900);
+}
+
+/* ---------- filter chips ---------- */
+
+.filters {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 1.25rem;
+}
+
+.filters__label {
+    margin-right: 0.35rem;
+    color: var(--slate-500);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.filter-chip {
+    padding: 0.35rem 0.8rem;
+    border: 1px solid var(--slate-300);
+    border-radius: 999px;
+    background-color: #ffffff;
+    color: var(--slate-700);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.filter-chip:hover {
+    border-color: var(--teal-600);
+    color: var(--teal-700);
+}
+
+.filter-chip--active {
+    border-color: var(--teal-700);
+    background-color: var(--teal-700);
+    color: #ffffff;
+}
+
+/* ---------- toolbar extras ---------- */
+
+.toolbar__end {
+    margin-left: auto;
+}
+
+/* ---------- clickable rows ---------- */
+
+.table td:has(.rowlink) {
+    padding: 0;
+}
+
+.card--flush .table td:has(.rowlink):first-child,
+.card--flush .table td:has(.rowlink):last-child {
+    padding: 0;
+}
+
+.rowlink {
+    display: block;
+    padding: 0.7rem 0.75rem;
+    color: inherit;
+    text-decoration: none;
+}
+
+.card--flush .table td:first-child .rowlink {
+    padding-left: 1.25rem;
+}
+
+.card--flush .table td:last-child .rowlink {
+    padding-right: 1.25rem;
+}
+
+.rowlink--strong {
+    color: var(--teal-700);
+    font-weight: 600;
+}
+
+.table tbody tr:hover .rowlink--strong {
+    text-decoration: underline;
+}
+
+.card__header {
+    padding: 1.1rem 1.25rem;
+}
+
+.card--flush .table th:first-child,
+.card--flush .table td:first-child {
+    padding-left: 1.25rem;
+}
+
+.card--flush .table th:last-child,
+.card--flush .table td:last-child {
+    padding-right: 1.25rem;
+}
+
+.card--flush .table td:first-child .rowlink {
+    padding-left: 1.25rem;
+}
+
+.card--flush .table td:last-child .rowlink {
+    padding-right: 1.25rem;
+}
+
+
+/* ---------- page header with an action ---------- */
+
+.page__header--row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+/* ---------- forms ---------- */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 1.25rem;
+}
+
+.form-grid .field--wide {
+    grid-column: 1 / -1;
+}
+
+.field__error {
+    margin: 0.3rem 0 0;
+    color: var(--red-700);
+    font-size: 0.825rem;
+}
+
+.field__input--invalid {
+    border-color: var(--red-700);
+}
+
+.form-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--slate-200);
+}
+
+.context-line {
+    margin: 0 0 1.25rem;
+    color: var(--slate-500);
+    font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
 }

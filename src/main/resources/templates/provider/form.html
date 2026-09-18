@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Add provider &middot; CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'providers')}"></div>
+
+<main class="page">
+
+    <a class="backlink" th:href="@{/providers}">&larr; All providers</a>
+
+    <div class="page__header">
+        <h1>Add provider</h1>
+        <p class="page__subtitle">First and last name are required.</p>
+    </div>
+
+    <section class="card">
+        <form th:action="@{/providers}" th:object="${form}" method="post">
+
+            <div class="form-grid">
+                <label class="field">
+                    <span class="field__label">First name</span>
+                    <input class="field__input" type="text" th:field="*{firstName}"
+                           th:classappend="${#fields.hasErrors('firstName')} ? 'field__input--invalid'">
+                    <span class="field__error" th:if="${#fields.hasErrors('firstName')}"
+                          th:errors="*{firstName}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Last name</span>
+                    <input class="field__input" type="text" th:field="*{lastName}"
+                           th:classappend="${#fields.hasErrors('lastName')} ? 'field__input--invalid'">
+                    <span class="field__error" th:if="${#fields.hasErrors('lastName')}"
+                          th:errors="*{lastName}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Date of birth</span>
+                    <input class="field__input" type="date" th:field="*{dob}"
+                           th:classappend="${#fields.hasErrors('dob')} ? 'field__input--invalid'">
+                    <span class="field__error" th:if="${#fields.hasErrors('dob')}" th:errors="*{dob}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Place of birth</span>
+                    <input class="field__input" type="text" th:field="*{placeOfBirth}">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">NPI</span>
+                    <input class="field__input" type="text" inputmode="numeric" th:field="*{npi}"
+                           th:classappend="${#fields.hasErrors('npi')} ? 'field__input--invalid'"
+                           placeholder="10 digits">
+                    <span class="field__error" th:if="${#fields.hasErrors('npi')}" th:errors="*{npi}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Sex</span>
+                    <input class="field__input" type="text" th:field="*{sex}">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Phone</span>
+                    <input class="field__input" type="tel" th:field="*{phoneNumber}">
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button class="button" type="submit">Save provider</button>
+                <a class="button button--quiet" th:href="@{/providers}">Cancel</a>
+            </div>
+        </form>
+    </section>
+
+</main>
+
+</body>
+</html>

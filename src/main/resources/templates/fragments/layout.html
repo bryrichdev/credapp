@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<header class="topbar" th:fragment="topbar(user, section)">
+    <div class="topbar__left">
+        <a class="topbar__brand" th:href="@{/}">
+            <span class="topbar__mark">CA</span>
+            <span>CredApp</span>
+        </a>
+
+        <nav class="topnav">
+            <a class="topnav__link" th:href="@{/providers}"
+               th:classappend="${section == 'providers'} ? 'topnav__link--active'">Providers</a>
+            <a class="topnav__link" th:href="@{/licenses}"
+               th:classappend="${section == 'licenses'} ? 'topnav__link--active'">Licenses</a>
+            <a class="topnav__link" th:href="@{/licenses/expiring}"
+               th:classappend="${section == 'expiring'} ? 'topnav__link--active'">Expiring</a>
+        </nav>
+    </div>
+
+    <div class="topbar__right">
+        <span class="topbar__user" th:text="${user.email}">user@example.com</span>
+        <form th:action="@{/logout}" method="post">
+            <button class="button button--quiet" type="submit">Sign out</button>
+        </form>
+    </div>
+</header>
+
+</body>
+</html>

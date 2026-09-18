@@ -5,6 +5,8 @@ import dev.bryrich.credapp.dto.ProviderResponse;
 import dev.bryrich.credapp.entity.Provider;
 import dev.bryrich.credapp.service.ProviderService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -28,10 +30,8 @@ public class ProviderController {
     }
 
     @GetMapping
-    public List<ProviderResponse> search(@RequestParam String lastName) {
-        return providerService.search(lastName).stream()
-                .map(ProviderResponse::from)
-                .toList();
+    public Page<ProviderResponse> search(@RequestParam String lastName, Pageable pageable) {
+        return providerService.search(lastName, pageable).map(ProviderResponse::from);
     }
 
     @PostMapping

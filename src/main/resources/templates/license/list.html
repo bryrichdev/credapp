@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Licenses &middot; CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'licenses')}"></div>
+
+<main class="page">
+
+    <div class="page__header page__header--row">
+        <div>
+        <h1>Licenses</h1>
+        <p class="page__subtitle">
+            <span th:if="${providerName == null or providerName.isBlank()}"
+                  th:text="${page.totalElements} + ' license(s) on file'">0 licenses</span>
+            <span th:unless="${providerName == null or providerName.isBlank()}"
+                  th:text="${page.totalElements} + ' license(s) for providers matching &quot;' + ${providerName} + '&quot;'">0 results</span>
+        </p>
+        </div>
+        <a class="button" th:href="@{/licenses/new}">Add license</a>
+    </div>
+
+    <form class="toolbar" th:action="@{/licenses}" method="get">
+        <input class="field__input toolbar__input"
+               type="search"
+               name="providerName"
+               th:value="${providerName}"
+               placeholder="Search by provider name">
+        <button class="button" type="submit">Search</button>
+        <a class="button button--quiet"
+           th:if="${providerName != null and !providerName.isBlank()}"
+           th:href="@{/licenses}">Clear</a>
+        <a class="button button--quiet toolbar__end" th:href="@{/licenses/expiring}">Expiring soon</a>
+    </form>
+
+    <section class="card card--flush">
+        <table class="table" th:unless="${page.isEmpty()}">
+            <thead>
+            <tr>
+                <th>Provider</th>
+                <th>State</th>
+                <th>Number</th>
+                <th>Type</th>
+                <th>Issued</th>
+                <th>Expires</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="license : ${page.content}" th:with="s=${license.status.name()}">
+                <td>
+                    <a class="rowlink rowlink--strong" th:href="@{/providers/{id}(id=${license.provider.id})}"
+                       th:text="${license.provider.lastName} + ', ' + ${license.provider.firstName}"></a>
+                </td>
+                <td>
+                    <a class="rowlink" th:href="@{/providers/{id}(id=${license.provider.id})}"
+                       th:text="${license.state}"></a>
+                </td>
+                <td>
+                    <a class="rowlink" th:href="@{/providers/{id}(id=${license.provider.id})}"
+                       th:text="${license.licenseNumber}"></a>
+                </td>
+                <td>
+                    <a class="rowlink" th:href="@{/providers/{id}(id=${license.provider.id})}"
+                       th:text="${license.licenseType}"></a>
+                </td>
+                <td>
+                    <a class="rowlink" th:href="@{/providers/{id}(id=${license.provider.id})}"
+                       th:text="${license.issueDate} ?: '—'"></a>
+                </td>
+                <td>
+                    <a class="rowlink" th:href="@{/providers/{id}(id=${license.provider.id})}"
+                       th:text="${license.expirationDate}"></a>
+                </td>
+                <td>
+                    <span class="badge"
+                          th:classappend="${s == 'ACTIVE' ? 'badge--active'
+                              : (s == 'PENDING' or s == 'PROBATION' ? 'badge--pending'
+                              : (s == 'EXPIRED' or s == 'REVOKED' or s == 'SUSPENDED' ? 'badge--alert'
+                              : 'badge--inactive'))}"
+                          th:text="${license.status.value}"></span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="empty" th:if="${page.isEmpty()}">
+            <p class="empty__title">No licenses found</p>
+            <p class="empty__hint" th:if="${providerName != null and !providerName.isBlank()}">
+                Try a shorter search term.
+            </p>
+        </div>
+    </section>
+
+    <nav class="pagination" th:if="${page.totalPages > 1}">
+        <a class="button button--quiet"
+           th:if="${page.hasPrevious()}"
+           th:href="@{/licenses(page=${page.number - 1}, size=${page.size}, providerName=${providerName})}">Previous</a>
+        <span th:unless="${page.hasPrevious()}"></span>
+
+        <span class="pagination__status"
+              th:text="'Page ' + (${page.number} + 1) + ' of ' + ${page.totalPages}">Page 1 of 1</span>
+
+        <a class="button button--quiet"
+           th:if="${page.hasNext()}"
+           th:href="@{/licenses(page=${page.number + 1}, size=${page.size}, providerName=${providerName})}">Next</a>
+        <span th:unless="${page.hasNext()}"></span>
+    </nav>
+
+</main>
+
+</body>
+</html>

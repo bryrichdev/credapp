@@ -8,19 +8,7 @@
 </head>
 <body>
 
-<header class="topbar">
-    <div class="topbar__brand">
-        <span class="topbar__mark">CP</span>
-        <span>Credapp</span>
-    </div>
-
-    <div class="topbar__right">
-        <span class="topbar__user" th:text="${user.email}">user@example.com</span>
-        <form th:action="@{/logout}" method="post">
-            <button class="button button--quiet" type="submit">Sign out</button>
-        </form>
-    </div>
-</header>
+<div th:replace="~{fragments/layout :: topbar(${user}, 'home')}"></div>
 
 <main class="page">
     <div class="page__header">

@@ -2,12 +2,12 @@ package dev.bryrich.credapp.service;
 
 import dev.bryrich.credapp.entity.Provider;
 import dev.bryrich.credapp.repository.ProviderRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import dev.bryrich.credapp.exception.ProviderNotFoundException;
-
-import java.util.List;
 
 
 @Service
@@ -29,8 +29,13 @@ public class ProviderService {
     }
 
     @Transactional(readOnly = true)
-    public List<Provider> search(String lastName) {
-        return providerRepository.findByLastNameContainingIgnoreCase(lastName);
+    public Page<Provider> search(String lastName, Pageable pageable) {
+        return providerRepository.findByLastNameContainingIgnoreCase(lastName, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Provider> findAll(Pageable pageable) {
+        return providerRepository.findAll(pageable);
     }
 
     @Transactional

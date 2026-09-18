@@ -3,6 +3,8 @@ package dev.bryrich.credapp.repository;
 import dev.bryrich.credapp.entity.License;
 
 import dev.bryrich.credapp.entity.LicenseStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,5 +24,20 @@ public interface LicenseRepository extends JpaRepository<License, Long> {
     List<License> findExpiringWithProvider(@Param("status") LicenseStatus status,
                                            @Param("from") LocalDate from,
                                            @Param("to") LocalDate to);
+    @Query(value = """
+        SELECT l FROM License l
+        JOIN FETCH l.provider p
+        WHERE :name = ''
+           OR LOWER(p.lastName) LIKE LOWER(CONCAT('%', :name, '%'))
+           OR LOWER(p.firstName) LIKE LOWER(CONCAT('%', :name, '%'))
+        """,
+            countQuery = """
+        SELECT COUNT(l) FROM License l
+        JOIN l.provider p
+        WHERE :name = ''
+           OR LOWER(p.lastName) LIKE LOWER(CONCAT('%', :name, '%'))
+           OR LOWER(p.firstName) LIKE LOWER(CONCAT('%', :name, '%'))
+        """)
+    Page<License> searchByProviderName(@Param("name") String name, Pageable pageable);
 
 }

@@ -9,6 +9,7 @@ import dev.bryrich.credapp.repository.ProviderRepository;
 import dev.bryrich.credapp.exception.ProviderNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,6 +61,11 @@ public class LicenseService {
     @Transactional(readOnly = true)
     public Page<License> findAll(Pageable pageable) {
         return licenseRepository.findAll(pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<License> searchByProviderName(@Param("providerName") String providerName, Pageable pageable) {
+        return licenseRepository.searchByProviderName(providerName, pageable);
     }
 
 }

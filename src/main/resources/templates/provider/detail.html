@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${provider.firstName} + ' ' + ${provider.lastName} + ' · CredApp'">Provider &middot; CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'providers')}"></div>
+
+<main class="page">
+
+    <a class="backlink" th:href="@{/providers}">&larr; All providers</a>
+
+    <div class="page__header">
+        <h1 th:text="${provider.firstName} + ' ' + ${provider.lastName}"></h1>
+        <p class="page__subtitle">
+            NPI <span th:text="${provider.npi} ?: 'not on file'">1234567890</span>
+        </p>
+    </div>
+
+    <section class="card">
+        <h2>Provider details</h2>
+        <dl class="detail-list">
+            <dt>First name</dt>
+            <dd th:text="${provider.firstName}"></dd>
+
+            <dt>Last name</dt>
+            <dd th:text="${provider.lastName}"></dd>
+
+            <dt>Date of birth</dt>
+            <dd th:text="${provider.dob} ?: '—'">1985-04-12</dd>
+
+            <dt>Place of birth</dt>
+            <dd th:text="${provider.placeOfBirth} ?: '—'">—</dd>
+
+            <dt>Sex</dt>
+            <dd th:text="${provider.sex} ?: '—'">F</dd>
+
+            <dt>Phone</dt>
+            <dd th:text="${provider.phoneNumber} ?: '—'">—</dd>
+
+            <dt>NPI</dt>
+            <dd th:text="${provider.npi} ?: '—'">1234567890</dd>
+
+            <dt>Added</dt>
+            <dd th:text="${provider.createdAt}">2026-01-01</dd>
+        </dl>
+    </section>
+
+    <section class="card card--flush">
+        <div class="card__header">
+            <h2>Licenses</h2>
+            <span class="count-pill" th:text="${licenses.size()}">0</span>
+            <a class="button toolbar__end"
+               th:href="@{/providers/{id}/licenses/new(id=${provider.id})}">Add license</a>
+        </div>
+
+        <table class="table" th:unless="${licenses.isEmpty()}">
+            <thead>
+            <tr>
+                <th>State</th>
+                <th>Number</th>
+                <th>Type</th>
+                <th>Issued</th>
+                <th>Expires</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="license : ${licenses}" th:with="s=${license.status.name()}">
+                <td th:text="${license.state}">UT</td>
+                <td th:text="${license.licenseNumber}">12345</td>
+                <td th:text="${license.licenseType}">MD</td>
+                <td th:text="${license.issueDate} ?: '—'">—</td>
+                <td th:text="${license.expirationDate}">2027-06-30</td>
+                <td>
+                    <span class="badge"
+                          th:classappend="${s == 'ACTIVE' ? 'badge--active'
+                              : (s == 'PENDING' or s == 'PROBATION' ? 'badge--pending'
+                              : (s == 'EXPIRED' or s == 'REVOKED' or s == 'SUSPENDED' ? 'badge--alert'
+                              : 'badge--inactive'))}"
+                          th:text="${license.status.value}">active</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="empty" th:if="${licenses.isEmpty()}">
+            <p class="empty__title">No licenses on file</p>
+            <p class="empty__hint">Licenses added for this provider will appear here.</p>
+        </div>
+    </section>
+
+    <section class="card" th:if="${!licenses.isEmpty()}">
+        <h2>Restrictions</h2>
+        <ul class="plain-list">
+            <li th:each="license : ${licenses}"
+                th:if="${license.restrictions != null and !license.restrictions.isBlank()}">
+                <strong th:text="${license.state} + ' ' + ${license.licenseNumber}">UT 12345</strong>
+                <span th:text="${license.restrictions}">restriction text</span>
+            </li>
+        </ul>
+        <p class="empty__hint"
+           th:if="${#lists.isEmpty(licenses.?[restrictions != null and !restrictions.isBlank()])}">
+            None recorded.
+        </p>
+    </section>
+
+</main>
+
+</body>
+</html>
