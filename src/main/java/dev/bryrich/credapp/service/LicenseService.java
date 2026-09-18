@@ -64,6 +64,14 @@ public class LicenseService {
     }
 
     @Transactional
+    public License update(Long id, Long providerId, java.util.function.Consumer<License> changes) {
+        License license = licenseRepository.findByIdAndProviderId(id, providerId)
+                .orElseThrow(() -> new LicenseNotFoundException(id, providerId));
+        changes.accept(license);
+        return license;
+    }
+
+    @Transactional
     public void delete(Long id, Long providerId) {
         License license = licenseRepository.findByIdAndProviderId(id, providerId)
                 .orElseThrow(() -> new LicenseNotFoundException(id, providerId));

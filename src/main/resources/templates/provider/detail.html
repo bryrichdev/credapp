@@ -14,14 +14,21 @@
 
     <a class="backlink" th:href="@{/providers}">&larr; All providers</a>
 
-    <div class="page__header">
-        <h1 th:text="${provider.firstName} + ' ' + ${provider.lastName}"></h1>
-        <p class="page__subtitle">
-            NPI <span th:text="${provider.npi} ?: 'not on file'">1234567890</span>
-        </p>
+    <div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
+
+    <div class="page__header page__header--row">
+        <div>
+            <h1 th:text="${provider.firstName} + ' ' + ${provider.lastName}"></h1>
+            <p class="page__subtitle">
+                NPI <span th:text="${#strings.isEmpty(provider.npi)} ? 'not on file' : ${provider.npi}"></span>
+            </p>
+        </div>
+        <a class="button button--quiet" th:unless="${editing}"
+           th:href="@{/providers/{id}(id=${provider.id}, edit=1)}">Edit provider</a>
     </div>
 
-    <section class="card">
+    <!-- ============ read view ============ -->
+    <section class="card" th:unless="${editing}">
         <h2>Provider details</h2>
         <dl class="detail-list">
             <dt>First name</dt>
@@ -31,25 +38,95 @@
             <dd th:text="${provider.lastName}"></dd>
 
             <dt>Date of birth</dt>
-            <dd th:text="${provider.dob} ?: '—'">1985-04-12</dd>
+            <dd th:text="${provider.dob} ?: '—'"></dd>
 
             <dt>Place of birth</dt>
-            <dd th:text="${provider.placeOfBirth} ?: '—'">123</dd>
+            <dd th:text="${#strings.isEmpty(provider.placeOfBirth)} ? '—' : ${provider.placeOfBirth}"></dd>
 
             <dt>Sex</dt>
             <dd th:text="${provider.sex != null} ? ${provider.sex.label} : '—'"></dd>
 
             <dt>Phone</dt>
-            <dd th:text="${provider.phoneNumber} ?: '—'">123</dd>
+            <dd th:text="${#strings.isEmpty(provider.phoneNumber)} ? '—' : ${provider.phoneNumber}"></dd>
 
             <dt>NPI</dt>
-            <dd th:text="${provider.npi} ?: '—'">1234567890</dd>
+            <dd th:text="${#strings.isEmpty(provider.npi)} ? '—' : ${provider.npi}"></dd>
 
             <dt>Added</dt>
-            <dd th:text="${provider.createdAt}">2026-01-01</dd>
+            <dd th:text="${provider.createdAt}"></dd>
         </dl>
     </section>
 
+    <!-- ============ edit view ============ -->
+    <form th:if="${editing}"
+          id="providerEditForm"
+          th:action="@{/providers/{id}/edit(id=${provider.id})}"
+          th:object="${form}"
+          method="post">
+
+        <section class="card">
+            <h2>Edit provider</h2>
+
+            <div class="form-grid">
+                <label class="field">
+                    <span class="field__label">First name</span>
+                    <input class="field__input" type="text" th:field="*{firstName}"
+                           th:classappend="${#fields.hasErrors('firstName')} ? 'field__input--invalid'">
+                    <span class="field__error" th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Last name</span>
+                    <input class="field__input" type="text" th:field="*{lastName}"
+                           th:classappend="${#fields.hasErrors('lastName')} ? 'field__input--invalid'">
+                    <span class="field__error" th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Date of birth</span>
+                    <input class="field__input" type="date" th:field="*{dob}">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Place of birth</span>
+                    <input class="field__input" type="text" th:field="*{placeOfBirth}">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">NPI</span>
+                    <input class="field__input" type="text" inputmode="numeric" th:field="*{npi}"
+                           th:classappend="${#fields.hasErrors('npi')} ? 'field__input--invalid'"
+                           placeholder="10 digits">
+                    <span class="field__error" th:if="${#fields.hasErrors('npi')}" th:errors="*{npi}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Sex</span>
+                    <select class="field__input" th:field="*{sex}">
+                        <option value="">Not recorded</option>
+                        <option th:each="option : ${sexes}"
+                                th:value="${option}"
+                                th:text="${option.label}"></option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Phone</span>
+                    <input class="field__input" type="tel" th:field="*{phoneNumber}">
+                </label>
+            </div>
+        </section>
+
+        <div class="savebar" id="saveBar" hidden>
+            <span class="savebar__text">You have unsaved changes</span>
+            <div class="savebar__actions">
+                <a class="button button--quiet" th:href="@{/providers/{id}(id=${provider.id})}">Cancel</a>
+                <button class="button" type="submit">Save changes</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- ============ licenses ============ -->
     <section class="card card--flush">
         <div class="card__header">
             <h2>Licenses</h2>
@@ -72,25 +149,29 @@
             </thead>
             <tbody>
             <tr th:each="license : ${licenses}" th:with="s=${license.status.name()}">
-                <td th:text="${license.state}">UT</td>
-                <td th:text="${license.licenseNumber}">12345</td>
-                <td th:text="${license.licenseType}">MD</td>
-                <td th:text="${license.issueDate} ?: '—'">—</td>
-                <td th:text="${license.expirationDate}">2027-06-30</td>
+                <td th:text="${license.state}"></td>
+                <td th:text="${license.licenseNumber}"></td>
+                <td th:text="${license.licenseType}"></td>
+                <td th:text="${license.issueDate} ?: '—'"></td>
+                <td th:text="${license.expirationDate}"></td>
                 <td>
                     <span class="badge"
                           th:classappend="${s == 'ACTIVE' ? 'badge--active'
                               : (s == 'PENDING' or s == 'PROBATION' ? 'badge--pending'
                               : (s == 'EXPIRED' or s == 'REVOKED' or s == 'SUSPENDED' ? 'badge--alert'
                               : 'badge--inactive'))}"
-                          th:text="${license.status.value}">active</span>
+                          th:text="${license.status.value}"></span>
                 </td>
                 <td class="table__actions">
-                    <form th:action="@{/providers/{pid}/licenses/{lid}/delete(pid=${provider.id}, lid=${license.id})}"
-                          method="post"
-                          onsubmit="return confirm('Delete this license?');">
-                        <button class="button button--danger button--small" type="submit">Delete</button>
-                    </form>
+                    <div class="row-actions">
+                        <a class="button button--quiet button--small"
+                           th:href="@{/providers/{pid}/licenses/{lid}/edit(pid=${provider.id}, lid=${license.id})}">Edit</a>
+                        <form th:action="@{/providers/{pid}/licenses/{lid}/delete(pid=${provider.id}, lid=${license.id})}"
+                              method="post"
+                              onsubmit="return confirm('Delete this license?');">
+                            <button class="button button--danger button--small" type="submit">Delete</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
             </tbody>
@@ -102,22 +183,7 @@
         </div>
     </section>
 
-    <section class="card" th:if="${!licenses.isEmpty()}">
-        <h2>Restrictions</h2>
-        <ul class="plain-list">
-            <li th:each="license : ${licenses}"
-                th:if="${license.restrictions != null and !license.restrictions.isBlank()}">
-                <strong th:text="${license.state} + ' ' + ${license.licenseNumber}">UT 12345</strong>
-                <span th:text="${license.restrictions}">restriction text</span>
-            </li>
-        </ul>
-        <p class="empty__hint"
-           th:if="${#lists.isEmpty(licenses.?[restrictions != null and !restrictions.isBlank()])}">
-            None recorded.
-        </p>
-    </section>
-
-    <section class="card danger-zone">
+    <section class="card danger-zone" th:unless="${editing}">
         <div>
             <h2>Delete provider</h2>
             <p class="empty__hint">
@@ -131,6 +197,43 @@
     </section>
 
 </main>
+
+<script>
+    (function () {
+        const form = document.getElementById('providerEditForm');
+        const saveBar = document.getElementById('saveBar');
+        if (!form || !saveBar) {
+            return;
+        }
+
+        // Remember what every field looked like when the page loaded.
+        const fields = Array.from(form.querySelectorAll('input, select, textarea'));
+        const initial = new Map(fields.map(field => [field, field.value]));
+        let dirty = false;
+
+        function check() {
+            dirty = fields.some(field => field.value !== initial.get(field));
+            saveBar.hidden = !dirty;
+        }
+
+        fields.forEach(field => {
+            field.addEventListener('input', check);
+            field.addEventListener('change', check);
+        });
+
+        // Don't warn when the change is being saved on purpose.
+        form.addEventListener('submit', () => {
+            dirty = false;
+        });
+
+        window.addEventListener('beforeunload', event => {
+            if (dirty) {
+                event.preventDefault();
+                event.returnValue = '';
+            }
+        });
+    })();
+</script>
 
 </body>
 </html>

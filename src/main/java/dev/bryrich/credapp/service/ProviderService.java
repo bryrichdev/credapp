@@ -44,6 +44,14 @@ public class ProviderService {
     }
 
     @Transactional
+    public Provider update(Long id, java.util.function.Consumer<Provider> changes) {
+        Provider provider = providerRepository.findById(id)
+                .orElseThrow(() -> new ProviderNotFoundException(id));
+        changes.accept(provider);
+        return provider;
+    }
+
+    @Transactional
     public void delete(Long id) {
         Provider provider = providerRepository.findById(id)
                 .orElseThrow(() -> new ProviderNotFoundException(id));

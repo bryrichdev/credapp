@@ -28,14 +28,42 @@ public class ProviderForm {
 
     private String phoneNumber;
 
+    /** Empty form, for the create screen. */
+    public ProviderForm() {
+    }
+
+    /** Copies a saved provider's values in, so the edit screen renders them. */
+    public static ProviderForm from(Provider provider) {
+        ProviderForm form = new ProviderForm();
+        form.firstName = provider.getFirstName();
+        form.lastName = provider.getLastName();
+        form.dob = provider.getDob();
+        form.placeOfBirth = provider.getPlaceOfBirth();
+        form.npi = provider.getNpi();
+        form.sex = provider.getSex();
+        form.phoneNumber = provider.getPhoneNumber();
+        return form;
+    }
+
     public Provider toEntity() {
         Provider provider = new Provider(firstName, lastName);
-        provider.setDob(dob);
-        provider.setPlaceOfBirth(placeOfBirth);
-        provider.setNpi(npi == null || npi.isBlank() ? null : npi);
-        provider.setSex(sex);
-        provider.setPhoneNumber(phoneNumber);
+        applyTo(provider);
         return provider;
+    }
+
+    /** Copies this form's values onto an existing provider, for updates. */
+    public void applyTo(Provider provider) {
+        provider.setFirstName(firstName);
+        provider.setLastName(lastName);
+        provider.setDob(dob);
+        provider.setPlaceOfBirth(blankToNull(placeOfBirth));
+        provider.setNpi(blankToNull(npi));
+        provider.setSex(sex);
+        provider.setPhoneNumber(blankToNull(phoneNumber));
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 
     public String getFirstName() {

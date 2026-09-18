@@ -34,16 +34,52 @@ public class LicenseForm {
 
     private String restrictions;
 
+    /** Empty form, for the create screen. */
+    public LicenseForm() {
+    }
+
+    /** Copies a saved license's values in, so the edit screen renders them. */
+    public static LicenseForm from(License license) {
+        LicenseForm form = new LicenseForm();
+        form.state = license.getState();
+        form.licenseNumber = license.getLicenseNumber();
+        form.licenseType = license.getLicenseType();
+        form.issueDate = license.getIssueDate();
+        form.expirationDate = license.getExpirationDate();
+        form.status = license.getStatus();
+        form.restrictions = license.getRestrictions();
+        return form;
+    }
+
     public License toEntity() {
         License license = new License(
-                state == null ? null : state.trim().toUpperCase(Locale.ROOT),
+                normalizedState(),
                 licenseNumber,
                 licenseType,
                 expirationDate,
                 status);
         license.setIssueDate(issueDate);
-        license.setRestrictions(restrictions == null || restrictions.isBlank() ? null : restrictions);
+        license.setRestrictions(blankToNull(restrictions));
         return license;
+    }
+
+    /** Copies this form's values onto an existing license, for updates. */
+    public void applyTo(License license) {
+        license.setState(normalizedState());
+        license.setLicenseNumber(licenseNumber);
+        license.setLicenseType(licenseType);
+        license.setIssueDate(issueDate);
+        license.setExpirationDate(expirationDate);
+        license.setStatus(status);
+        license.setRestrictions(blankToNull(restrictions));
+    }
+
+    private String normalizedState() {
+        return state == null ? null : state.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 
     public String getState() {

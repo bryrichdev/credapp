@@ -87,11 +87,15 @@
                           th:text="${license.status.value}"></span>
                 </td>
                 <td class="table__actions">
-                    <form th:action="@{/providers/{pid}/licenses/{lid}/delete(pid=${license.provider.id}, lid=${license.id})}"
-                          method="post"
-                          onsubmit="return confirm('Delete this license?');">
-                        <button class="button button--danger button--small" type="submit">Delete</button>
-                    </form>
+                    <div class="row-actions">
+                        <a class="button button--quiet button--small"
+                           th:href="@{/providers/{pid}/licenses/{lid}/edit(pid=${license.provider.id}, lid=${license.id})}">Edit</a>
+                        <form th:action="@{/providers/{pid}/licenses/{lid}/delete(pid=${license.provider.id}, lid=${license.id})}"
+                              method="post"
+                              onsubmit="return confirm('Delete this license?');">
+                            <button class="button button--danger button--small" type="submit">Delete</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
             </tbody>

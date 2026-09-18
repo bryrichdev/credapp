@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Add license &middot; CredApp</title>
+    <title th:text="${licenseId} != null ? 'Edit license · CredApp' : 'Add license · CredApp'">Add license</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
@@ -15,7 +15,7 @@
     <a class="backlink" th:href="@{/providers/{id}(id=${provider.id})}">&larr; Back to provider</a>
 
     <div class="page__header">
-        <h1>Add license</h1>
+        <h1 th:text="${licenseId} != null ? 'Edit license' : 'Add license'">Add license</h1>
     </div>
 
     <section class="card">
@@ -24,7 +24,10 @@
             <strong th:text="${provider.firstName} + ' ' + ${provider.lastName}"></strong>
         </p>
 
-        <form th:action="@{/providers/{id}/licenses(id=${provider.id})}" th:object="${form}" method="post">
+        <form th:object="${form}" method="post"
+              th:action="${licenseId} != null
+                  ? @{/providers/{pid}/licenses/{lid}/edit(pid=${provider.id}, lid=${licenseId})}
+                  : @{/providers/{pid}/licenses(pid=${provider.id})}">
 
             <div class="form-grid">
                 <label class="field">
@@ -83,7 +86,7 @@
             </div>
 
             <div class="form-actions">
-                <button class="button" type="submit">Save license</button>
+                <button class="button" type="submit" th:text="${licenseId} != null ? 'Save changes' : 'Save license'">Save license</button>
                 <a class="button button--quiet" th:href="@{/providers/{id}(id=${provider.id})}">Cancel</a>
             </div>
         </form>

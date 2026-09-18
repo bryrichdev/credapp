@@ -1,19 +1,19 @@
 package dev.bryrich.credapp.webcontroller;
 
-
 import dev.bryrich.credapp.dto.LicenseForm;
 import dev.bryrich.credapp.dto.ProviderForm;
+import dev.bryrich.credapp.entity.License;
 import dev.bryrich.credapp.entity.LicenseStatus;
+import dev.bryrich.credapp.entity.Provider;
 import dev.bryrich.credapp.entity.Sex;
 import dev.bryrich.credapp.service.LicenseService;
+import dev.bryrich.credapp.service.ProviderService;
 import jakarta.validation.Valid;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
-import org.springframework.ui.Model;
-import dev.bryrich.credapp.entity.Provider;
-import dev.bryrich.credapp.service.ProviderService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +22,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @RequestMapping("/providers")
 public class ProviderWebController {
+
     private final ProviderService providerService;
     private final LicenseService licenseService;
 
@@ -30,6 +31,7 @@ public class ProviderWebController {
         this.licenseService = licenseService;
     }
 
+    /** Blank text inputs submit "" — store null instead. */
     @InitBinder
     public void initBinder(WebDataBinder binder) {
         binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
@@ -49,11 +51,36 @@ public class ProviderWebController {
     }
 
     @GetMapping("/{id}")
-    public String details(@PathVariable Long id, Model model) {
+    public String detail(@PathVariable Long id,
+                         @RequestParam(name = "edit", defaultValue = "false") boolean edit,
+                         Model model) {
         Provider provider = providerService.findById(id);
         model.addAttribute("provider", provider);
         model.addAttribute("licenses", licenseService.findByProviderId(id));
-        return "/provider/detail";
+        model.addAttribute("editing", edit);
+        if (edit) {
+            model.addAttribute("form", ProviderForm.from(provider));
+            model.addAttribute("sexes", Sex.values());
+        }
+        return "provider/detail";
+    }
+
+    @PostMapping("/{id}/edit")
+    public String updateProvider(@PathVariable Long id,
+                                 @Valid @ModelAttribute("form") ProviderForm form,
+                                 BindingResult binding,
+                                 Model model,
+                                 RedirectAttributes redirectAttributes) {
+        if (binding.hasErrors()) {
+            model.addAttribute("provider", providerService.findById(id));
+            model.addAttribute("licenses", licenseService.findByProviderId(id));
+            model.addAttribute("editing", true);
+            model.addAttribute("sexes", Sex.values());
+            return "provider/detail";
+        }
+        providerService.update(id, form::applyTo);
+        redirectAttributes.addFlashAttribute("message", "Provider updated.");
+        return "redirect:/providers/" + id;
     }
 
     @GetMapping("/new")
@@ -95,6 +122,36 @@ public class ProviderWebController {
         }
         licenseService.addLicense(id, form.toEntity());
         return "redirect:/providers/" + id;
+    }
+
+    @GetMapping("/{providerId}/licenses/{licenseId}/edit")
+    public String editLicense(@PathVariable Long providerId,
+                              @PathVariable Long licenseId,
+                              Model model) {
+        License license = licenseService.findByIdAndProviderId(licenseId, providerId);
+        model.addAttribute("provider", providerService.findById(providerId));
+        model.addAttribute("form", LicenseForm.from(license));
+        model.addAttribute("statuses", LicenseStatus.values());
+        model.addAttribute("licenseId", licenseId);
+        return "license/form";
+    }
+
+    @PostMapping("/{providerId}/licenses/{licenseId}/edit")
+    public String updateLicense(@PathVariable Long providerId,
+                                @PathVariable Long licenseId,
+                                @Valid @ModelAttribute("form") LicenseForm form,
+                                BindingResult binding,
+                                Model model,
+                                RedirectAttributes redirectAttributes) {
+        if (binding.hasErrors()) {
+            model.addAttribute("provider", providerService.findById(providerId));
+            model.addAttribute("statuses", LicenseStatus.values());
+            model.addAttribute("licenseId", licenseId);
+            return "license/form";
+        }
+        licenseService.update(licenseId, providerId, form::applyTo);
+        redirectAttributes.addFlashAttribute("message", "License updated.");
+        return "redirect:/providers/" + providerId;
     }
 
     @PostMapping("/{id}/delete")

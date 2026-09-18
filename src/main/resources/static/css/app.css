@@ -181,17 +181,11 @@ a {
     color: var(--slate-700);
 }
 
-.field__input,
-input.field__input,
-select.field__input,
-textarea.field__input {
-    box-sizing: border-box;
+.field__input {
     width: 100%;
-    height: 2.55rem;
-    padding: 0 0.7rem;
-    font-family: inherit;
+    padding: 0.6rem 0.7rem;
     font-size: 0.95rem;
-    line-height: 1.4;
+    font-family: inherit;
     color: var(--slate-900);
     background-color: #ffffff;
     border: 1px solid var(--slate-300);
@@ -203,28 +197,6 @@ textarea.field__input {
     outline: none;
     border-color: var(--teal-600);
     box-shadow: 0 0 0 3px rgba(26, 127, 129, 0.15);
-}
-
-select.field__input {
-    appearance: none;
-    -webkit-appearance: none;
-    padding-right: 2.1rem;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%236b7884' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 11px 8px;
-}
-
-input[type="date"].field__input::-webkit-calendar-picker-indicator {
-    margin-left: 0.35rem;
-    opacity: 0.55;
-    cursor: pointer;
-}
-
-textarea.field__input {
-    height: auto;
-    padding: 0.55rem 0.7rem;
-    resize: vertical;
 }
 
 .button {
@@ -739,3 +711,63 @@ textarea.field__input {
     margin-bottom: 0.2rem;
 }
 
+
+/* ---------- row actions ---------- */
+
+.row-actions {
+    display: flex;
+    gap: 0.35rem;
+    justify-content: flex-end;
+}
+
+/* ---------- unsaved-changes bar ---------- */
+
+.savebar {
+    position: sticky;
+    bottom: 1rem;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1.25rem;
+    padding: 0.85rem 1.25rem;
+    background-color: var(--teal-900);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    color: #ffffff;
+}
+
+.savebar[hidden] {
+    display: none;
+}
+
+.savebar__text {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.savebar__actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.savebar .button {
+    background-color: #ffffff;
+    border-color: #ffffff;
+    color: var(--teal-900);
+}
+
+.savebar .button:hover {
+    background-color: var(--teal-50);
+}
+
+.savebar .button--quiet {
+    background-color: transparent;
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #ffffff;
+}
+
+.savebar .button--quiet:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+}

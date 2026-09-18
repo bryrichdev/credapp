@@ -67,10 +67,14 @@
                        th:text="${provider.phoneNumber} ?: '—'"></a>
                 </td>
                 <td class="table__actions">
-                    <form th:action="@{/providers/{id}/delete(id=${provider.id})}" method="post"
-                          onsubmit="return confirm('Delete this provider and all of their licenses?');">
-                        <button class="button button--danger button--small" type="submit">Delete</button>
-                    </form>
+                    <div class="row-actions">
+                        <a class="button button--quiet button--small"
+                           th:href="@{/providers/{id}(id=${provider.id}, edit=1)}">Edit</a>
+                        <form th:action="@{/providers/{id}/delete(id=${provider.id})}" method="post"
+                              onsubmit="return confirm('Delete this provider and all of their licenses?');">
+                            <button class="button button--danger button--small" type="submit">Delete</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
             </tbody>
