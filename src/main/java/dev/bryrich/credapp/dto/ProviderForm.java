@@ -28,6 +28,12 @@ public class ProviderForm {
 
     private String phoneNumber;
 
+    /**
+     * Optional, and only read when creating. The group link lives in group_providers, so
+     * applyTo leaves it alone and the controller assigns it after the provider is saved.
+     */
+    private Long groupId;
+
     /** Empty form, for the create screen. */
     public ProviderForm() {
     }
@@ -120,5 +126,13 @@ public class ProviderForm {
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    public Long getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(Long groupId) {
+        this.groupId = groupId;
     }
 }

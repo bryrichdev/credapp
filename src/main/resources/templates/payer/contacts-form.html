@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Add contacts &middot; CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'payers')}"></div>
+
+<main class="page">
+
+    <a class="backlink" th:href="@{/payers/{id}(id=${payer.id})}">&larr; Back to payer</a>
+
+    <div class="page__header">
+        <h1>Add contacts</h1>
+        <p class="page__subtitle">
+            Fill in a contact's role, then add another. Leave both group and provider blank
+            for a contact that covers the whole payer.
+        </p>
+    </div>
+
+    <p class="context-line">
+        For
+        <strong th:text="${payer.name}"></strong>
+    </p>
+
+    <form method="post" th:action="@{/payers/{pid}/contacts(pid=${payer.id})}" th:object="${form}">
+
+        <div id="contactList">
+            <section class="card" data-contact th:each="contact, stat : *{contacts}">
+                <div class="card__header">
+                    <h2 data-contact-title th:text="'Contact ' + ${stat.count}">Contact 1</h2>
+                    <button class="button button--quiet button--small toolbar__end"
+                            type="button" data-remove>Remove</button>
+                </div>
+
+                <div class="alert alert--error"
+                     th:if="${#fields.hasErrors('contacts[__${stat.index}__].scopeExclusive')}"
+                     th:errors="*{contacts[__${stat.index}__].scopeExclusive}"></div>
+
+                <div class="form-grid">
+                    <label class="field field--wide">
+                        <span class="field__label">Role</span>
+                        <input class="field__input" type="text" data-required
+                               th:field="*{contacts[__${stat.index}__].role}"
+                               th:classappend="${#fields.hasErrors('contacts[__${stat.index}__].role')} ? 'field__input--invalid'"
+                               placeholder="e.g. Provider rep, Credentialing analyst">
+                        <span class="field__error"
+                              th:if="${#fields.hasErrors('contacts[__${stat.index}__].role')}"
+                              th:errors="*{contacts[__${stat.index}__].role}"></span>
+                    </label>
+
+                    <label class="field">
+                        <span class="field__label">Group</span>
+                        <select class="field__input" th:field="*{contacts[__${stat.index}__].groupId}">
+                            <option th:value="''">Not group-specific</option>
+                            <option th:each="option : ${groups}"
+                                    th:value="${option.id}"
+                                    th:text="${option.lbn}"></option>
+                        </select>
+                    </label>
+
+                    <label class="field">
+                        <span class="field__label">Provider</span>
+                        <select class="field__input" th:field="*{contacts[__${stat.index}__].providerId}">
+                            <option th:value="''">Not provider-specific</option>
+                            <option th:each="option : ${providers}"
+                                    th:value="${option.id}"
+                                    th:text="${option.lastName} + ', ' + ${option.firstName}"></option>
+                        </select>
+                    </label>
+
+                    <label class="field">
+                        <span class="field__label">Phone</span>
+                        <input class="field__input" type="tel"
+                               th:field="*{contacts[__${stat.index}__].phoneNumber}">
+                    </label>
+
+                    <label class="field">
+                        <span class="field__label">Fax</span>
+                        <input class="field__input" type="tel"
+                               th:field="*{contacts[__${stat.index}__].faxNumber}">
+                    </label>
+
+                    <label class="field">
+                        <span class="field__label">Email</span>
+                        <input class="field__input" type="email"
+                               th:field="*{contacts[__${stat.index}__].emailAddress}"
+                               th:classappend="${#fields.hasErrors('contacts[__${stat.index}__].emailAddress')} ? 'field__input--invalid'">
+                        <span class="field__error"
+                              th:if="${#fields.hasErrors('contacts[__${stat.index}__].emailAddress')}"
+                              th:errors="*{contacts[__${stat.index}__].emailAddress}"></span>
+                    </label>
+
+                    <label class="field field--wide">
+                        <span class="field__label">Address</span>
+                        <input class="field__input" type="text"
+                               th:field="*{contacts[__${stat.index}__].address}">
+                    </label>
+                </div>
+            </section>
+        </div>
+
+        <section class="card">
+            <div class="form-actions">
+                <button class="button" type="submit">Save contacts</button>
+                <button class="button button--quiet" type="button" id="addContact" disabled>
+                    Add another contact
+                </button>
+                <a class="button button--quiet" th:href="@{/payers/{id}(id=${payer.id})}">Cancel</a>
+            </div>
+            <p class="empty__hint" id="addHint">Fill in the role above before adding another contact.</p>
+        </section>
+    </form>
+
+    <!-- Blank block the button clones. Indexes are rewritten on insert. -->
+    <template id="contactTemplate">
+        <section class="card" data-contact>
+            <div class="card__header">
+                <h2 data-contact-title>Contact</h2>
+                <button class="button button--quiet button--small toolbar__end"
+                        type="button" data-remove>Remove</button>
+            </div>
+
+            <div class="form-grid">
+                <label class="field field--wide">
+                    <span class="field__label">Role</span>
+                    <input class="field__input" type="text" data-required
+                           name="contacts[0].role"
+                           placeholder="e.g. Provider rep, Credentialing analyst">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Group</span>
+                    <select class="field__input" name="contacts[0].groupId">
+                        <option value="">Not group-specific</option>
+                        <option th:each="option : ${groups}"
+                                th:value="${option.id}"
+                                th:text="${option.lbn}"></option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Provider</span>
+                    <select class="field__input" name="contacts[0].providerId">
+                        <option value="">Not provider-specific</option>
+                        <option th:each="option : ${providers}"
+                                th:value="${option.id}"
+                                th:text="${option.lastName} + ', ' + ${option.firstName}"></option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Phone</span>
+                    <input class="field__input" type="tel" name="contacts[0].phoneNumber">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Fax</span>
+                    <input class="field__input" type="tel" name="contacts[0].faxNumber">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Email</span>
+                    <input class="field__input" type="email" name="contacts[0].emailAddress">
+                </label>
+
+                <label class="field field--wide">
+                    <span class="field__label">Address</span>
+                    <input class="field__input" type="text" name="contacts[0].address">
+                </label>
+            </div>
+        </section>
+    </template>
+
+</main>
+
+<script>
+    (function () {
+        const list = document.getElementById('contactList');
+        const addButton = document.getElementById('addContact');
+        const hint = document.getElementById('addHint');
+        const template = document.getElementById('contactTemplate');
+        if (!list || !addButton || !template) {
+            return;
+        }
+
+        function blocks() {
+            return Array.from(list.querySelectorAll('[data-contact]'));
+        }
+
+        // Spring binds contacts[0], contacts[1], ... so the indexes have to stay
+        // contiguous after every add and remove.
+        function renumber() {
+            const all = blocks();
+            all.forEach((block, index) => {
+                block.querySelector('[data-contact-title]').textContent = 'Contact ' + (index + 1);
+                block.querySelectorAll('[name]').forEach(input => {
+                    input.name = input.name.replace(/contacts\[\d+\]/, 'contacts[' + index + ']');
+                });
+                const remove = block.querySelector('[data-remove]');
+                if (remove) {
+                    remove.hidden = all.length === 1;
+                }
+            });
+        }
+
+        function lastBlockComplete() {
+            const all = blocks();
+            if (all.length === 0) {
+                return false;
+            }
+            const last = all[all.length - 1];
+            return Array.from(last.querySelectorAll('[data-required]'))
+                .every(input => input.value.trim() !== '');
+        }
+
+        function refresh() {
+            const ready = lastBlockComplete();
+            addButton.disabled = !ready;
+            hint.hidden = ready;
+        }
+
+        addButton.addEventListener('click', function () {
+            if (!lastBlockComplete()) {
+                return;
+            }
+            list.appendChild(template.content.cloneNode(true));
+            renumber();
+            refresh();
+            const added = blocks().pop();
+            const first = added.querySelector('input, select');
+            if (first) {
+                first.focus();
+            }
+        });
+
+        list.addEventListener('click', function (event) {
+            const button = event.target.closest('[data-remove]');
+            if (!button || blocks().length === 1) {
+                return;
+            }
+            button.closest('[data-contact]').remove();
+            renumber();
+            refresh();
+        });
+
+        list.addEventListener('input', refresh);
+        list.addEventListener('change', refresh);
+
+        renumber();
+        refresh();
+    })();
+</script>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Add group &middot; CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'providers')}"></div>
+
+<main class="page">
+
+    <a class="backlink" th:href="@{/providers/{id}(id=${provider.id})}">&larr; Back to provider</a>
+
+    <div class="page__header">
+        <h1>Add group</h1>
+        <p class="page__subtitle">A provider can belong to more than one group.</p>
+    </div>
+
+    <section class="card">
+        <p class="context-line">
+            For
+            <strong th:text="${provider.firstName} + ' ' + ${provider.lastName}"></strong>
+        </p>
+
+        <form method="post" th:action="@{/providers/{id}/groups(id=${provider.id})}" th:object="${form}">
+
+            <div class="form-grid">
+                <label class="field field--wide">
+                    <span class="field__label">Group</span>
+                    <select class="field__input" th:field="*{groupId}"
+                            th:classappend="${#fields.hasErrors('groupId')} ? 'field__input--invalid'">
+                        <option th:value="''">Select a group</option>
+                        <option th:each="option : ${groups}"
+                                th:value="${option.id}"
+                                th:text="${option.lbn}"></option>
+                    </select>
+                    <span class="field__error" th:errors="*{groupId}"
+                          th:if="${#fields.hasErrors('groupId')}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Effective date</span>
+                    <input class="field__input" type="date" th:field="*{effectiveDate}">
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button class="button" type="submit">Save group</button>
+                <a class="button button--quiet" th:href="@{/providers/{id}(id=${provider.id})}">Cancel</a>
+            </div>
+        </form>
+    </section>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

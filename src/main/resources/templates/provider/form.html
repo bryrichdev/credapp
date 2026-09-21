@@ -16,7 +16,7 @@
 
     <div class="page__header">
         <h1>Add provider</h1>
-        <p class="page__subtitle">First and last name are required.</p>
+        <p class="page__subtitle">First and last name are required. A group can be added now or later.</p>
     </div>
 
     <section class="card">
@@ -74,6 +74,16 @@
                 <label class="field">
                     <span class="field__label">Phone</span>
                     <input class="field__input" type="tel" th:field="*{phoneNumber}">
+                </label>
+
+                <label class="field field--wide">
+                    <span class="field__label">Group</span>
+                    <select class="field__input" th:field="*{groupId}">
+                        <option th:value="''">No group yet</option>
+                        <option th:each="option : ${groups}"
+                                th:value="${option.id}"
+                                th:text="${option.lbn}"></option>
+                    </select>
                 </label>
             </div>
 

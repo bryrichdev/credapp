@@ -2,10 +2,13 @@ package dev.bryrich.credapp.webcontroller;
 
 import dev.bryrich.credapp.dto.LicenseForm;
 import dev.bryrich.credapp.dto.ProviderForm;
+import dev.bryrich.credapp.dto.ProviderGroupForm;
 import dev.bryrich.credapp.entity.License;
 import dev.bryrich.credapp.entity.enums.LicenseStatus;
 import dev.bryrich.credapp.entity.Provider;
 import dev.bryrich.credapp.entity.enums.Sex;
+import dev.bryrich.credapp.service.GroupProviderService;
+import dev.bryrich.credapp.service.GroupService;
 import dev.bryrich.credapp.service.LicenseService;
 import dev.bryrich.credapp.service.ProviderService;
 import jakarta.validation.Valid;
@@ -25,10 +28,17 @@ public class ProviderWebController {
 
     private final ProviderService providerService;
     private final LicenseService licenseService;
+    private final GroupProviderService groupProviderService;
+    private final GroupService groupService;
 
-    public ProviderWebController(ProviderService providerService, LicenseService licenseService) {
+    public ProviderWebController(ProviderService providerService,
+                                 LicenseService licenseService,
+                                 GroupProviderService groupProviderService,
+                                 GroupService groupService) {
         this.providerService = providerService;
         this.licenseService = licenseService;
+        this.groupProviderService = groupProviderService;
+        this.groupService = groupService;
     }
 
     /** Blank text inputs submit "" — store null instead. */
@@ -57,6 +67,7 @@ public class ProviderWebController {
         Provider provider = providerService.findById(id);
         model.addAttribute("provider", provider);
         model.addAttribute("licenses", licenseService.findByProviderId(id));
+        model.addAttribute("groups", groupProviderService.findGroups(id));
         model.addAttribute("editing", edit);
         if (edit) {
             model.addAttribute("form", ProviderForm.from(provider));
@@ -74,6 +85,7 @@ public class ProviderWebController {
         if (binding.hasErrors()) {
             model.addAttribute("provider", providerService.findById(id));
             model.addAttribute("licenses", licenseService.findByProviderId(id));
+            model.addAttribute("groups", groupProviderService.findGroups(id));
             model.addAttribute("editing", true);
             model.addAttribute("sexes", Sex.values());
             return "provider/detail";
@@ -87,6 +99,7 @@ public class ProviderWebController {
     public String newProvider(Model model) {
         model.addAttribute("form", new ProviderForm());
         model.addAttribute("sexes", Sex.values());
+        model.addAttribute("groups", groupService.findAllForSelect());
         return "provider/form";
     }
 
@@ -96,9 +109,13 @@ public class ProviderWebController {
                          Model model) {
         if (binding.hasErrors()) {
             model.addAttribute("sexes", Sex.values());
+            model.addAttribute("groups", groupService.findAllForSelect());
             return "provider/form";
         }
         Provider saved = providerService.create(form.toEntity());
+        if (form.getGroupId() != null) {
+            groupProviderService.assign(form.getGroupId(), saved.getId(), null);
+        }
         return "redirect:/providers/" + saved.getId();
     }
 
@@ -157,6 +174,41 @@ public class ProviderWebController {
         }
         licenseService.update(licenseId, providerId, form::applyTo);
         redirectAttributes.addFlashAttribute("message", "License updated.");
+        return "redirect:/providers/" + providerId;
+    }
+
+    // ============ groups this provider belongs to ============
+
+    @GetMapping("/{id}/groups/new")
+    public String newProviderGroup(@PathVariable Long id, Model model) {
+        model.addAttribute("provider", providerService.findById(id));
+        model.addAttribute("form", new ProviderGroupForm());
+        model.addAttribute("groups", groupService.findAllForSelect());
+        return "provider/group-form";
+    }
+
+    @PostMapping("/{id}/groups")
+    public String addProviderGroup(@PathVariable Long id,
+                                   @Valid @ModelAttribute("form") ProviderGroupForm form,
+                                   BindingResult binding,
+                                   Model model,
+                                   RedirectAttributes redirectAttributes) {
+        if (binding.hasErrors()) {
+            model.addAttribute("provider", providerService.findById(id));
+            model.addAttribute("groups", groupService.findAllForSelect());
+            return "provider/group-form";
+        }
+        groupProviderService.assign(form.getGroupId(), id, form.getEffectiveDate());
+        redirectAttributes.addFlashAttribute("message", "Group added.");
+        return "redirect:/providers/" + id;
+    }
+
+    @PostMapping("/{providerId}/groups/{groupId}/delete")
+    public String removeProviderGroup(@PathVariable Long providerId,
+                                      @PathVariable Long groupId,
+                                      RedirectAttributes redirectAttributes) {
+        groupProviderService.unassign(groupId, providerId);
+        redirectAttributes.addFlashAttribute("message", "Group removed.");
         return "redirect:/providers/" + providerId;
     }
 

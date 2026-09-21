@@ -701,6 +701,20 @@ a {
     font-size: 0.8rem;
 }
 
+.button:disabled,
+.button[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* A select sitting in a row of --small buttons, sized to match them. */
+.field__input--small {
+    width: auto;
+    padding: 0.3rem 0.65rem;
+    font-size: 0.8rem;
+    line-height: 1.2;
+}
+
 .table__actions {
     width: 1%;
     white-space: nowrap;
@@ -732,6 +746,11 @@ a {
     align-items: center;
     gap: 0.35rem;
     justify-content: flex-end;
+}
+
+/* Same row, packed to the left — for controls that live in a normal data column. */
+.row-actions--start {
+    justify-content: flex-start;
 }
 
 /* ---------- unsaved-changes bar ---------- */

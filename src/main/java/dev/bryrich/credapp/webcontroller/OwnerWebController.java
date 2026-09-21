@@ -1,9 +1,12 @@
 package dev.bryrich.credapp.webcontroller;
 
 import dev.bryrich.credapp.dto.OwnerForm;
+import dev.bryrich.credapp.dto.OwnerGroupForm;
 import dev.bryrich.credapp.entity.GroupOwner;
 import dev.bryrich.credapp.entity.Owner;
+import dev.bryrich.credapp.exception.OwnershipPercentExceededException;
 import dev.bryrich.credapp.service.GroupOwnershipService;
+import dev.bryrich.credapp.service.GroupService;
 import dev.bryrich.credapp.service.OwnerService;
 import jakarta.validation.Valid;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
@@ -28,11 +31,14 @@ public class OwnerWebController {
 
     private final OwnerService ownerService;
     private final GroupOwnershipService ownershipService;
+    private final GroupService groupService;
 
     public OwnerWebController(OwnerService ownerService,
-                              GroupOwnershipService ownershipService) {
+                              GroupOwnershipService ownershipService,
+                              GroupService groupService) {
         this.ownerService = ownerService;
         this.ownershipService = ownershipService;
+        this.groupService = groupService;
     }
 
     /** Blank text inputs submit "" — store null instead. */
@@ -86,17 +92,72 @@ public class OwnerWebController {
     @GetMapping("/new")
     public String newOwner(Model model) {
         model.addAttribute("form", new OwnerForm());
+        model.addAttribute("groups", groupService.findAllForSelect());
         return "owner/form";
     }
 
     @PostMapping
     public String create(@Valid @ModelAttribute("form") OwnerForm form,
-                         BindingResult binding) {
+                         BindingResult binding,
+                         Model model,
+                         RedirectAttributes redirectAttributes) {
         if (binding.hasErrors()) {
+            model.addAttribute("groups", groupService.findAllForSelect());
             return "owner/form";
         }
         Owner saved = ownerService.create(form.toEntity());
+        if (form.getGroupId() != null) {
+            try {
+                ownershipService.addOwner(form.getGroupId(), saved.getId(),
+                        form.getPercentOwned(), null);
+            } catch (OwnershipPercentExceededException ex) {
+                // The person is saved; only the stake was refused. Keep the record they
+                // just typed in and say why the group did not stick.
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        "Owner saved, but the group was not added: " + ex.getMessage());
+            }
+        }
         return "redirect:/owners/" + saved.getId();
+    }
+
+    // ============ groups this owner holds a stake in ============
+
+    @GetMapping("/{id}/groups/new")
+    public String newOwnerGroup(@PathVariable Long id, Model model) {
+        model.addAttribute("form", new OwnerGroupForm());
+        addGroupFormAttributes(id, model);
+        return "owner/group-form";
+    }
+
+    @PostMapping("/{id}/groups")
+    public String addOwnerGroup(@PathVariable Long id,
+                                @Valid @ModelAttribute("form") OwnerGroupForm form,
+                                BindingResult binding,
+                                Model model,
+                                RedirectAttributes redirectAttributes) {
+        if (binding.hasErrors()) {
+            addGroupFormAttributes(id, model);
+            return "owner/group-form";
+        }
+        try {
+            ownershipService.addOwner(form.getGroupId(), id, form.getPercentOwned(),
+                    form.getEffectiveDate());
+        } catch (OwnershipPercentExceededException ex) {
+            binding.rejectValue("percentOwned", "percent.exceeded", ex.getMessage());
+            addGroupFormAttributes(id, model);
+            return "owner/group-form";
+        }
+        redirectAttributes.addFlashAttribute("message", "Group added.");
+        return "redirect:/owners/" + id;
+    }
+
+    @PostMapping("/{ownerId}/groups/{groupId}/delete")
+    public String removeOwnerGroup(@PathVariable Long ownerId,
+                                   @PathVariable Long groupId,
+                                   RedirectAttributes redirectAttributes) {
+        ownershipService.removeOwner(groupId, ownerId);
+        redirectAttributes.addFlashAttribute("message", "Group removed.");
+        return "redirect:/owners/" + ownerId;
     }
 
     @PostMapping("/{id}/delete")
@@ -104,6 +165,11 @@ public class OwnerWebController {
         ownerService.delete(id);
         redirectAttributes.addFlashAttribute("message", "Owner deleted.");
         return "redirect:/owners";
+    }
+
+    private void addGroupFormAttributes(Long ownerId, Model model) {
+        model.addAttribute("owner", ownerService.findById(ownerId));
+        model.addAttribute("groups", groupService.findAllForSelect());
     }
 
     private void addDetailAttributes(Long id, Owner owner, Model model) {

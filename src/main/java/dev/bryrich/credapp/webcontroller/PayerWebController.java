@@ -1,5 +1,6 @@
 package dev.bryrich.credapp.webcontroller;
 
+import dev.bryrich.credapp.dto.PayerContactBatchForm;
 import dev.bryrich.credapp.dto.PayerContactForm;
 import dev.bryrich.credapp.dto.PayerForm;
 import dev.bryrich.credapp.entity.Payer;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.SmartValidator;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -27,15 +29,18 @@ public class PayerWebController {
     private final PayerContactService contactService;
     private final GroupService groupService;
     private final ProviderService providerService;
+    private final SmartValidator validator;
 
     public PayerWebController(PayerService payerService,
                               PayerContactService contactService,
                               GroupService groupService,
-                              ProviderService providerService) {
+                              ProviderService providerService,
+                              SmartValidator validator) {
         this.payerService = payerService;
         this.contactService = contactService;
         this.groupService = groupService;
         this.providerService = providerService;
+        this.validator = validator;
     }
 
     /** Blank text inputs submit "" — store null instead. */
@@ -114,30 +119,41 @@ public class PayerWebController {
     // ============ contacts ============
 
     @GetMapping("/{id}/contacts/new")
-    public String newContact(@PathVariable Long id, Model model) {
-        model.addAttribute("form", new PayerContactForm());
+    public String newContacts(@PathVariable Long id, Model model) {
+        model.addAttribute("form", new PayerContactBatchForm());
         addContactFormAttributes(id, model);
-        return "payer/contact-form";
+        return "payer/contacts-form";
     }
 
+    /**
+     * Saves every contact block the page submitted. Blank blocks are dropped before
+     * validation runs, so an added-then-abandoned block doesn't hold up the rest — which
+     * is why this binds without @Valid and calls the validator once the list is tidy.
+     */
     @PostMapping("/{id}/contacts")
-    public String createContact(@PathVariable Long id,
-                                @Valid @ModelAttribute("form") PayerContactForm form,
-                                BindingResult binding,
-                                Model model,
-                                RedirectAttributes redirectAttributes) {
+    public String createContacts(@PathVariable Long id,
+                                 @ModelAttribute("form") PayerContactBatchForm form,
+                                 BindingResult binding,
+                                 Model model,
+                                 RedirectAttributes redirectAttributes) {
+        form.pruneBlank();
+        validator.validate(form, binding);
         if (binding.hasErrors()) {
             addContactFormAttributes(id, model);
-            return "payer/contact-form";
+            return "payer/contacts-form";
         }
-        if (form.getGroupId() != null) {
-            contactService.addGroupContact(id, form.getGroupId(), form.getRole(), form::applyTo);
-        } else if (form.getProviderId() != null) {
-            contactService.addProviderContact(id, form.getProviderId(), form.getRole(), form::applyTo);
-        } else {
-            contactService.addContact(id, form.getRole(), form::applyTo);
+        for (PayerContactForm contact : form.getContacts()) {
+            if (contact.getGroupId() != null) {
+                contactService.addGroupContact(id, contact.getGroupId(), contact.getRole(), contact::applyTo);
+            } else if (contact.getProviderId() != null) {
+                contactService.addProviderContact(id, contact.getProviderId(), contact.getRole(), contact::applyTo);
+            } else {
+                contactService.addContact(id, contact.getRole(), contact::applyTo);
+            }
         }
-        redirectAttributes.addFlashAttribute("message", "Contact added.");
+        int saved = form.getContacts().size();
+        redirectAttributes.addFlashAttribute("message",
+                saved == 1 ? "Contact added." : saved + " contacts added.");
         return "redirect:/payers/" + id;
     }
 

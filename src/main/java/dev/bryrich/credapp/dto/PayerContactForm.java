@@ -41,6 +41,17 @@ public class PayerContactForm {
         return form;
     }
 
+    /** True when nothing was typed into this block, so it can be dropped before validating. */
+    public boolean isBlank() {
+        return blankToNull(role) == null
+                && groupId == null
+                && providerId == null
+                && blankToNull(phoneNumber) == null
+                && blankToNull(faxNumber) == null
+                && blankToNull(emailAddress) == null
+                && blankToNull(address) == null;
+    }
+
     @AssertTrue(message = "A contact can be tied to a group or a provider, not both")
     public boolean isScopeExclusive() {
         return groupId == null || providerId == null;

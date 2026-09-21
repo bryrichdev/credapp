@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
-    <title th:text="${contactId} != null ? 'Edit contact · CredApp' : 'Add contact · CredApp'">Add contact</title>
+    <title>Edit contact &middot; CredApp</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
@@ -15,7 +15,7 @@
     <a class="backlink" th:href="@{/payers/{id}(id=${payer.id})}">&larr; Back to payer</a>
 
     <div class="page__header">
-        <h1 th:text="${contactId} != null ? 'Edit contact' : 'Add contact'">Add contact</h1>
+        <h1>Edit contact</h1>
         <p class="page__subtitle">
             Leave both group and provider blank for a contact that covers the whole payer.
         </p>
@@ -27,9 +27,8 @@
             <strong th:text="${payer.name}"></strong>
         </p>
 
-        <form method="post" th:action="${contactId != null}
-                ? @{/payers/{pid}/contacts/{cid}/edit(pid=${payer.id}, cid=${contactId})}
-                : @{/payers/{pid}/contacts(pid=${payer.id})}"
+        <form method="post"
+              th:action="@{/payers/{pid}/contacts/{cid}/edit(pid=${payer.id}, cid=${contactId})}"
               th:object="${form}">
 
             <div class="alert alert--error" th:if="${#fields.hasErrors('scopeExclusive')}"
@@ -89,8 +88,7 @@
             </div>
 
             <div class="form-actions">
-                <button class="button" type="submit"
-                        th:text="${contactId} != null ? 'Save changes' : 'Save contact'">Save contact</button>
+                <button class="button" type="submit">Save changes</button>
                 <a class="button button--quiet" th:href="@{/payers/{id}(id=${payer.id})}">Cancel</a>
             </div>
         </form>

@@ -16,7 +16,7 @@
 
     <div class="page__header">
         <h1>Add owner</h1>
-        <p class="page__subtitle">First and last name are required. Attach them to a group afterwards.</p>
+        <p class="page__subtitle">First and last name are required. A group can be added now or later.</p>
     </div>
 
     <section class="card">
@@ -56,6 +56,26 @@
                 <label class="field field--wide">
                     <span class="field__label">Home address</span>
                     <input class="field__input" type="text" th:field="*{homeAddress}">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Group</span>
+                    <select class="field__input" th:field="*{groupId}">
+                        <option th:value="''">No group yet</option>
+                        <option th:each="option : ${groups}"
+                                th:value="${option.id}"
+                                th:text="${option.lbn}"></option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Percent owned</span>
+                    <input class="field__input" type="number" step="0.01" min="0.01" max="100"
+                           th:field="*{percentOwned}"
+                           th:classappend="${#fields.hasErrors('percentOwned')} ? 'field__input--invalid'"
+                           placeholder="Only if a group is picked">
+                    <span class="field__error" th:errors="*{percentOwned}"
+                          th:if="${#fields.hasErrors('percentOwned')}"></span>
                 </label>
             </div>
 

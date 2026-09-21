@@ -71,9 +71,9 @@
                 </td>
                 <td>
                     <!-- Promote or demote in place. Only the roles this account may hand out are listed. -->
-                    <form class="row-actions" th:if="${manageable}"
+                    <form class="row-actions row-actions--start" th:if="${manageable}"
                           th:action="@{/admin/users/{id}/role(id=${account.id})}" method="post">
-                        <select class="field__input" name="role" onchange="this.form.submit()">
+                        <select class="field__input field__input--small" name="role" onchange="this.form.submit()">
                             <option th:each="option : ${user.role.assignableRoles()}"
                                     th:value="${option}"
                                     th:text="${option.label}"

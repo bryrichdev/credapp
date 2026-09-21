@@ -183,6 +183,51 @@
         </div>
     </section>
 
+    <!-- ============ groups ============ -->
+    <section class="card card--flush">
+        <div class="card__header">
+            <h2>Groups</h2>
+            <span class="count-pill" th:text="${groups.size()}">0</span>
+            <a class="button toolbar__end"
+               th:href="@{/providers/{id}/groups/new(id=${provider.id})}">Add group</a>
+        </div>
+
+        <table class="table" th:unless="${groups.isEmpty()}">
+            <thead>
+            <tr>
+                <th>Group</th>
+                <th>Group NPI</th>
+                <th>Effective</th>
+                <th class="table__actions"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="link : ${groups}">
+                <td>
+                    <a class="rowlink rowlink--strong" th:href="@{/groups/{id}(id=${link.group.id})}"
+                       th:text="${link.group.lbn}"></a>
+                </td>
+                <td th:text="${link.group.npi} ?: '—'"></td>
+                <td th:text="${link.effectiveDate} ?: '—'"></td>
+                <td class="table__actions">
+                    <div class="row-actions">
+                        <form th:action="@{/providers/{pid}/groups/{gid}/delete(pid=${provider.id}, gid=${link.group.id})}"
+                              method="post"
+                              onsubmit="return confirm('Remove this provider from the group?');">
+                            <button class="button button--danger button--small" type="submit">Remove</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="empty" th:if="${groups.isEmpty()}">
+            <p class="empty__title">Not in any group</p>
+            <p class="empty__hint">A provider can be assigned to more than one group.</p>
+        </div>
+    </section>
+
     <section class="card danger-zone" th:unless="${editing}">
         <div>
             <h2>Delete provider</h2>

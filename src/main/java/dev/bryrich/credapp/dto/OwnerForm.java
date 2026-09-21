@@ -1,10 +1,14 @@
 package dev.bryrich.credapp.dto;
 
 import dev.bryrich.credapp.entity.Owner;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -27,6 +31,17 @@ public class OwnerForm {
     private String ssn;
 
     private String homeAddress;
+
+    /**
+     * Optional, and only read when creating. The stake lives in group_owners, so applyTo
+     * leaves both alone and the controller records them after the owner is saved.
+     */
+    private Long groupId;
+
+    @DecimalMin(value = "0.01", message = "Percent owned must be greater than 0")
+    @DecimalMax(value = "100.00", message = "Percent owned cannot exceed 100")
+    @Digits(integer = 3, fraction = 2, message = "Percent owned allows at most two decimal places")
+    private BigDecimal percentOwned;
 
     /** Empty form, for the create screen. */
     public OwnerForm() {
@@ -101,5 +116,21 @@ public class OwnerForm {
 
     public void setHomeAddress(String homeAddress) {
         this.homeAddress = homeAddress;
+    }
+
+    public Long getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(Long groupId) {
+        this.groupId = groupId;
+    }
+
+    public BigDecimal getPercentOwned() {
+        return percentOwned;
+    }
+
+    public void setPercentOwned(BigDecimal percentOwned) {
+        this.percentOwned = percentOwned;
     }
 }
