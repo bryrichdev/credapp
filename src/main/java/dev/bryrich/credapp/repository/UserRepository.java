@@ -1,6 +1,6 @@
 package dev.bryrich.credapp.repository;
 
-import dev.bryrich.credapp.entity.Role;
+import dev.bryrich.credapp.entity.enums.Role;
 import dev.bryrich.credapp.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 

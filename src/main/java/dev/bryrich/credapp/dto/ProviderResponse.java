@@ -1,7 +1,7 @@
 package dev.bryrich.credapp.dto;
 
 import dev.bryrich.credapp.entity.Provider;
-import dev.bryrich.credapp.entity.Sex;
+import dev.bryrich.credapp.entity.enums.Sex;
 
 import java.time.Instant;
 import java.time.LocalDate;

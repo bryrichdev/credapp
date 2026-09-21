@@ -1,7 +1,7 @@
 package dev.bryrich.credapp.service;
 
 import dev.bryrich.credapp.entity.License;
-import dev.bryrich.credapp.entity.LicenseStatus;
+import dev.bryrich.credapp.entity.enums.LicenseStatus;
 import dev.bryrich.credapp.entity.Provider;
 import dev.bryrich.credapp.exception.LicenseNotFoundException;
 import dev.bryrich.credapp.repository.LicenseRepository;

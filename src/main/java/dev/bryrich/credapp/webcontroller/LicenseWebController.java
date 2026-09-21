@@ -2,7 +2,7 @@ package dev.bryrich.credapp.webcontroller;
 
 
 import dev.bryrich.credapp.dto.LicenseForm;
-import dev.bryrich.credapp.entity.LicenseStatus;
+import dev.bryrich.credapp.entity.enums.LicenseStatus;
 import dev.bryrich.credapp.service.LicenseService;
 
 import dev.bryrich.credapp.service.ProviderService;

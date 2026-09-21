@@ -2,7 +2,7 @@ package dev.bryrich.credapp.repository;
 
 import dev.bryrich.credapp.entity.License;
 
-import dev.bryrich.credapp.entity.LicenseStatus;
+import dev.bryrich.credapp.entity.enums.LicenseStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

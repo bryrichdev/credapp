@@ -1,5 +1,6 @@
 package dev.bryrich.credapp.entity;
 
+import dev.bryrich.credapp.entity.enums.Sex;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 

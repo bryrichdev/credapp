@@ -1,6 +1,6 @@
 package dev.bryrich.credapp.service;
 
-import dev.bryrich.credapp.entity.Role;
+import dev.bryrich.credapp.entity.enums.Role;
 import dev.bryrich.credapp.entity.User;
 import dev.bryrich.credapp.exception.EmailAlreadyExistsException;
 import dev.bryrich.credapp.exception.UserNotFoundException;

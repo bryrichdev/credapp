@@ -1,4 +1,4 @@
-package dev.bryrich.credapp.entity;
+package dev.bryrich.credapp.entity.enums;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 

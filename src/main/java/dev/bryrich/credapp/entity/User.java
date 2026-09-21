@@ -1,6 +1,7 @@
 package dev.bryrich.credapp.entity;
 
 
+import dev.bryrich.credapp.entity.enums.Role;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;

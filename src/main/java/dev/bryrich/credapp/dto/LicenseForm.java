@@ -1,7 +1,7 @@
 package dev.bryrich.credapp.dto;
 
 import dev.bryrich.credapp.entity.License;
-import dev.bryrich.credapp.entity.LicenseStatus;
+import dev.bryrich.credapp.entity.enums.LicenseStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;

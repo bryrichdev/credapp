@@ -2,9 +2,9 @@ package dev.bryrich.credapp.repository;
 
 import dev.bryrich.credapp.TestcontainersConfiguration;
 import dev.bryrich.credapp.entity.License;
-import dev.bryrich.credapp.entity.LicenseStatus;
+import dev.bryrich.credapp.entity.enums.LicenseStatus;
 import dev.bryrich.credapp.entity.Provider;
-import dev.bryrich.credapp.entity.Sex;
+import dev.bryrich.credapp.entity.enums.Sex;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;

@@ -1,7 +1,7 @@
 package dev.bryrich.credapp.dto;
 
 import dev.bryrich.credapp.entity.Provider;
-import dev.bryrich.credapp.entity.Sex;
+import dev.bryrich.credapp.entity.enums.Sex;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.format.annotation.DateTimeFormat;
