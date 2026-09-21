@@ -1,6 +1,5 @@
-package dev.bryrich.credapp.entity;
+package dev.bryrich.credapp.entity.enums;
 
-import dev.bryrich.credapp.entity.enums.Role;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 

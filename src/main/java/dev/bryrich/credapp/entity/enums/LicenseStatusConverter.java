@@ -1,6 +1,5 @@
-package dev.bryrich.credapp.entity;
+package dev.bryrich.credapp.entity.enums;
 
-import dev.bryrich.credapp.entity.enums.LicenseStatus;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 

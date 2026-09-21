@@ -4,7 +4,7 @@ CREATE TABLE groups
     lbn        TEXT        NOT NULL,
     dba        TEXT,
     npi        TEXT UNIQUE CHECK (npi ~ '^[0-9]{10}$'),
-    tax_id     TEXT        NOT NULL,
+    tax_id     TEXT        NOT NULL CHECK (tax_id ~ '^[0-9]{9}$'),
     specialty  TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -13,7 +13,7 @@ CREATE TABLE groups
 CREATE TABLE group_locations
 (
     id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    group_id        BIGINT NOT NULL REFERENCES groups (id) ON DELETE CASCADE,
+    group_id        BIGINT      NOT NULL REFERENCES groups (id) ON DELETE CASCADE,
     location_name   TEXT        NOT NULL,
     address         TEXT        NOT NULL,
     fax_number      TEXT,
@@ -28,11 +28,11 @@ CREATE INDEX idx_group_locations_group_id ON group_locations (group_id);
 
 CREATE TABLE group_providers
 (
-    group_id BIGINT NOT NULL REFERENCES groups (id) ON DELETE CASCADE,
-    provider_id BIGINT NOT NULL REFERENCES providers (id) ON DELETE CASCADE,
+    group_id       BIGINT      NOT NULL REFERENCES groups (id) ON DELETE CASCADE,
+    provider_id    BIGINT      NOT NULL REFERENCES providers (id) ON DELETE CASCADE,
     effective_date DATE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (group_id, provider_id)
 );
 
@@ -52,12 +52,12 @@ COMMENT ON COLUMN owners.ssn IS 'AES-256-GCM ciphertext, base64, IV-prefixed; se
 
 CREATE TABLE group_owners
 (
-    group_id      BIGINT       NOT NULL REFERENCES groups (id) ON DELETE CASCADE,
-    owner_id      BIGINT       NOT NULL REFERENCES owners (id) ON DELETE CASCADE,
-    percent_owned NUMERIC(5,2) CHECK (percent_owned > 0 AND percent_owned <= 100),
+    group_id       BIGINT      NOT NULL REFERENCES groups (id) ON DELETE CASCADE,
+    owner_id       BIGINT      NOT NULL REFERENCES owners (id) ON DELETE CASCADE,
+    percent_owned  NUMERIC(5, 2) CHECK (percent_owned > 0 AND percent_owned <= 100),
     effective_date DATE,
-    created_at    TIMESTAMPTZ  NOT NULL DEFAULT now(),
-    updated_at    TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (group_id, owner_id)
 );
 
@@ -65,10 +65,10 @@ CREATE INDEX idx_group_owners_owner_id ON group_owners (owner_id);
 
 CREATE TABLE group_owner_relationships
 (
-    group_id         BIGINT NOT NULL,
-    owner_id         BIGINT NOT NULL,
-    related_owner_id BIGINT NOT NULL,
-    relationship     TEXT   NOT NULL
+    group_id         BIGINT      NOT NULL,
+    owner_id         BIGINT      NOT NULL,
+    related_owner_id BIGINT      NOT NULL,
+    relationship     TEXT        NOT NULL
         CHECK (relationship in ('spouse', 'parent', 'child', 'sibling')),
     created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (group_id, owner_id, related_owner_id),
@@ -108,7 +108,8 @@ CREATE TABLE payer_contacts
         CHECK (group_id IS NULL OR provider_id IS NULL)
 );
 
-ALTER TABLE providers DROP CONSTRAINT providers_ssn_check;
+ALTER TABLE providers
+    DROP CONSTRAINT providers_ssn_check;
 
 COMMENT ON COLUMN providers.ssn IS 'AES-256-GCM ciphertext, base64, IV-prefixed; see SsnConverter';
 
