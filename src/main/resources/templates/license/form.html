@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
     <title th:text="${licenseId} != null ? 'Edit license · CredApp' : 'Add license · CredApp'">Add license</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
@@ -12,82 +12,104 @@
 
 <main class="page">
 
-    <a class="backlink" th:href="@{/providers/{id}(id=${provider.id})}">&larr; Back to provider</a>
+    <a class="backlink" th:href="@{/providers/{id}(id=${provider.id})}" th:if="${provider != null}">&larr; Back to
+        provider</a>
 
     <div class="page__header">
         <h1 th:text="${licenseId} != null ? 'Edit license' : 'Add license'">Add license</h1>
     </div>
 
     <section class="card">
-        <p class="context-line">
+        <p class="context-line" th:if="${provider != null}">
             For
             <strong th:text="${provider.firstName} + ' ' + ${provider.lastName}"></strong>
         </p>
 
-        <form th:object="${form}" method="post"
-              th:action="${licenseId} != null
-                  ? @{/providers/{pid}/licenses/{lid}/edit(pid=${provider.id}, lid=${licenseId})}
-                  : @{/providers/{pid}/licenses(pid=${provider.id})}">
+        <form method="post" th:action="${licenseId != null}
+                ? @{/providers/{pid}/licenses/{lid}/edit(pid=${provider.id}, lid=${licenseId})}
+                : (${provider != null}
+                ? @{/providers/{pid}/licenses(pid=${provider.id})}
+                : @{/licenses})"
+              th:object="${form}">
+
+            <input th:field="*{providerId}" th:if="${provider != null}" type="hidden">
 
             <div class="form-grid">
+                <label class="field field--wide" th:if="${provider == null}">
+                    <span class="field__label">Provider</span>
+                    <select class="field__input"
+                            th:classappend="${#fields.hasErrors('providerId')} ? 'field__input--invalid'"
+                            th:field="*{providerId}">
+                        <option th:value="''">Select a provider</option>
+                        <option th:each="option : ${providers}"
+                                th:text="${option.lastName} + ', ' + ${option.firstName}"
+                                th:value="${option.id}"></option>
+                    </select>
+                    <span class="field__error" th:errors="*{providerId}"
+                          th:if="${#fields.hasErrors('providerId')}"></span>
+                </label>
+
                 <label class="field">
                     <span class="field__label">State</span>
-                    <input class="field__input" type="text" maxlength="2" th:field="*{state}"
-                           th:classappend="${#fields.hasErrors('state')} ? 'field__input--invalid'"
-                           placeholder="UT">
-                    <span class="field__error" th:if="${#fields.hasErrors('state')}" th:errors="*{state}"></span>
+                    <input class="field__input" maxlength="2" placeholder="UT" th:classappend="${#fields.hasErrors('state')} ? 'field__input--invalid'"
+                           th:field="*{state}"
+                           type="text">
+                    <span class="field__error" th:errors="*{state}" th:if="${#fields.hasErrors('state')}"></span>
                 </label>
 
                 <label class="field">
                     <span class="field__label">License number</span>
-                    <input class="field__input" type="text" th:field="*{licenseNumber}"
-                           th:classappend="${#fields.hasErrors('licenseNumber')} ? 'field__input--invalid'">
-                    <span class="field__error" th:if="${#fields.hasErrors('licenseNumber')}"
-                          th:errors="*{licenseNumber}"></span>
+                    <input class="field__input" th:classappend="${#fields.hasErrors('licenseNumber')} ? 'field__input--invalid'" th:field="*{licenseNumber}"
+                           type="text">
+                    <span class="field__error" th:errors="*{licenseNumber}"
+                          th:if="${#fields.hasErrors('licenseNumber')}"></span>
                 </label>
 
                 <label class="field">
                     <span class="field__label">License type</span>
-                    <input class="field__input" type="text" th:field="*{licenseType}"
-                           th:classappend="${#fields.hasErrors('licenseType')} ? 'field__input--invalid'"
-                           placeholder="MD">
-                    <span class="field__error" th:if="${#fields.hasErrors('licenseType')}"
-                          th:errors="*{licenseType}"></span>
+                    <input class="field__input" placeholder="MD" th:classappend="${#fields.hasErrors('licenseType')} ? 'field__input--invalid'"
+                           th:field="*{licenseType}"
+                           type="text">
+                    <span class="field__error" th:errors="*{licenseType}"
+                          th:if="${#fields.hasErrors('licenseType')}"></span>
                 </label>
 
                 <label class="field">
                     <span class="field__label">Status</span>
                     <select class="field__input" th:field="*{status}">
                         <option th:each="option : ${statuses}"
-                                th:value="${option}"
-                                th:text="${option.value}"></option>
+                                th:text="${option.value}"
+                                th:value="${option}"></option>
                     </select>
-                    <span class="field__error" th:if="${#fields.hasErrors('status')}" th:errors="*{status}"></span>
+                    <span class="field__error" th:errors="*{status}" th:if="${#fields.hasErrors('status')}"></span>
                 </label>
 
                 <label class="field">
                     <span class="field__label">Issue date</span>
-                    <input class="field__input" type="date" th:field="*{issueDate}">
+                    <input class="field__input" th:field="*{issueDate}" type="date">
                 </label>
 
                 <label class="field">
                     <span class="field__label">Expiration date</span>
-                    <input class="field__input" type="date" th:field="*{expirationDate}"
-                           th:classappend="${#fields.hasErrors('expirationDate')} ? 'field__input--invalid'">
-                    <span class="field__error" th:if="${#fields.hasErrors('expirationDate')}"
-                          th:errors="*{expirationDate}"></span>
+                    <input class="field__input" th:classappend="${#fields.hasErrors('expirationDate')} ? 'field__input--invalid'" th:field="*{expirationDate}"
+                           type="date">
+                    <span class="field__error" th:errors="*{expirationDate}"
+                          th:if="${#fields.hasErrors('expirationDate')}"></span>
                 </label>
 
                 <label class="field field--wide">
                     <span class="field__label">Restrictions</span>
-                    <input class="field__input" type="text" th:field="*{restrictions}"
-                           placeholder="Leave blank if none">
+                    <input class="field__input" placeholder="Leave blank if none" th:field="*{restrictions}"
+                           type="text">
                 </label>
             </div>
 
             <div class="form-actions">
-                <button class="button" type="submit" th:text="${licenseId} != null ? 'Save changes' : 'Save license'">Save license</button>
-                <a class="button button--quiet" th:href="@{/providers/{id}(id=${provider.id})}">Cancel</a>
+                <button class="button" th:text="${licenseId} != null ? 'Save changes' : 'Save license'" type="submit">
+                    Save license
+                </button>
+                <a class="button button--quiet"
+                   th:href="${provider != null} ? @{/providers/{id}(id=${provider.id})} : @{/licenses}">Cancel</a>
             </div>
         </form>
     </section>

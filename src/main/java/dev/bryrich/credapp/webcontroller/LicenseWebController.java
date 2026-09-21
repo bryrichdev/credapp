@@ -1,30 +1,42 @@
 package dev.bryrich.credapp.webcontroller;
 
 
-import dev.bryrich.credapp.entity.License;
+import dev.bryrich.credapp.dto.LicenseForm;
+import dev.bryrich.credapp.entity.LicenseStatus;
 import dev.bryrich.credapp.service.LicenseService;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import org.springframework.data.domain.Page;
+import dev.bryrich.credapp.service.ProviderService;
+import jakarta.validation.Valid;
+import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.ui.Model;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import java.time.LocalDate;
-import java.util.List;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/licenses")
 public class LicenseWebController {
     private final LicenseService licenseService;
+    private final ProviderService providerService;
 
-    public LicenseWebController(LicenseService licenseService) {
+    public LicenseWebController(LicenseService licenseService, ProviderService providerService) {
         this.licenseService = licenseService;
+        this.providerService = providerService;
+    }
+
+    /** Blank text inputs submit "" — store null instead. */
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
     }
 
     @GetMapping
@@ -37,12 +49,29 @@ public class LicenseWebController {
         return "license/list";
     }
 
-    @GetMapping("/expiring")
-    public String expiring(@RequestParam(defaultValue = "30") @Min(1) @Max(365) int days, Model model) {
-        List<License> licenses = licenseService.findExpiringSoon(days);
-        model.addAttribute("licenses", licenses);
-        model.addAttribute("days", days);
-        model.addAttribute("today", LocalDate.now());
-        return "license/expiring";
+    @GetMapping("/new")
+    public String newLicense(Model model) {
+        model.addAttribute("form", new LicenseForm());
+        addFormOptions(model);
+        return "license/form";
+    }
+
+    @PostMapping
+    public String create(@Valid @ModelAttribute("form") LicenseForm form,
+                         BindingResult binding,
+                         Model model,
+                         RedirectAttributes redirectAttributes) {
+        if (binding.hasErrors()) {
+            addFormOptions(model);
+            return "license/form";
+        }
+        licenseService.addLicense(form.getProviderId(), form.toEntity());
+        redirectAttributes.addFlashAttribute("message", "License added.");
+        return "redirect:/providers/" + form.getProviderId();
+    }
+
+    private void addFormOptions(Model model) {
+        model.addAttribute("statuses", LicenseStatus.values());
+        model.addAttribute("providers", providerService.findAllForSelect());
     }
 }

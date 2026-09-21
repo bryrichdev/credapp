@@ -32,6 +32,9 @@ public class LicenseForm {
     @NotNull(message = "Status is required")
     private LicenseStatus status = LicenseStatus.ACTIVE;
 
+    @NotNull(message = "Provider is required")
+    private Long providerId;
+
     private String restrictions;
 
     /** Empty form, for the create screen. */
@@ -137,4 +140,7 @@ public class LicenseForm {
     public void setRestrictions(String restrictions) {
         this.restrictions = restrictions;
     }
+
+    public Long getProviderId() { return providerId; }
+    public void setProviderId(Long providerId) { this.providerId = providerId; }
 }

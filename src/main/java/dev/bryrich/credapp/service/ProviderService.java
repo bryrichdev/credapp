@@ -4,10 +4,13 @@ import dev.bryrich.credapp.entity.Provider;
 import dev.bryrich.credapp.repository.ProviderRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import dev.bryrich.credapp.exception.ProviderNotFoundException;
+
+import java.util.List;
 
 
 @Service
@@ -37,6 +40,9 @@ public class ProviderService {
     public Page<Provider> findAll(Pageable pageable) {
         return providerRepository.findAll(pageable);
     }
+
+    @Transactional(readOnly = true)
+    public List<Provider> findAllForSelect() { return providerRepository.findAll(Sort.by("lastName", "firstName")); }
 
     @Transactional
     public Provider create(Provider provider) {

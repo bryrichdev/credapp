@@ -104,8 +104,10 @@ public class ProviderWebController {
 
     @GetMapping("/{id}/licenses/new")
     public String newLicense(@PathVariable Long id, Model model) {
+        LicenseForm form = new LicenseForm();
+        form.setProviderId(id);
         model.addAttribute("provider", providerService.findById(id));
-        model.addAttribute("form", new LicenseForm());
+        model.addAttribute("form", form);
         model.addAttribute("statuses", LicenseStatus.values());
         return "license/form";
     }
@@ -114,13 +116,15 @@ public class ProviderWebController {
     public String createLicense(@PathVariable Long id,
                                 @Valid @ModelAttribute("form") LicenseForm form,
                                 BindingResult binding,
-                                Model model) {
+                                Model model,
+                                RedirectAttributes redirectAttributes) {
         if (binding.hasErrors()) {
             model.addAttribute("provider", providerService.findById(id));
             model.addAttribute("statuses", LicenseStatus.values());
             return "license/form";
         }
         licenseService.addLicense(id, form.toEntity());
+        redirectAttributes.addFlashAttribute("message", "License added.");
         return "redirect:/providers/" + id;
     }
 
@@ -129,8 +133,10 @@ public class ProviderWebController {
                               @PathVariable Long licenseId,
                               Model model) {
         License license = licenseService.findByIdAndProviderId(licenseId, providerId);
+        LicenseForm form = LicenseForm.from(license);
+        form.setProviderId(providerId);
         model.addAttribute("provider", providerService.findById(providerId));
-        model.addAttribute("form", LicenseForm.from(license));
+        model.addAttribute("form", form);
         model.addAttribute("statuses", LicenseStatus.values());
         model.addAttribute("licenseId", licenseId);
         return "license/form";

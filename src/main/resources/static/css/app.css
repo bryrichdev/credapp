@@ -50,6 +50,7 @@ h2 { font-size: 1.15rem; }
 
 a {
     color: var(--teal-700);
+    text-decoration: none;
 }
 
 /* ---------- top bar ---------- */
@@ -208,6 +209,9 @@ a {
     font-size: 0.95rem;
     font-family: inherit;
     font-weight: 600;
+    /* <button> gets line-height: normal from the UA sheet, <a> inherits the
+       body's 1.55 — pin it so both render the same height. */
+    line-height: 1.2;
     color: #ffffff;
     background-color: var(--teal-700);
     border: 1px solid var(--teal-700);
@@ -716,6 +720,7 @@ a {
 
 .row-actions {
     display: flex;
+    align-items: center;
     gap: 0.35rem;
     justify-content: flex-end;
 }
