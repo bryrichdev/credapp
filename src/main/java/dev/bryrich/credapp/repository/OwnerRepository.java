@@ -17,6 +17,8 @@ public interface OwnerRepository extends JpaRepository<Owner, Long> {
 
     Page<Owner> findByLastNameContainingIgnoreCase(String lastName, Pageable pageable);
 
+    List<Owner> findByLastNameIgnoreCase(String lastName);
+
     List<Owner> findByLastNameIgnoreCaseAndFirstNameIgnoreCase(String lastName, String firstName);
 
     /** Name plus date of birth is the practical way to spot an owner already on file. */

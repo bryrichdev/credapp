@@ -21,11 +21,22 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler({ProviderNotFoundException.class, LicenseNotFoundException.class, UserNotFoundException.class})
+    @ExceptionHandler({ProviderNotFoundException.class, LicenseNotFoundException.class,
+            UserNotFoundException.class, GroupNotFoundException.class,
+            GroupLocationNotFoundException.class, OwnerNotFoundException.class,
+            PayerNotFoundException.class, PayerContactNotFoundException.class})
     public ProblemDetail handleNotFound(RuntimeException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.NOT_FOUND, ex.getMessage());
         problem.setTitle("Resource not found");
+        return problem;
+    }
+
+    @ExceptionHandler(OwnershipPercentExceededException.class)
+    public ProblemDetail handleOwnershipPercentExceeded(OwnershipPercentExceededException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Ownership over 100%");
         return problem;
     }
 
