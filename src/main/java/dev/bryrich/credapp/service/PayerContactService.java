@@ -44,7 +44,7 @@ public class PayerContactService {
     @Transactional(readOnly = true)
     public List<PayerContact> findByPayerId(Long payerId) {
         requirePayer(payerId);
-        return contactRepository.findByPayerId(payerId);
+        return contactRepository.findByPayerIdWithScope(payerId);
     }
 
     /** Contacts tied to neither a group nor a provider. */

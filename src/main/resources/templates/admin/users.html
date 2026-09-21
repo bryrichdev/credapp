@@ -1,1 +1,144 @@
-hello users
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Users &middot; CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'users')}"></div>
+
+<main class="page">
+
+    <div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
+    <div class="alert alert--error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+    <div class="page__header page__header--row">
+        <div>
+        <h1>Users</h1>
+        <p class="page__subtitle">
+            <span th:if="${q == null or q.isBlank()}"
+                  th:text="${page.totalElements} + ' account(s)'">0 accounts</span>
+            <span th:unless="${q == null or q.isBlank()}"
+                  th:text="${page.totalElements} + ' result(s) for &quot;' + ${q} + '&quot;'">0 results</span>
+        </p>
+        </div>
+        <a class="button" th:href="@{/admin/users/new}">Add user</a>
+    </div>
+
+    <p class="context-line">
+        Signed in as
+        <strong th:text="${user.email}"></strong>
+        &middot;
+        <span class="badge badge--active" th:text="${user.role.label}">Admin</span>
+        <span th:if="${isSuperuser}"> &middot; you can manage every account, including admins.</span>
+        <span th:unless="${isSuperuser}"> &middot; you can manage coordinator and read-only accounts.</span>
+    </p>
+
+    <form class="toolbar" th:action="@{/admin/users}" method="get">
+        <input class="field__input toolbar__input"
+               type="search"
+               name="q"
+               th:value="${q}"
+               placeholder="Search by name or email">
+        <button class="button" type="submit">Search</button>
+        <a class="button button--quiet"
+           th:if="${q != null and !q.isBlank()}"
+           th:href="@{/admin/users}">Clear</a>
+    </form>
+
+    <section class="card card--flush">
+        <table class="table" th:unless="${page.isEmpty()}">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th class="table__actions"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="account : ${page.content}"
+                th:with="self=${account.id == user.id},
+                         manageable=${account.id != user.id and user.role.canManage(account.role)}">
+                <td th:text="${account.fullName} ?: '—'"></td>
+                <td>
+                    <span th:text="${account.email}"></span>
+                    <span class="badge badge--inactive" th:if="${self}">You</span>
+                </td>
+                <td>
+                    <!-- Promote or demote in place. Only the roles this account may hand out are listed. -->
+                    <form class="row-actions" th:if="${manageable}"
+                          th:action="@{/admin/users/{id}/role(id=${account.id})}" method="post">
+                        <select class="field__input" name="role" onchange="this.form.submit()">
+                            <option th:each="option : ${user.role.assignableRoles()}"
+                                    th:value="${option}"
+                                    th:text="${option.label}"
+                                    th:selected="${option == account.role}"></option>
+                        </select>
+                        <noscript><button class="button button--quiet button--small" type="submit">Apply</button></noscript>
+                    </form>
+                    <span class="badge" th:unless="${manageable}"
+                          th:classappend="${account.role.name() == 'SUPERUSER'} ? 'badge--alert'
+                              : (${account.role.name() == 'ADMIN'} ? 'badge--pending' : 'badge--inactive')"
+                          th:text="${account.role.label}">Role</span>
+                </td>
+                <td>
+                    <span class="badge"
+                          th:classappend="${account.enabled} ? 'badge--active' : 'badge--alert'"
+                          th:text="${account.enabled} ? 'Enabled' : 'Disabled'">Enabled</span>
+                </td>
+                <td class="table__actions">
+                    <div class="row-actions">
+                        <a class="button button--quiet button--small"
+                           th:if="${manageable or self}"
+                           th:href="@{/admin/users/{id}/edit(id=${account.id})}">Edit</a>
+
+                        <form th:if="${manageable}"
+                              th:action="@{/admin/users/{id}/enabled(id=${account.id})}" method="post">
+                            <input type="hidden" name="enabled" th:value="${!account.enabled}">
+                            <button class="button button--quiet button--small" type="submit"
+                                    th:text="${account.enabled} ? 'Disable' : 'Enable'">Disable</button>
+                        </form>
+
+                        <form th:if="${manageable}"
+                              th:action="@{/admin/users/{id}/delete(id=${account.id})}" method="post"
+                              onsubmit="return confirm('Delete this account? They will lose access immediately.');">
+                            <button class="button button--danger button--small" type="submit">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="empty" th:if="${page.isEmpty()}">
+            <p class="empty__title">No accounts found</p>
+            <p class="empty__hint" th:if="${q != null and !q.isBlank()}">Try a shorter search term.</p>
+        </div>
+    </section>
+
+    <nav class="pagination" th:if="${page.totalPages > 1}">
+        <a class="button button--quiet"
+           th:if="${page.hasPrevious()}"
+           th:href="@{/admin/users(page=${page.number - 1}, size=${page.size}, q=${q})}">Previous</a>
+        <span th:unless="${page.hasPrevious()}"></span>
+
+        <span class="pagination__status"
+              th:text="'Page ' + (${page.number} + 1) + ' of ' + ${page.totalPages}">Page 1 of 1</span>
+
+        <a class="button button--quiet"
+           th:if="${page.hasNext()}"
+           th:href="@{/admin/users(page=${page.number + 1}, size=${page.size}, q=${q})}">Next</a>
+        <span th:unless="${page.hasNext()}"></span>
+    </nav>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

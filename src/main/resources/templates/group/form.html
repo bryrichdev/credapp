@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Add group &middot; CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'groups')}"></div>
+
+<main class="page">
+
+    <a class="backlink" th:href="@{/groups}">&larr; All groups</a>
+
+    <div class="page__header">
+        <h1>Add group</h1>
+        <p class="page__subtitle">Legal business name and tax ID are required.</p>
+    </div>
+
+    <section class="card">
+        <form th:action="@{/groups}" th:object="${form}" method="post">
+
+            <div class="form-grid">
+                <label class="field">
+                    <span class="field__label">Legal business name</span>
+                    <input class="field__input" type="text" th:field="*{lbn}"
+                           th:classappend="${#fields.hasErrors('lbn')} ? 'field__input--invalid'">
+                    <span class="field__error" th:if="${#fields.hasErrors('lbn')}" th:errors="*{lbn}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">DBA</span>
+                    <input class="field__input" type="text" th:field="*{dba}"
+                           placeholder="Leave blank if same as legal name">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Group NPI</span>
+                    <input class="field__input" type="text" inputmode="numeric" th:field="*{npi}"
+                           th:classappend="${#fields.hasErrors('npi')} ? 'field__input--invalid'"
+                           placeholder="10 digits">
+                    <span class="field__error" th:if="${#fields.hasErrors('npi')}" th:errors="*{npi}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Tax ID</span>
+                    <input class="field__input" type="text" inputmode="numeric" th:field="*{taxId}"
+                           th:classappend="${#fields.hasErrors('taxId')} ? 'field__input--invalid'"
+                           placeholder="9 digits">
+                    <span class="field__error" th:if="${#fields.hasErrors('taxId')}" th:errors="*{taxId}"></span>
+                </label>
+
+                <label class="field field--wide">
+                    <span class="field__label">Specialty</span>
+                    <input class="field__input" type="text" th:field="*{specialty}">
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button class="button" type="submit">Save group</button>
+                <a class="button button--quiet" th:href="@{/groups}">Cancel</a>
+            </div>
+        </form>
+    </section>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

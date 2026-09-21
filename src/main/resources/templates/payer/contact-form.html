@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title th:text="${contactId} != null ? 'Edit contact · CredApp' : 'Add contact · CredApp'">Add contact</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'payers')}"></div>
+
+<main class="page">
+
+    <a class="backlink" th:href="@{/payers/{id}(id=${payer.id})}">&larr; Back to payer</a>
+
+    <div class="page__header">
+        <h1 th:text="${contactId} != null ? 'Edit contact' : 'Add contact'">Add contact</h1>
+        <p class="page__subtitle">
+            Leave both group and provider blank for a contact that covers the whole payer.
+        </p>
+    </div>
+
+    <section class="card">
+        <p class="context-line">
+            For
+            <strong th:text="${payer.name}"></strong>
+        </p>
+
+        <form method="post" th:action="${contactId != null}
+                ? @{/payers/{pid}/contacts/{cid}/edit(pid=${payer.id}, cid=${contactId})}
+                : @{/payers/{pid}/contacts(pid=${payer.id})}"
+              th:object="${form}">
+
+            <div class="alert alert--error" th:if="${#fields.hasErrors('scopeExclusive')}"
+                 th:errors="*{scopeExclusive}"></div>
+
+            <div class="form-grid">
+                <label class="field field--wide">
+                    <span class="field__label">Role</span>
+                    <input class="field__input" type="text" th:field="*{role}"
+                           th:classappend="${#fields.hasErrors('role')} ? 'field__input--invalid'"
+                           placeholder="e.g. Provider rep, Credentialing analyst">
+                    <span class="field__error" th:errors="*{role}" th:if="${#fields.hasErrors('role')}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Group</span>
+                    <select class="field__input" th:field="*{groupId}">
+                        <option th:value="''">Not group-specific</option>
+                        <option th:each="option : ${groups}"
+                                th:value="${option.id}"
+                                th:text="${option.lbn}"></option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Provider</span>
+                    <select class="field__input" th:field="*{providerId}">
+                        <option th:value="''">Not provider-specific</option>
+                        <option th:each="option : ${providers}"
+                                th:value="${option.id}"
+                                th:text="${option.lastName} + ', ' + ${option.firstName}"></option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Phone</span>
+                    <input class="field__input" type="tel" th:field="*{phoneNumber}">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Fax</span>
+                    <input class="field__input" type="tel" th:field="*{faxNumber}">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Email</span>
+                    <input class="field__input" type="email" th:field="*{emailAddress}"
+                           th:classappend="${#fields.hasErrors('emailAddress')} ? 'field__input--invalid'">
+                    <span class="field__error" th:errors="*{emailAddress}"
+                          th:if="${#fields.hasErrors('emailAddress')}"></span>
+                </label>
+
+                <label class="field field--wide">
+                    <span class="field__label">Address</span>
+                    <input class="field__input" type="text" th:field="*{address}">
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button class="button" type="submit"
+                        th:text="${contactId} != null ? 'Save changes' : 'Save contact'">Save contact</button>
+                <a class="button button--quiet" th:href="@{/payers/{id}(id=${payer.id})}">Cancel</a>
+            </div>
+        </form>
+    </section>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

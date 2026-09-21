@@ -15,8 +15,14 @@ public class WebModelAdvice {
         return principal == null ? null : principal.getUser();
     }
 
+    /** Controls the Users tab. True for both tiers that can manage accounts. */
     @ModelAttribute("isAdmin")
     public boolean isAdmin(@AuthenticationPrincipal CredAppUserDetails principal) {
-        return principal != null && principal.getUser().getRole() == Role.ADMIN;
+        return principal != null && principal.getUser().getRole().canManageUsers();
+    }
+
+    @ModelAttribute("isSuperuser")
+    public boolean isSuperuser(@AuthenticationPrincipal CredAppUserDetails principal) {
+        return principal != null && principal.getUser().getRole() == Role.SUPERUSER;
     }
 }

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${group.lbn} + ' · CredApp'">Group &middot; CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'groups')}"></div>
+
+<main class="page">
+
+    <a class="backlink" th:href="@{/groups}">&larr; All groups</a>
+
+    <div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
+
+    <div class="page__header page__header--row">
+        <div>
+            <h1 th:text="${group.lbn}"></h1>
+            <p class="page__subtitle">
+                <span th:if="${!#strings.isEmpty(group.dba)}" th:text="'DBA ' + ${group.dba} + ' · '"></span>
+                NPI <span th:text="${#strings.isEmpty(group.npi)} ? 'not on file' : ${group.npi}"></span>
+            </p>
+        </div>
+        <a class="button button--quiet" th:unless="${editing}"
+           th:href="@{/groups/{id}(id=${group.id}, edit=1)}">Edit group</a>
+    </div>
+
+    <!-- ============ read view ============ -->
+    <section class="card" th:unless="${editing}">
+        <h2>Group details</h2>
+        <dl class="detail-list">
+            <dt>Legal business name</dt>
+            <dd th:text="${group.lbn}"></dd>
+
+            <dt>DBA</dt>
+            <dd th:text="${#strings.isEmpty(group.dba)} ? '—' : ${group.dba}"></dd>
+
+            <dt>Group NPI</dt>
+            <dd th:text="${#strings.isEmpty(group.npi)} ? '—' : ${group.npi}"></dd>
+
+            <dt>Tax ID</dt>
+            <dd th:text="${group.taxId}"></dd>
+
+            <dt>Specialty</dt>
+            <dd th:text="${#strings.isEmpty(group.specialty)} ? '—' : ${group.specialty}"></dd>
+
+            <dt>Added</dt>
+            <dd th:text="${group.createdAt}"></dd>
+        </dl>
+    </section>
+
+    <!-- ============ edit view ============ -->
+    <form th:if="${editing}"
+          id="groupEditForm"
+          th:action="@{/groups/{id}/edit(id=${group.id})}"
+          th:object="${form}"
+          method="post">
+
+        <section class="card">
+            <h2>Edit group</h2>
+
+            <div class="form-grid">
+                <label class="field">
+                    <span class="field__label">Legal business name</span>
+                    <input class="field__input" type="text" th:field="*{lbn}"
+                           th:classappend="${#fields.hasErrors('lbn')} ? 'field__input--invalid'">
+                    <span class="field__error" th:if="${#fields.hasErrors('lbn')}" th:errors="*{lbn}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">DBA</span>
+                    <input class="field__input" type="text" th:field="*{dba}">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Group NPI</span>
+                    <input class="field__input" type="text" inputmode="numeric" th:field="*{npi}"
+                           th:classappend="${#fields.hasErrors('npi')} ? 'field__input--invalid'"
+                           placeholder="10 digits">
+                    <span class="field__error" th:if="${#fields.hasErrors('npi')}" th:errors="*{npi}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Tax ID</span>
+                    <input class="field__input" type="text" inputmode="numeric" th:field="*{taxId}"
+                           th:classappend="${#fields.hasErrors('taxId')} ? 'field__input--invalid'"
+                           placeholder="9 digits">
+                    <span class="field__error" th:if="${#fields.hasErrors('taxId')}" th:errors="*{taxId}"></span>
+                </label>
+
+                <label class="field field--wide">
+                    <span class="field__label">Specialty</span>
+                    <input class="field__input" type="text" th:field="*{specialty}">
+                </label>
+            </div>
+        </section>
+
+        <div class="savebar" id="saveBar" hidden>
+            <span class="savebar__text">You have unsaved changes</span>
+            <div class="savebar__actions">
+                <a class="button button--quiet" th:href="@{/groups/{id}(id=${group.id})}">Cancel</a>
+                <button class="button" type="submit">Save changes</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- ============ locations ============ -->
+    <section class="card card--flush">
+        <div class="card__header">
+            <h2>Locations</h2>
+            <span class="count-pill" th:text="${locations.size()}">0</span>
+            <a class="button toolbar__end"
+               th:href="@{/groups/{id}/locations/new(id=${group.id})}">Add location</a>
+        </div>
+
+        <table class="table" th:unless="${locations.isEmpty()}">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Address</th>
+                <th>Phone</th>
+                <th>Fax</th>
+                <th>Languages</th>
+                <th class="table__actions"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="location : ${locations}">
+                <td th:text="${location.locationName}"></td>
+                <td th:text="${location.address}"></td>
+                <td th:text="${location.phoneNumber} ?: '—'"></td>
+                <td th:text="${location.faxNumber} ?: '—'"></td>
+                <td th:text="${location.languages} ?: '—'"></td>
+                <td class="table__actions">
+                    <div class="row-actions">
+                        <a class="button button--quiet button--small"
+                           th:href="@{/groups/{gid}/locations/{lid}/edit(gid=${group.id}, lid=${location.id})}">Edit</a>
+                        <form th:action="@{/groups/{gid}/locations/{lid}/delete(gid=${group.id}, lid=${location.id})}"
+                              method="post"
+                              onsubmit="return confirm('Delete this location?');">
+                            <button class="button button--danger button--small" type="submit">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="empty" th:if="${locations.isEmpty()}">
+            <p class="empty__title">No locations on file</p>
+            <p class="empty__hint">Practice locations for this group will appear here.</p>
+        </div>
+    </section>
+
+    <!-- ============ owners ============ -->
+    <section class="card card--flush">
+        <div class="card__header">
+            <h2>Owners</h2>
+            <span class="count-pill" th:text="${owners.size()}">0</span>
+            <a class="button toolbar__end"
+               th:href="@{/groups/{id}/owners/new(id=${group.id})}">Add owner</a>
+        </div>
+
+        <table class="table" th:unless="${owners.isEmpty()}">
+            <thead>
+            <tr>
+                <th>Owner</th>
+                <th>Percent owned</th>
+                <th>Effective</th>
+                <th class="table__actions"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="stake : ${owners}">
+                <td>
+                    <a class="rowlink rowlink--strong" th:href="@{/owners/{id}(id=${stake.owner.id})}"
+                       th:text="${stake.owner.lastName} + ', ' + ${stake.owner.firstName}"></a>
+                </td>
+                <td th:text="${stake.percentOwned != null} ? ${stake.percentOwned} + '%' : '—'"></td>
+                <td th:text="${stake.effectiveDate} ?: '—'"></td>
+                <td class="table__actions">
+                    <div class="row-actions">
+                        <a class="button button--quiet button--small"
+                           th:href="@{/groups/{gid}/owners/{oid}/edit(gid=${group.id}, oid=${stake.owner.id})}">Edit</a>
+                        <form th:action="@{/groups/{gid}/owners/{oid}/delete(gid=${group.id}, oid=${stake.owner.id})}"
+                              method="post"
+                              onsubmit="return confirm('Remove this owner from the group? Their relationships here go too.');">
+                            <button class="button button--danger button--small" type="submit">Remove</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+            <tfoot>
+            <tr>
+                <td>Total</td>
+                <td th:text="${totalPercent} + '%'">0%</td>
+                <td colspan="2">
+                    <span class="badge"
+                          th:classappend="${remainingPercent.signum() == 0} ? 'badge--active' : 'badge--pending'"
+                          th:text="${remainingPercent.signum() == 0}
+                              ? 'Fully accounted for'
+                              : (${remainingPercent} + '% unassigned')"></span>
+                </td>
+            </tr>
+            </tfoot>
+        </table>
+
+        <div class="empty" th:if="${owners.isEmpty()}">
+            <p class="empty__title">No owners on file</p>
+            <p class="empty__hint">Add the people who own this group and the share each one holds.</p>
+        </div>
+    </section>
+
+    <!-- ============ relationships between owners ============ -->
+    <section class="card card--flush">
+        <div class="card__header">
+            <h2>Owner relationships</h2>
+            <span class="count-pill" th:text="${relations.size()}">0</span>
+            <a class="button toolbar__end"
+               th:if="${owners.size() >= 2}"
+               th:href="@{/groups/{id}/relations/new(id=${group.id})}">Add relationship</a>
+        </div>
+
+        <table class="table" th:unless="${relations.isEmpty()}">
+            <thead>
+            <tr>
+                <th>Owner</th>
+                <th>Is the</th>
+                <th>Of</th>
+                <th class="table__actions"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="relation : ${relations}">
+                <td th:text="${relation.owner.owner.firstName} + ' ' + ${relation.owner.owner.lastName}"></td>
+                <td>
+                    <span class="badge badge--inactive" th:text="${relation.relationship.dbValue()}"></span>
+                </td>
+                <td th:text="${relation.relatedOwner.owner.firstName} + ' ' + ${relation.relatedOwner.owner.lastName}"></td>
+                <td class="table__actions">
+                    <div class="row-actions">
+                        <form th:action="@{/groups/{gid}/relations/{a}/{b}/delete(gid=${group.id},
+                                  a=${relation.id.ownerId}, b=${relation.id.relatedOwnerId})}"
+                              method="post"
+                              onsubmit="return confirm('Remove this relationship?');">
+                            <button class="button button--danger button--small" type="submit">Remove</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="empty" th:if="${relations.isEmpty()}">
+            <p class="empty__title">No relationships recorded</p>
+            <p class="empty__hint" th:if="${owners.size() >= 2}">
+                Payers ask whether any of this group's owners are related to each other.
+            </p>
+            <p class="empty__hint" th:unless="${owners.size() >= 2}">
+                Add at least two owners before recording how they are related.
+            </p>
+        </div>
+    </section>
+
+    <!-- ============ providers ============ -->
+    <section class="card card--flush">
+        <div class="card__header">
+            <h2>Providers</h2>
+            <span class="count-pill" th:text="${providers.size()}">0</span>
+            <a class="button toolbar__end"
+               th:href="@{/groups/{id}/providers/new(id=${group.id})}">Assign provider</a>
+        </div>
+
+        <table class="table" th:unless="${providers.isEmpty()}">
+            <thead>
+            <tr>
+                <th>Provider</th>
+                <th>NPI</th>
+                <th>Effective</th>
+                <th class="table__actions"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="link : ${providers}">
+                <td>
+                    <a class="rowlink rowlink--strong" th:href="@{/providers/{id}(id=${link.provider.id})}"
+                       th:text="${link.provider.lastName} + ', ' + ${link.provider.firstName}"></a>
+                </td>
+                <td th:text="${link.provider.npi} ?: '—'"></td>
+                <td th:text="${link.effectiveDate} ?: '—'"></td>
+                <td class="table__actions">
+                    <div class="row-actions">
+                        <form th:action="@{/groups/{gid}/providers/{pid}/delete(gid=${group.id}, pid=${link.provider.id})}"
+                              method="post"
+                              onsubmit="return confirm('Unassign this provider from the group?');">
+                            <button class="button button--danger button--small" type="submit">Unassign</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="empty" th:if="${providers.isEmpty()}">
+            <p class="empty__title">No providers assigned</p>
+            <p class="empty__hint">A provider can be assigned to more than one group.</p>
+        </div>
+    </section>
+
+    <section class="card danger-zone" th:unless="${editing}">
+        <div>
+            <h2>Delete group</h2>
+            <p class="empty__hint">
+                This removes the group, its locations, its ownership records and its provider assignments.
+                The people and providers themselves are kept.
+            </p>
+        </div>
+        <form th:action="@{/groups/{id}/delete(id=${group.id})}" method="post"
+              onsubmit="return confirm('Delete this group? This cannot be undone.');">
+            <button class="button button--danger" type="submit">Delete group</button>
+        </form>
+    </section>
+
+</main>
+
+<script>
+    (function () {
+        const form = document.getElementById('groupEditForm');
+        const saveBar = document.getElementById('saveBar');
+        if (!form || !saveBar) {
+            return;
+        }
+
+        // Remember what every field looked like when the page loaded.
+        const fields = Array.from(form.querySelectorAll('input, select, textarea'));
+        const initial = new Map(fields.map(field => [field, field.value]));
+        let dirty = false;
+
+        function check() {
+            dirty = fields.some(field => field.value !== initial.get(field));
+            saveBar.hidden = !dirty;
+        }
+
+        fields.forEach(field => {
+            field.addEventListener('input', check);
+            field.addEventListener('change', check);
+        });
+
+        // Don't warn when the change is being saved on purpose.
+        form.addEventListener('submit', () => {
+            dirty = false;
+        });
+
+        window.addEventListener('beforeunload', event => {
+            if (dirty) {
+                event.preventDefault();
+                event.returnValue = '';
+            }
+        });
+    })();
+</script>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

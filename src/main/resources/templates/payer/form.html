@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Add payer &middot; CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'payers')}"></div>
+
+<main class="page">
+
+    <a class="backlink" th:href="@{/payers}">&larr; All payers</a>
+
+    <div class="page__header">
+        <h1>Add payer</h1>
+        <p class="page__subtitle">Names are unique. Add contacts once the payer is saved.</p>
+    </div>
+
+    <section class="card">
+        <form th:action="@{/payers}" th:object="${form}" method="post">
+
+            <div class="form-grid">
+                <label class="field">
+                    <span class="field__label">Name</span>
+                    <input class="field__input" type="text" th:field="*{name}"
+                           th:classappend="${#fields.hasErrors('name')} ? 'field__input--invalid'">
+                    <span class="field__error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+                </label>
+
+                <label class="field field--wide">
+                    <span class="field__label">Note</span>
+                    <input class="field__input" type="text" th:field="*{note}"
+                           placeholder="Portal, submission quirks, anything worth remembering">
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button class="button" type="submit">Save payer</button>
+                <a class="button button--quiet" th:href="@{/payers}">Cancel</a>
+            </div>
+        </form>
+    </section>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

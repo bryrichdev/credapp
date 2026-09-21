@@ -1,5 +1,6 @@
 package dev.bryrich.credapp.config;
 
+import dev.bryrich.credapp.entity.User;
 import dev.bryrich.credapp.entity.enums.Role;
 import dev.bryrich.credapp.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,11 +24,21 @@ public class DevDataSeeder implements CommandLineRunner {
         this.adminPassword = adminPassword;
     }
 
+    /**
+     * Makes sure there is always one superuser to sign in as. If the dev account already
+     * exists from before the superuser tier was added, it gets promoted rather than
+     * duplicated — an existing password is left alone.
+     */
     @Override
     public void run(String... args) {
-        if (userService.existsByEmail(adminEmail)) {
+        User existing = userService.findByEmail(adminEmail).orElse(null);
+        if (existing == null) {
+            userService.create(adminEmail, adminPassword, "Dev Superuser", Role.SUPERUSER);
             return;
         }
-        userService.create(adminEmail, adminPassword, "Dev Admin", Role.ADMIN);
+        if (existing.getRole() != Role.SUPERUSER
+                && userService.countByRole(Role.SUPERUSER) == 0) {
+            userService.promoteToSuperuser(existing.getId());
+        }
     }
 }

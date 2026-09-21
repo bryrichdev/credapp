@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title th:text="${target} != null ? 'Edit user · CredApp' : 'Add user · CredApp'">Add user</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'users')}"></div>
+
+<main class="page">
+
+    <a class="backlink" th:href="@{/admin/users}">&larr; All users</a>
+
+    <div class="page__header">
+        <h1 th:text="${target} != null ? 'Edit user' : 'Add user'">Add user</h1>
+        <p class="page__subtitle" th:if="${target == null}">Passwords must be at least 12 characters.</p>
+        <p class="page__subtitle" th:unless="${target == null}">Leave the password blank to keep the current one.</p>
+    </div>
+
+    <section class="card">
+        <p class="context-line" th:if="${target != null}">
+            Editing
+            <strong th:text="${target.email}"></strong>
+            <span th:if="${target.id == user.id}"> &middot; this is your own account, so role and status are locked.</span>
+        </p>
+
+        <form method="post" th:action="${target != null}
+                ? @{/admin/users/{id}/edit(id=${target.id})}
+                : @{/admin/users}"
+              th:object="${form}">
+
+            <div class="form-grid">
+                <label class="field">
+                    <span class="field__label">Full name</span>
+                    <input class="field__input" type="text" th:field="*{fullName}">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Email</span>
+                    <input class="field__input" type="email" th:field="*{email}"
+                           th:classappend="${#fields.hasErrors('email')} ? 'field__input--invalid'">
+                    <span class="field__error" th:errors="*{email}" th:if="${#fields.hasErrors('email')}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Password</span>
+                    <input class="field__input" type="password" autocomplete="new-password"
+                           th:field="*{password}"
+                           th:classappend="${#fields.hasErrors('password')} ? 'field__input--invalid'"
+                           th:placeholder="${target} != null ? 'Leave blank to keep current' : 'At least 12 characters'">
+                    <span class="field__error" th:errors="*{password}" th:if="${#fields.hasErrors('password')}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Role</span>
+                    <select class="field__input" th:field="*{role}"
+                            th:disabled="${target != null and target.id == user.id}"
+                            th:classappend="${#fields.hasErrors('role')} ? 'field__input--invalid'">
+                        <option th:each="option : ${roles}"
+                                th:value="${option}"
+                                th:text="${option.label}"></option>
+                    </select>
+                    <span class="field__error" th:errors="*{role}" th:if="${#fields.hasErrors('role')}"></span>
+                </label>
+
+                <label class="field field--wide" th:if="${target != null and target.id != user.id}">
+                    <span class="field__label">Status</span>
+                    <select class="field__input" th:field="*{enabled}">
+                        <option th:value="true">Enabled</option>
+                        <option th:value="false">Disabled</option>
+                    </select>
+                </label>
+            </div>
+
+            <!-- A disabled select submits nothing, so keep your own role and status intact. -->
+            <input type="hidden" name="role" th:value="*{role}"
+                   th:if="${target != null and target.id == user.id}">
+            <input type="hidden" th:field="*{enabled}" th:if="${target == null or target.id == user.id}">
+
+            <div class="form-actions">
+                <button class="button" type="submit"
+                        th:text="${target} != null ? 'Save changes' : 'Save user'">Save user</button>
+                <a class="button button--quiet" th:href="@{/admin/users}">Cancel</a>
+            </div>
+        </form>
+    </section>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

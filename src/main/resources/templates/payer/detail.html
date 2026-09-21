@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${payer.name} + ' · CredApp'">Payer &middot; CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'payers')}"></div>
+
+<main class="page">
+
+    <a class="backlink" th:href="@{/payers}">&larr; All payers</a>
+
+    <div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
+
+    <div class="page__header page__header--row">
+        <div>
+            <h1 th:text="${payer.name}"></h1>
+            <p class="page__subtitle" th:text="${contacts.size()} + ' contact(s) on file'">0 contacts</p>
+        </div>
+        <a class="button button--quiet" th:unless="${editing}"
+           th:href="@{/payers/{id}(id=${payer.id}, edit=1)}">Edit payer</a>
+    </div>
+
+    <!-- ============ read view ============ -->
+    <section class="card" th:unless="${editing}">
+        <h2>Payer details</h2>
+        <dl class="detail-list">
+            <dt>Name</dt>
+            <dd th:text="${payer.name}"></dd>
+
+            <dt>Note</dt>
+            <dd th:text="${#strings.isEmpty(payer.note)} ? '—' : ${payer.note}"></dd>
+
+            <dt>Added</dt>
+            <dd th:text="${payer.createdAt}"></dd>
+        </dl>
+    </section>
+
+    <!-- ============ edit view ============ -->
+    <form th:if="${editing}"
+          id="payerEditForm"
+          th:action="@{/payers/{id}/edit(id=${payer.id})}"
+          th:object="${form}"
+          method="post">
+
+        <section class="card">
+            <h2>Edit payer</h2>
+
+            <div class="form-grid">
+                <label class="field">
+                    <span class="field__label">Name</span>
+                    <input class="field__input" type="text" th:field="*{name}"
+                           th:classappend="${#fields.hasErrors('name')} ? 'field__input--invalid'">
+                    <span class="field__error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+                </label>
+
+                <label class="field field--wide">
+                    <span class="field__label">Note</span>
+                    <input class="field__input" type="text" th:field="*{note}">
+                </label>
+            </div>
+        </section>
+
+        <div class="savebar" id="saveBar" hidden>
+            <span class="savebar__text">You have unsaved changes</span>
+            <div class="savebar__actions">
+                <a class="button button--quiet" th:href="@{/payers/{id}(id=${payer.id})}">Cancel</a>
+                <button class="button" type="submit">Save changes</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- ============ contacts ============ -->
+    <section class="card card--flush">
+        <div class="card__header">
+            <h2>Contacts</h2>
+            <span class="count-pill" th:text="${contacts.size()}">0</span>
+            <a class="button toolbar__end"
+               th:href="@{/payers/{id}/contacts/new(id=${payer.id})}">Add contact</a>
+        </div>
+
+        <table class="table" th:unless="${contacts.isEmpty()}">
+            <thead>
+            <tr>
+                <th>Role</th>
+                <th>Scope</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Fax</th>
+                <th class="table__actions"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="contact : ${contacts}">
+                <td th:text="${contact.role}"></td>
+                <td>
+                    <span class="badge badge--inactive"
+                          th:if="${contact.group == null and contact.provider == null}">Payer-wide</span>
+                    <a class="rowlink" th:if="${contact.group != null}"
+                       th:href="@{/groups/{id}(id=${contact.group.id})}"
+                       th:text="${contact.group.lbn}"></a>
+                    <a class="rowlink" th:if="${contact.provider != null}"
+                       th:href="@{/providers/{id}(id=${contact.provider.id})}"
+                       th:text="${contact.provider.lastName} + ', ' + ${contact.provider.firstName}"></a>
+                </td>
+                <td th:text="${contact.phoneNumber} ?: '—'"></td>
+                <td th:text="${contact.emailAddress} ?: '—'"></td>
+                <td th:text="${contact.faxNumber} ?: '—'"></td>
+                <td class="table__actions">
+                    <div class="row-actions">
+                        <a class="button button--quiet button--small"
+                           th:href="@{/payers/{pid}/contacts/{cid}/edit(pid=${payer.id}, cid=${contact.id})}">Edit</a>
+                        <form th:action="@{/payers/{pid}/contacts/{cid}/delete(pid=${payer.id}, cid=${contact.id})}"
+                              method="post"
+                              onsubmit="return confirm('Delete this contact?');">
+                            <button class="button button--danger button--small" type="submit">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="empty" th:if="${contacts.isEmpty()}">
+            <p class="empty__title">No contacts on file</p>
+            <p class="empty__hint">
+                A contact can cover the payer as a whole, one group, or one provider.
+            </p>
+        </div>
+    </section>
+
+    <section class="card danger-zone" th:unless="${editing}">
+        <div>
+            <h2>Delete payer</h2>
+            <p class="empty__hint">This removes the payer and every contact recorded for it.</p>
+        </div>
+        <form th:action="@{/payers/{id}/delete(id=${payer.id})}" method="post"
+              onsubmit="return confirm('Delete this payer and all of its contacts? This cannot be undone.');">
+            <button class="button button--danger" type="submit">Delete payer</button>
+        </form>
+    </section>
+
+</main>
+
+<script>
+    (function () {
+        const form = document.getElementById('payerEditForm');
+        const saveBar = document.getElementById('saveBar');
+        if (!form || !saveBar) {
+            return;
+        }
+
+        // Remember what every field looked like when the page loaded.
+        const fields = Array.from(form.querySelectorAll('input, select, textarea'));
+        const initial = new Map(fields.map(field => [field, field.value]));
+        let dirty = false;
+
+        function check() {
+            dirty = fields.some(field => field.value !== initial.get(field));
+            saveBar.hidden = !dirty;
+        }
+
+        fields.forEach(field => {
+            field.addEventListener('input', check);
+            field.addEventListener('change', check);
+        });
+
+        // Don't warn when the change is being saved on purpose.
+        form.addEventListener('submit', () => {
+            dirty = false;
+        });
+
+        window.addEventListener('beforeunload', event => {
+            if (dirty) {
+                event.preventDefault();
+                event.returnValue = '';
+            }
+        });
+    })();
+</script>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

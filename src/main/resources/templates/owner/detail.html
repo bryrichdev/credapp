@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${owner.firstName} + ' ' + ${owner.lastName} + ' · CredApp'">Owner &middot; CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'owners')}"></div>
+
+<main class="page">
+
+    <a class="backlink" th:href="@{/owners}">&larr; All owners</a>
+
+    <div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
+
+    <div class="page__header page__header--row">
+        <div>
+            <h1 th:text="${owner.firstName} + ' ' + ${owner.lastName}"></h1>
+            <p class="page__subtitle" th:text="${stakes.size()} + ' group(s) owned'">0 groups owned</p>
+        </div>
+        <a class="button button--quiet" th:unless="${editing}"
+           th:href="@{/owners/{id}(id=${owner.id}, edit=1)}">Edit owner</a>
+    </div>
+
+    <!-- ============ read view ============ -->
+    <section class="card" th:unless="${editing}">
+        <h2>Owner details</h2>
+        <dl class="detail-list">
+            <dt>First name</dt>
+            <dd th:text="${owner.firstName}"></dd>
+
+            <dt>Last name</dt>
+            <dd th:text="${owner.lastName}"></dd>
+
+            <dt>Date of birth</dt>
+            <dd th:text="${owner.dob} ?: '—'"></dd>
+
+            <dt>Home address</dt>
+            <dd th:text="${#strings.isEmpty(owner.homeAddress)} ? '—' : ${owner.homeAddress}"></dd>
+
+            <dt>SSN</dt>
+            <dd>
+                <span class="badge" th:classappend="${owner.ssn != null} ? 'badge--active' : 'badge--inactive'"
+                      th:text="${owner.ssn != null} ? 'On file, encrypted' : 'Not on file'"></span>
+            </dd>
+
+            <dt>Added</dt>
+            <dd th:text="${owner.createdAt}"></dd>
+        </dl>
+    </section>
+
+    <!-- ============ edit view ============ -->
+    <form th:if="${editing}"
+          id="ownerEditForm"
+          th:action="@{/owners/{id}/edit(id=${owner.id})}"
+          th:object="${form}"
+          method="post">
+
+        <section class="card">
+            <h2>Edit owner</h2>
+
+            <div class="form-grid">
+                <label class="field">
+                    <span class="field__label">First name</span>
+                    <input class="field__input" type="text" th:field="*{firstName}"
+                           th:classappend="${#fields.hasErrors('firstName')} ? 'field__input--invalid'">
+                    <span class="field__error" th:if="${#fields.hasErrors('firstName')}"
+                          th:errors="*{firstName}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Last name</span>
+                    <input class="field__input" type="text" th:field="*{lastName}"
+                           th:classappend="${#fields.hasErrors('lastName')} ? 'field__input--invalid'">
+                    <span class="field__error" th:if="${#fields.hasErrors('lastName')}"
+                          th:errors="*{lastName}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Date of birth</span>
+                    <input class="field__input" type="date" th:field="*{dob}">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">SSN</span>
+                    <input class="field__input" type="text" inputmode="numeric" autocomplete="off"
+                           th:field="*{ssn}"
+                           th:classappend="${#fields.hasErrors('ssn')} ? 'field__input--invalid'"
+                           placeholder="Leave blank to keep what is stored">
+                    <span class="field__error" th:if="${#fields.hasErrors('ssn')}" th:errors="*{ssn}"></span>
+                </label>
+
+                <label class="field field--wide">
+                    <span class="field__label">Home address</span>
+                    <input class="field__input" type="text" th:field="*{homeAddress}">
+                </label>
+            </div>
+        </section>
+
+        <div class="savebar" id="saveBar" hidden>
+            <span class="savebar__text">You have unsaved changes</span>
+            <div class="savebar__actions">
+                <a class="button button--quiet" th:href="@{/owners/{id}(id=${owner.id})}">Cancel</a>
+                <button class="button" type="submit">Save changes</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- ============ groups owned ============ -->
+    <section class="card card--flush">
+        <div class="card__header">
+            <h2>Groups owned</h2>
+            <span class="count-pill" th:text="${stakes.size()}">0</span>
+        </div>
+
+        <table class="table" th:unless="${stakes.isEmpty()}">
+            <thead>
+            <tr>
+                <th>Group</th>
+                <th>Percent owned</th>
+                <th>Effective</th>
+                <th class="table__actions"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="stake : ${stakes}">
+                <td>
+                    <a class="rowlink rowlink--strong" th:href="@{/groups/{id}(id=${stake.group.id})}"
+                       th:text="${stake.group.lbn}"></a>
+                </td>
+                <td th:text="${stake.percentOwned != null} ? ${stake.percentOwned} + '%' : '—'"></td>
+                <td th:text="${stake.effectiveDate} ?: '—'"></td>
+                <td class="table__actions">
+                    <div class="row-actions">
+                        <a class="button button--quiet button--small"
+                           th:href="@{/groups/{gid}/owners/{oid}/edit(gid=${stake.group.id}, oid=${owner.id})}">Edit</a>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="empty" th:if="${stakes.isEmpty()}">
+            <p class="empty__title">Not an owner of any group</p>
+            <p class="empty__hint">Add them from a group's page, where you also set their share.</p>
+        </div>
+    </section>
+
+    <section class="card danger-zone" th:unless="${editing}">
+        <div>
+            <h2>Delete owner</h2>
+            <p class="empty__hint">
+                This removes the person, their share of every group and any relationships recorded for them.
+            </p>
+        </div>
+        <form th:action="@{/owners/{id}/delete(id=${owner.id})}" method="post"
+              onsubmit="return confirm('Delete this owner? This cannot be undone.');">
+            <button class="button button--danger" type="submit">Delete owner</button>
+        </form>
+    </section>
+
+</main>
+
+<script>
+    (function () {
+        const form = document.getElementById('ownerEditForm');
+        const saveBar = document.getElementById('saveBar');
+        if (!form || !saveBar) {
+            return;
+        }
+
+        // Remember what every field looked like when the page loaded.
+        const fields = Array.from(form.querySelectorAll('input, select, textarea'));
+        const initial = new Map(fields.map(field => [field, field.value]));
+        let dirty = false;
+
+        function check() {
+            dirty = fields.some(field => field.value !== initial.get(field));
+            saveBar.hidden = !dirty;
+        }
+
+        fields.forEach(field => {
+            field.addEventListener('input', check);
+            field.addEventListener('change', check);
+        });
+
+        // Don't warn when the change is being saved on purpose.
+        form.addEventListener('submit', () => {
+            dirty = false;
+        });
+
+        window.addEventListener('beforeunload', event => {
+            if (dirty) {
+                event.preventDefault();
+                event.returnValue = '';
+            }
+        });
+    })();
+</script>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

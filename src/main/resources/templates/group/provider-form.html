@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Assign provider &middot; CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'groups')}"></div>
+
+<main class="page">
+
+    <a class="backlink" th:href="@{/groups/{id}(id=${group.id})}">&larr; Back to group</a>
+
+    <div class="page__header">
+        <h1>Assign provider</h1>
+        <p class="page__subtitle">Assigning a provider who is already in this group just updates the date.</p>
+    </div>
+
+    <section class="card">
+        <p class="context-line">
+            For
+            <strong th:text="${group.lbn}"></strong>
+        </p>
+
+        <form method="post" th:action="@{/groups/{gid}/providers(gid=${group.id})}" th:object="${form}">
+
+            <div class="form-grid">
+                <label class="field field--wide">
+                    <span class="field__label">Provider</span>
+                    <select class="field__input" th:field="*{providerId}"
+                            th:classappend="${#fields.hasErrors('providerId')} ? 'field__input--invalid'">
+                        <option th:value="''">Select a provider</option>
+                        <option th:each="option : ${providers}"
+                                th:value="${option.id}"
+                                th:text="${option.lastName} + ', ' + ${option.firstName}"></option>
+                    </select>
+                    <span class="field__error" th:errors="*{providerId}"
+                          th:if="${#fields.hasErrors('providerId')}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Effective date</span>
+                    <input class="field__input" type="date" th:field="*{effectiveDate}">
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button class="button" type="submit">Assign provider</button>
+                <a class="button button--quiet" th:href="@{/groups/{id}(id=${group.id})}">Cancel</a>
+            </div>
+        </form>
+    </section>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title th:text="${ownerId} != null ? 'Edit ownership · CredApp' : 'Add owner · CredApp'">Add owner</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'groups')}"></div>
+
+<main class="page">
+
+    <a class="backlink" th:href="@{/groups/{id}(id=${group.id})}">&larr; Back to group</a>
+
+    <div class="page__header">
+        <h1 th:text="${ownerId} != null ? 'Edit ownership' : 'Add owner'">Add owner</h1>
+        <p class="page__subtitle">
+            The person has to exist first.
+            <a class="link-strong" th:href="@{/owners/new}">Add a new owner</a>
+            if they aren't in the list.
+        </p>
+    </div>
+
+    <section class="card">
+        <p class="context-line">
+            For
+            <strong th:text="${group.lbn}"></strong>
+            &middot;
+            <span th:text="${remainingPercent} + '% unassigned'"></span>
+        </p>
+
+        <form method="post" th:action="${ownerId != null}
+                ? @{/groups/{gid}/owners/{oid}/edit(gid=${group.id}, oid=${ownerId})}
+                : @{/groups/{gid}/owners(gid=${group.id})}"
+              th:object="${form}">
+
+            <div class="form-grid">
+                <label class="field field--wide" th:if="${ownerId == null}">
+                    <span class="field__label">Owner</span>
+                    <select class="field__input" th:field="*{ownerId}"
+                            th:classappend="${#fields.hasErrors('ownerId')} ? 'field__input--invalid'">
+                        <option th:value="''">Select a person</option>
+                        <option th:each="option : ${people}"
+                                th:value="${option.id}"
+                                th:text="${option.lastName} + ', ' + ${option.firstName}"></option>
+                    </select>
+                    <span class="field__error" th:errors="*{ownerId}"
+                          th:if="${#fields.hasErrors('ownerId')}"></span>
+                </label>
+
+                <input th:field="*{ownerId}" th:if="${ownerId != null}" type="hidden">
+
+                <label class="field">
+                    <span class="field__label">Percent owned</span>
+                    <input class="field__input" type="number" step="0.01" min="0.01" max="100"
+                           th:field="*{percentOwned}"
+                           th:classappend="${#fields.hasErrors('percentOwned')} ? 'field__input--invalid'">
+                    <span class="field__error" th:errors="*{percentOwned}"
+                          th:if="${#fields.hasErrors('percentOwned')}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Effective date</span>
+                    <input class="field__input" type="date" th:field="*{effectiveDate}">
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button class="button" type="submit"
+                        th:text="${ownerId} != null ? 'Save changes' : 'Save owner'">Save owner</button>
+                <a class="button button--quiet" th:href="@{/groups/{id}(id=${group.id})}">Cancel</a>
+            </div>
+        </form>
+    </section>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Add relationship &middot; CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'groups')}"></div>
+
+<main class="page">
+
+    <a class="backlink" th:href="@{/groups/{id}(id=${group.id})}">&larr; Back to group</a>
+
+    <div class="page__header">
+        <h1>Add relationship</h1>
+        <p class="page__subtitle">Reads as "the first owner is the <em>relationship</em> of the second".</p>
+    </div>
+
+    <section class="card">
+        <p class="context-line">
+            For
+            <strong th:text="${group.lbn}"></strong>
+        </p>
+
+        <form method="post" th:action="@{/groups/{gid}/relations(gid=${group.id})}" th:object="${form}">
+
+            <div class="form-grid">
+                <label class="field">
+                    <span class="field__label">Owner</span>
+                    <select class="field__input" th:field="*{ownerId}"
+                            th:classappend="${#fields.hasErrors('ownerId')} ? 'field__input--invalid'">
+                        <option th:value="''">Select an owner</option>
+                        <option th:each="option : ${owners}"
+                                th:value="${option.owner.id}"
+                                th:text="${option.owner.lastName} + ', ' + ${option.owner.firstName}"></option>
+                    </select>
+                    <span class="field__error" th:errors="*{ownerId}"
+                          th:if="${#fields.hasErrors('ownerId')}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Is the</span>
+                    <select class="field__input" th:field="*{relationship}"
+                            th:classappend="${#fields.hasErrors('relationship')} ? 'field__input--invalid'">
+                        <option th:value="''">Select a relationship</option>
+                        <option th:each="option : ${relationships}"
+                                th:value="${option}"
+                                th:text="${option.dbValue()}"></option>
+                    </select>
+                    <span class="field__error" th:errors="*{relationship}"
+                          th:if="${#fields.hasErrors('relationship')}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Of</span>
+                    <select class="field__input" th:field="*{relatedOwnerId}"
+                            th:classappend="${#fields.hasErrors('relatedOwnerId')} ? 'field__input--invalid'">
+                        <option th:value="''">Select an owner</option>
+                        <option th:each="option : ${owners}"
+                                th:value="${option.owner.id}"
+                                th:text="${option.owner.lastName} + ', ' + ${option.owner.firstName}"></option>
+                    </select>
+                    <span class="field__error" th:errors="*{relatedOwnerId}"
+                          th:if="${#fields.hasErrors('relatedOwnerId')}"></span>
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button class="button" type="submit">Save relationship</button>
+                <a class="button button--quiet" th:href="@{/groups/{id}(id=${group.id})}">Cancel</a>
+            </div>
+        </form>
+    </section>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>
