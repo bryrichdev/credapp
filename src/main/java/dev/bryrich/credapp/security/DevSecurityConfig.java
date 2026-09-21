@@ -36,6 +36,7 @@ public class DevSecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login", "/css/**").permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")

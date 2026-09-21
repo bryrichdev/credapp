@@ -1,6 +1,7 @@
 package dev.bryrich.credapp.webcontroller;
 
 import dev.bryrich.credapp.entity.User;
+import dev.bryrich.credapp.entity.enums.Role;
 import dev.bryrich.credapp.security.CredAppUserDetails;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -12,5 +13,10 @@ public class WebModelAdvice {
     @ModelAttribute("user")
     public User currentUser(@AuthenticationPrincipal CredAppUserDetails principal) {
         return principal == null ? null : principal.getUser();
+    }
+
+    @ModelAttribute("isAdmin")
+    public boolean isAdmin(@AuthenticationPrincipal CredAppUserDetails principal) {
+        return principal != null && principal.getUser().getRole() == Role.ADMIN;
     }
 }

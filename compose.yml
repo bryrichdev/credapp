@@ -12,6 +12,7 @@ services:
       DB_USERNAME: ${DB_USERNAME:-credapp}
       DB_PASSWORD: ${DB_PASSWORD:-pass}
       DEV_PASSWORD: ${DEV_PASSWORD:-devpass}
+      CREDAPP_SSN_KEY: ${CREDAPP_SSN_KEY}
     depends_on:
       db:
         condition: service_healthy

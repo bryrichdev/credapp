@@ -10,16 +10,23 @@
         </a>
 
         <nav class="topnav">
-            <a class="topnav__link" th:href="@{/providers}"
-               th:classappend="${section == 'providers'} ? 'topnav__link--active'">Providers</a>
-            <a class="topnav__link" th:href="@{/licenses}"
-               th:classappend="${section == 'licenses'} ? 'topnav__link--active'">Licenses</a>
+            <a class="topnav__link" th:classappend="${section == 'providers'} ? 'topnav__link--active'"
+               th:href="@{/providers}">Providers</a>
+            <a class="topnav__link" th:classappend="${section == 'licenses'} ? 'topnav__link--active'"
+               th:href="@{/licenses}">Licenses</a>
+            <a class="topnav__link" th:classappend="${section == 'groups'} ? 'topnav__link--active'"
+               th:href="@{/groups}">Groups</a>
+            <a class="topnav__link" th:classappend="${section == 'payers'} ? 'topnav__link--active'"
+               th:href="@{/payers}">Payers</a>
+            <a class="topnav__link" th:classappend="${section == 'users'} ? 'topnav__link--active'"
+               th:href="@{/admin/users}"
+               th:if="${isAdmin}">Users</a>
         </nav>
     </div>
 
     <div class="topbar__right">
         <span class="topbar__user" th:text="${user.email}">user@example.com</span>
-        <form th:action="@{/logout}" method="post">
+        <form method="post" th:action="@{/logout}">
             <button class="button button--quiet" type="submit">Sign out</button>
         </form>
     </div>
@@ -30,7 +37,7 @@
         <div class="sitefoot__left">
             <span class="sitefoot__mark">CA</span>
             <span class="sitefoot__name">CredApp</span>
-            <span class="sitefoot__sep" aria-hidden="true">&middot;</span>
+            <span aria-hidden="true" class="sitefoot__sep">&middot;</span>
             <span class="sitefoot__note">Provider credentialing and license tracking</span>
         </div>
         <span class="sitefoot__meta"

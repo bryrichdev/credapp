@@ -1,6 +1,7 @@
 package dev.bryrich.credapp.entity;
 
 import dev.bryrich.credapp.entity.enums.Sex;
+import dev.bryrich.credapp.security.SsnConverter;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -27,6 +28,9 @@ public class Provider {
     private LocalDate dob;
     private String placeOfBirth;
     private String npi;
+
+    /** Stored as AES-256-GCM ciphertext; see {@link SsnConverter}. */
+    @Convert(converter = SsnConverter.class)
     private String ssn;
     private Sex sex;
     private String phoneNumber;
