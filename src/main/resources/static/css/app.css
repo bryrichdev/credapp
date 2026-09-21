@@ -32,6 +32,11 @@
 
 body {
     margin: 0;
+    /* column layout so .sitefoot is pushed to the viewport bottom on short
+       pages; body.signin overrides display/min-height for the sign-in screen */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
     background-color: var(--slate-50);
     color: var(--slate-900);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -102,6 +107,10 @@ a {
 /* ---------- layout ---------- */
 
 .page {
+    flex: 1 0 auto;
+    /* width:100% is required — `margin: 0 auto` on a flex item cancels the
+       cross-axis stretch, which would shrink the page to its content width */
+    width: 100%;
     max-width: 920px;
     margin: 0 auto;
     padding: 2rem 1.5rem 4rem;
@@ -775,4 +784,79 @@ a {
 
 .savebar .button--quiet:hover {
     background-color: rgba(255, 255, 255, 0.12);
+}
+
+
+/* ---------- site footer ---------- */
+
+.sitefoot {
+    background-color: #ffffff;
+    border-top: 1px solid var(--slate-200);
+}
+
+.sitefoot__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    /* full-bleed with the same 1.5rem gutter as .topbar */
+    padding: 1.1rem 1.5rem;
+}
+
+.sitefoot__left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.sitefoot__mark {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background-color: var(--teal-50);
+    color: var(--teal-700);
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.sitefoot__name {
+    color: var(--slate-700);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.sitefoot__sep {
+    color: var(--slate-300);
+}
+
+.sitefoot__note,
+.sitefoot__meta {
+    color: var(--slate-500);
+    font-size: 0.85rem;
+}
+
+.sitefoot__note {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.sitefoot__meta {
+    flex: none;
+}
+
+@media (max-width: 640px) {
+    .sitefoot__inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .sitefoot__note {
+        white-space: normal;
+    }
 }

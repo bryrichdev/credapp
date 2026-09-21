@@ -25,5 +25,18 @@
     </div>
 </header>
 
+<footer class="sitefoot" th:fragment="footer">
+    <div class="sitefoot__inner">
+        <div class="sitefoot__left">
+            <span class="sitefoot__mark">CA</span>
+            <span class="sitefoot__name">CredApp</span>
+            <span class="sitefoot__sep" aria-hidden="true">&middot;</span>
+            <span class="sitefoot__note">Provider credentialing and license tracking</span>
+        </div>
+        <span class="sitefoot__meta"
+              th:text="'&copy; ' + ${#dates.year(#dates.createNow())} + ' CredApp'">&copy; 2026 CredApp</span>
+    </div>
+</footer>
+
 </body>
 </html>
