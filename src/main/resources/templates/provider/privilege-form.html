@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title th:text="${privilegeId} != null ? 'Edit privilege · CredApp' : 'Add privilege · CredApp'">Add privilege</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'providers')}"></div>
+
+<main class="page">
+
+    <a class="backlink" th:href="@{/providers/{id}(id=${provider.id})}">&larr; Back to provider</a>
+
+    <div class="page__header">
+        <h1 th:text="${privilegeId} != null ? 'Edit privilege' : 'Add privilege'">Add privilege</h1>
+    </div>
+
+    <section class="card">
+        <p class="context-line">
+            For <strong th:text="${provider.firstName} + ' ' + ${provider.lastName}"></strong>
+        </p>
+
+        <form method="post" th:action="${privilegeId != null}
+                ? @{/providers/{pid}/privileges/{hid}/edit(pid=${provider.id}, hid=${privilegeId})}
+                : @{/providers/{pid}/privileges(pid=${provider.id})}"
+              th:object="${form}">
+
+            <div class="form-grid">
+                <label class="field field--wide">
+                    <span class="field__label">Hospital</span>
+                    <input class="field__input" type="text" th:field="*{name}"
+                           th:classappend="${#fields.hasErrors('name')} ? 'field__input--invalid'">
+                    <span class="field__error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Status</span>
+                    <select class="field__input" th:field="*{status}">
+                        <option th:each="option : ${privilegeStatuses}"
+                                th:value="${option}" th:text="${option.value}"></option>
+                    </select>
+                    <span class="field__error" th:if="${#fields.hasErrors('status')}" th:errors="*{status}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Admitting physician</span>
+                    <select class="field__input" th:field="*{admittingPhysicianId}">
+                        <option value="">None — admits under own privileges</option>
+                        <option th:each="option : ${colleagues}"
+                                th:value="${option.id}"
+                                th:text="${option.lastName} + ', ' + ${option.firstName}"></option>
+                    </select>
+                    <span class="field__hint">Name a colleague only when this provider does not admit themselves</span>
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button class="button" type="submit"
+                        th:text="${privilegeId} != null ? 'Save changes' : 'Save privilege'">Save privilege</button>
+                <a class="button button--quiet" th:href="@{/providers/{id}(id=${provider.id})}">Cancel</a>
+            </div>
+        </form>
+    </section>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

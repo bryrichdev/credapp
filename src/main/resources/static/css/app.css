@@ -656,6 +656,13 @@ a {
     font-size: 0.825rem;
 }
 
+.field__hint {
+    display: block;
+    margin: 0.3rem 0 0;
+    color: var(--slate-500);
+    font-size: 0.825rem;
+}
+
 .field__input--invalid {
     border-color: var(--red-700);
 }

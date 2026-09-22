@@ -8,10 +8,18 @@ import dev.bryrich.credapp.entity.enums.LicenseStatus;
 import dev.bryrich.credapp.entity.Provider;
 import dev.bryrich.credapp.entity.enums.Sex;
 import dev.bryrich.credapp.security.CredAppUserDetails;
+import dev.bryrich.credapp.service.CertificationService;
+import dev.bryrich.credapp.service.CriminalChargeService;
 import dev.bryrich.credapp.service.GroupProviderService;
 import dev.bryrich.credapp.service.GroupService;
+import dev.bryrich.credapp.service.HospitalPrivilegeService;
 import dev.bryrich.credapp.service.LicenseService;
+import dev.bryrich.credapp.service.MalpracticeClaimService;
+import dev.bryrich.credapp.service.MalpracticePolicyService;
+import dev.bryrich.credapp.service.ProviderLocationService;
+import dev.bryrich.credapp.service.ProviderReferenceService;
 import dev.bryrich.credapp.service.ProviderService;
+import dev.bryrich.credapp.service.ProviderTaxonomyService;
 import dev.bryrich.credapp.service.SsnAccessService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -38,17 +46,41 @@ public class ProviderWebController {
     private final GroupProviderService groupProviderService;
     private final GroupService groupService;
     private final SsnAccessService ssnAccessService;
+    private final ProviderTaxonomyService providerTaxonomyService;
+    private final ProviderLocationService providerLocationService;
+    private final CertificationService certificationService;
+    private final ProviderReferenceService referenceService;
+    private final HospitalPrivilegeService privilegeService;
+    private final CriminalChargeService chargeService;
+    private final MalpracticePolicyService policyService;
+    private final MalpracticeClaimService claimService;
 
     public ProviderWebController(ProviderService providerService,
                                  LicenseService licenseService,
                                  GroupProviderService groupProviderService,
                                  GroupService groupService,
-                                 SsnAccessService ssnAccessService) {
+                                 SsnAccessService ssnAccessService,
+                                 ProviderTaxonomyService providerTaxonomyService,
+                                 ProviderLocationService providerLocationService,
+                                 CertificationService certificationService,
+                                 ProviderReferenceService referenceService,
+                                 HospitalPrivilegeService privilegeService,
+                                 CriminalChargeService chargeService,
+                                 MalpracticePolicyService policyService,
+                                 MalpracticeClaimService claimService) {
         this.providerService = providerService;
         this.licenseService = licenseService;
         this.groupProviderService = groupProviderService;
         this.groupService = groupService;
         this.ssnAccessService = ssnAccessService;
+        this.providerTaxonomyService = providerTaxonomyService;
+        this.providerLocationService = providerLocationService;
+        this.certificationService = certificationService;
+        this.referenceService = referenceService;
+        this.privilegeService = privilegeService;
+        this.chargeService = chargeService;
+        this.policyService = policyService;
+        this.claimService = claimService;
     }
 
     /**
@@ -98,9 +130,7 @@ public class ProviderWebController {
                          @RequestParam(name = "edit", defaultValue = "false") boolean edit,
                          Model model) {
         Provider provider = providerService.findById(id);
-        model.addAttribute("provider", provider);
-        model.addAttribute("licenses", licenseService.findByProviderId(id));
-        model.addAttribute("groups", groupProviderService.findGroups(id));
+        addDetailAttributes(id, provider, model);
         model.addAttribute("editing", edit);
         if (edit) {
             model.addAttribute("form", ProviderForm.from(provider));
@@ -116,9 +146,7 @@ public class ProviderWebController {
                                  Model model,
                                  RedirectAttributes redirectAttributes) {
         if (binding.hasErrors()) {
-            model.addAttribute("provider", providerService.findById(id));
-            model.addAttribute("licenses", licenseService.findByProviderId(id));
-            model.addAttribute("groups", groupProviderService.findGroups(id));
+            addDetailAttributes(id, providerService.findById(id), model);
             model.addAttribute("editing", true);
             model.addAttribute("sexes", Sex.values());
             return "provider/detail";
@@ -259,5 +287,20 @@ public class ProviderWebController {
         licenseService.delete(licenseId, providerId);
         redirectAttributes.addFlashAttribute("message", "License deleted.");
         return "redirect:/providers/" + providerId;
+    }
+
+    /** Everything the provider detail page lists, in one place so both entry points match. */
+    private void addDetailAttributes(Long id, Provider provider, Model model) {
+        model.addAttribute("provider", provider);
+        model.addAttribute("licenses", licenseService.findByProviderId(id));
+        model.addAttribute("groups", groupProviderService.findGroups(id));
+        model.addAttribute("taxonomies", providerTaxonomyService.findByProviderId(id));
+        model.addAttribute("practiceLocations", providerLocationService.findByProviderId(id));
+        model.addAttribute("certifications", certificationService.findByProviderId(id));
+        model.addAttribute("references", referenceService.findByProviderId(id));
+        model.addAttribute("privileges", privilegeService.findByProviderId(id));
+        model.addAttribute("charges", chargeService.findByProviderId(id));
+        model.addAttribute("policies", policyService.findByProviderId(id));
+        model.addAttribute("claims", claimService.findByProviderId(id));
     }
 }

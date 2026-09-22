@@ -305,6 +305,106 @@
         </div>
     </section>
 
+
+    <!-- ============ specialties ============ -->
+    <section class="card card--flush">
+        <div class="card__header">
+            <h2>Specialties</h2>
+            <span class="count-pill" th:text="${taxonomies.size()}">0</span>
+            <a class="button toolbar__end"
+               th:href="@{/groups/{id}/taxonomies/new(id=${group.id})}">Add specialty</a>
+        </div>
+
+        <table class="table" th:unless="${taxonomies.isEmpty()}">
+            <thead>
+            <tr>
+                <th>Specialty</th>
+                <th>Taxonomy code</th>
+                <th>Primary</th>
+                <th class="table__actions"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="tax : ${taxonomies}">
+                <td th:text="${tax.taxonomy.specialty}"></td>
+                <td th:text="${tax.taxonomy.code}"></td>
+                <td>
+                    <span class="badge badge--active" th:if="${tax.primary}">Primary</span>
+                    <span th:unless="${tax.primary}">&mdash;</span>
+                </td>
+                <td class="table__actions">
+                    <div class="row-actions">
+                        <form th:unless="${tax.primary}"
+                              th:action="@{/groups/{gid}/taxonomies/{code}/primary(gid=${group.id}, code=${tax.taxonomy.code})}"
+                              method="post">
+                            <button class="button button--quiet button--small" type="submit">Make primary</button>
+                        </form>
+                        <form th:action="@{/groups/{gid}/taxonomies/{code}/delete(gid=${group.id}, code=${tax.taxonomy.code})}"
+                              method="post"
+                              onsubmit="return confirm('Remove this specialty?');">
+                            <button class="button button--danger button--small" type="submit">Remove</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="empty" th:if="${taxonomies.isEmpty()}">
+            <p class="empty__title">No specialties on file</p>
+            <p class="empty__hint">Specialties come from the NUCC taxonomy code set.</p>
+        </div>
+    </section>
+
+    <!-- ============ malpractice ============ -->
+    <section class="card card--flush">
+        <div class="card__header">
+            <h2>Malpractice policies</h2>
+            <span class="count-pill" th:text="${policies.size()}">0</span>
+            <a class="button toolbar__end"
+               th:href="@{/groups/{id}/policies/new(id=${group.id})}">Add policy</a>
+        </div>
+
+        <table class="table" th:unless="${policies.isEmpty()}">
+            <thead>
+            <tr>
+                <th>Carrier</th>
+                <th>Policy number</th>
+                <th>Coverage</th>
+                <th>Effective</th>
+                <th>Expires</th>
+                <th class="table__actions"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="policy : ${policies}">
+                <td th:text="${policy.carrierName}"></td>
+                <td th:text="${policy.policyNumber}"></td>
+                <td th:text="${policy.amountOfCoveragePerOccurrence != null}
+                        ? ${#numbers.formatCurrency(policy.amountOfCoveragePerOccurrence)} : '&mdash;'"></td>
+                <td th:text="${policy.effectiveDate}"></td>
+                <td th:text="${policy.expirationDate} ?: '&mdash;'"></td>
+                <td class="table__actions">
+                    <div class="row-actions">
+                        <a class="button button--quiet button--small"
+                           th:href="@{/groups/{gid}/policies/{mid}/edit(gid=${group.id}, mid=${policy.id})}">Edit</a>
+                        <form th:action="@{/groups/{gid}/policies/{mid}/delete(gid=${group.id}, mid=${policy.id})}"
+                              method="post"
+                              onsubmit="return confirm('Delete this policy?');">
+                            <button class="button button--danger button--small" type="submit">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="empty" th:if="${policies.isEmpty()}">
+            <p class="empty__title">No malpractice policies on file</p>
+            <p class="empty__hint">A shared policy covers the group rather than one provider.</p>
+        </div>
+    </section>
+
     <section class="card danger-zone" th:unless="${editing}">
         <div>
             <h2>Delete group</h2>

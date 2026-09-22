@@ -11,6 +11,8 @@ import dev.bryrich.credapp.entity.GroupOwner;
 import dev.bryrich.credapp.entity.enums.Relationship;
 import dev.bryrich.credapp.exception.OwnershipPercentExceededException;
 import dev.bryrich.credapp.service.GroupLocationService;
+import dev.bryrich.credapp.service.GroupTaxonomyService;
+import dev.bryrich.credapp.service.MalpracticePolicyService;
 import dev.bryrich.credapp.service.GroupOwnershipService;
 import dev.bryrich.credapp.service.GroupProviderService;
 import dev.bryrich.credapp.service.GroupService;
@@ -37,19 +39,25 @@ public class GroupWebController {
     private final GroupProviderService groupProviderService;
     private final OwnerService ownerService;
     private final ProviderService providerService;
+    private final GroupTaxonomyService groupTaxonomyService;
+    private final MalpracticePolicyService policyService;
 
     public GroupWebController(GroupService groupService,
                               GroupLocationService locationService,
                               GroupOwnershipService ownershipService,
                               GroupProviderService groupProviderService,
                               OwnerService ownerService,
-                              ProviderService providerService) {
+                              ProviderService providerService,
+                              GroupTaxonomyService groupTaxonomyService,
+                              MalpracticePolicyService policyService) {
         this.groupService = groupService;
         this.locationService = locationService;
         this.ownershipService = ownershipService;
         this.groupProviderService = groupProviderService;
         this.ownerService = ownerService;
         this.providerService = providerService;
+        this.groupTaxonomyService = groupTaxonomyService;
+        this.policyService = policyService;
     }
 
     /** Blank text inputs submit "" — store null instead. */
@@ -344,6 +352,8 @@ public class GroupWebController {
         model.addAttribute("providers", groupProviderService.findProviders(id));
         model.addAttribute("totalPercent", ownershipService.totalPercentOwned(id));
         model.addAttribute("remainingPercent", ownershipService.remainingPercent(id));
+        model.addAttribute("taxonomies", groupTaxonomyService.findByGroupId(id));
+        model.addAttribute("policies", policyService.findByGroupId(id));
     }
 
     private void addOwnerFormAttributes(Long groupId, Model model) {

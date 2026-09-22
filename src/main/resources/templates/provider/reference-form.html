@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title th:text="${referenceId} != null ? 'Edit reference · CredApp' : 'Add reference · CredApp'">Add reference</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'providers')}"></div>
+
+<main class="page">
+
+    <a class="backlink" th:href="@{/providers/{id}(id=${provider.id})}">&larr; Back to provider</a>
+
+    <div class="page__header">
+        <h1 th:text="${referenceId} != null ? 'Edit reference' : 'Add reference'">Add reference</h1>
+    </div>
+
+    <section class="card">
+        <p class="context-line">
+            For <strong th:text="${provider.firstName} + ' ' + ${provider.lastName}"></strong>
+        </p>
+
+        <form method="post" th:action="${referenceId != null}
+                ? @{/providers/{pid}/references/{rid}/edit(pid=${provider.id}, rid=${referenceId})}
+                : @{/providers/{pid}/references(pid=${provider.id})}"
+              th:object="${form}">
+
+            <div class="form-grid">
+                <label class="field">
+                    <span class="field__label">Name</span>
+                    <input class="field__input" type="text" th:field="*{name}"
+                           th:classappend="${#fields.hasErrors('name')} ? 'field__input--invalid'">
+                    <span class="field__error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Title</span>
+                    <input class="field__input" type="text" th:field="*{title}" placeholder="MD, DO, NP">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Relationship</span>
+                    <input class="field__input" type="text" th:field="*{relationship}"
+                           th:classappend="${#fields.hasErrors('relationship')} ? 'field__input--invalid'"
+                           placeholder="Colleague, supervisor, partner">
+                    <span class="field__error" th:if="${#fields.hasErrors('relationship')}" th:errors="*{relationship}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Email</span>
+                    <input class="field__input" type="email" th:field="*{emailAddress}"
+                           th:classappend="${#fields.hasErrors('emailAddress')} ? 'field__input--invalid'">
+                    <span class="field__error" th:if="${#fields.hasErrors('emailAddress')}" th:errors="*{emailAddress}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Phone</span>
+                    <input class="field__input" type="tel" th:field="*{phoneNumber}">
+                </label>
+
+                <label class="field field--wide">
+                    <span class="field__label">Street</span>
+                    <input class="field__input" type="text" th:field="*{street1}">
+                </label>
+
+                <label class="field field--wide">
+                    <span class="field__label">Street 2</span>
+                    <input class="field__input" type="text" th:field="*{street2}" placeholder="Suite, unit">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">City</span>
+                    <input class="field__input" type="text" th:field="*{city}">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">State</span>
+                    <input class="field__input" type="text" maxlength="2" th:field="*{state}"
+                           th:classappend="${#fields.hasErrors('state')} ? 'field__input--invalid'" placeholder="MI">
+                    <span class="field__error" th:if="${#fields.hasErrors('state')}" th:errors="*{state}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">ZIP</span>
+                    <input class="field__input" type="text" th:field="*{zipCode}"
+                           th:classappend="${#fields.hasErrors('zipCode')} ? 'field__input--invalid'" placeholder="49425">
+                    <span class="field__error" th:if="${#fields.hasErrors('zipCode')}" th:errors="*{zipCode}"></span>
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button class="button" type="submit"
+                        th:text="${referenceId} != null ? 'Save changes' : 'Save reference'">Save reference</button>
+                <a class="button button--quiet" th:href="@{/providers/{id}(id=${provider.id})}">Cancel</a>
+            </div>
+        </form>
+    </section>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Add specialty &middot; CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'providers')}"></div>
+
+<main class="page">
+
+    <a class="backlink" th:href="@{/providers/{id}(id=${provider.id})}">&larr; Back to provider</a>
+
+    <div class="page__header">
+        <h1>Add specialty</h1>
+    </div>
+
+    <section class="card">
+        <p class="context-line">
+            For <strong th:text="${provider.firstName} + ' ' + ${provider.lastName}"></strong>
+        </p>
+
+        <div class="empty" th:if="${taxonomies.isEmpty()}">
+            <p class="empty__title">No taxonomy codes loaded</p>
+            <p class="empty__hint">The taxonomies table is seeded by migration. Load the code set before assigning specialties.</p>
+        </div>
+
+        <form method="post" th:unless="${taxonomies.isEmpty()}"
+              th:action="@{/providers/{pid}/taxonomies(pid=${provider.id})}"
+              th:object="${form}">
+
+            <div class="form-grid">
+                <label class="field field--wide">
+                    <span class="field__label">Specialty</span>
+                    <select class="field__input" th:field="*{code}"
+                            th:classappend="${#fields.hasErrors('code')} ? 'field__input--invalid'">
+                        <option value="">Select a specialty</option>
+                        <option th:each="option : ${taxonomies}"
+                                th:value="${option.code}" th:text="${option.label}"></option>
+                    </select>
+                    <span class="field__error" th:if="${#fields.hasErrors('code')}" th:errors="*{code}"></span>
+                </label>
+
+                <label class="field field--wide">
+                    <span class="field__label">Primary</span>
+                    <input type="checkbox" th:field="*{primary}">
+                    <span class="field__hint">A provider has at most one primary specialty. Ticking this clears any other.</span>
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button class="button" type="submit">Save specialty</button>
+                <a class="button button--quiet" th:href="@{/providers/{id}(id=${provider.id})}">Cancel</a>
+            </div>
+        </form>
+    </section>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>
