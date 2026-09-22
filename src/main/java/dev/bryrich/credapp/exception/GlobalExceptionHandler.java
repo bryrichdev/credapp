@@ -24,7 +24,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler({ProviderNotFoundException.class, LicenseNotFoundException.class,
             UserNotFoundException.class, GroupNotFoundException.class,
             GroupLocationNotFoundException.class, OwnerNotFoundException.class,
-            PayerNotFoundException.class, PayerContactNotFoundException.class})
+            PayerNotFoundException.class, PayerContactNotFoundException.class,
+            TaxonomyNotFoundException.class, ProviderTaxonomyNotFoundException.class,
+            GroupTaxonomyNotFoundException.class, ProviderLocationNotFoundException.class,
+            MalpracticePolicyNotFoundException.class, MalpracticeClaimNotFoundException.class,
+            ProviderReferenceNotFoundException.class, HospitalPrivilegeNotFoundException.class,
+            CertificationNotFoundException.class, CriminalChargeNotFoundException.class})
     public ProblemDetail handleNotFound(RuntimeException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.NOT_FOUND, ex.getMessage());
@@ -45,6 +50,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.FORBIDDEN, ex.getMessage());
         problem.setTitle("Not allowed");
+        return problem;
+    }
+
+    @ExceptionHandler({ProviderNotInGroupException.class, PolicyOwnerException.class})
+    public ProblemDetail handleInvalidAssignment(RuntimeException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Invalid assignment");
         return problem;
     }
 
