@@ -10,11 +10,10 @@ public record GroupResponse(
         String dba,
         String npi,
         String taxId,
-        String specialty,
         Instant createdAt
 ) {
     public static GroupResponse from(Group g) {
         return new GroupResponse(g.getId(), g.getLbn(), g.getDba(), g.getNpi(),
-                g.getTaxId(), g.getSpecialty(), g.getCreatedAt());
+                g.getTaxId(), g.getCreatedAt());
     }
 }

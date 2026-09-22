@@ -18,7 +18,6 @@ public class GroupForm {
     @Pattern(regexp = "^[0-9]{9}$", message = "Tax ID must be exactly 9 digits")
     private String taxId;
 
-    private String specialty;
 
     /** Empty form, for the create screen. */
     public GroupForm() {
@@ -31,7 +30,6 @@ public class GroupForm {
         form.dba = group.getDba();
         form.npi = group.getNpi();
         form.taxId = group.getTaxId();
-        form.specialty = group.getSpecialty();
         return form;
     }
 
@@ -47,7 +45,6 @@ public class GroupForm {
         group.setDba(blankToNull(dba));
         group.setNpi(blankToNull(npi));
         group.setTaxId(taxId);
-        group.setSpecialty(blankToNull(specialty));
     }
 
     private static String blankToNull(String value) {
@@ -84,13 +81,5 @@ public class GroupForm {
 
     public void setTaxId(String taxId) {
         this.taxId = taxId;
-    }
-
-    public String getSpecialty() {
-        return specialty;
-    }
-
-    public void setSpecialty(String specialty) {
-        this.specialty = specialty;
     }
 }

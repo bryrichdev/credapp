@@ -59,7 +59,7 @@
                 </td>
                 <td>
                     <a class="rowlink" th:href="@{/owners/{id}(id=${owner.id})}"
-                       th:text="${owner.homeAddress} ?: '—'"></a>
+                       th:text="${#strings.isEmpty(owner.formattedAddress)} ? '—' : ${owner.formattedAddress}"></a>
                 </td>
                 <td class="table__actions">
                     <div class="row-actions">

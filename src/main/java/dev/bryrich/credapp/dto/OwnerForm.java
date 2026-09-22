@@ -30,7 +30,15 @@ public class OwnerForm {
     @Pattern(regexp = "^$|^[0-9]{9}$", message = "SSN must be exactly 9 digits")
     private String ssn;
 
-    private String homeAddress;
+    private String street1;
+    private String street2;
+    private String city;
+
+    @Pattern(regexp = "^$|^[A-Za-z]{2}$", message = "State must be a two-letter code")
+    private String state;
+
+    @Pattern(regexp = "^$|^[0-9]{5}(-[0-9]{4})?$", message = "ZIP must be 5 or 9 digits")
+    private String zipCode;
 
     /**
      * Optional, and only read when creating. The stake lives in group_owners, so applyTo
@@ -53,7 +61,11 @@ public class OwnerForm {
         form.firstName = owner.getFirstName();
         form.lastName = owner.getLastName();
         form.dob = owner.getDob();
-        form.homeAddress = owner.getHomeAddress();
+        form.street1 = owner.getStreet1();
+        form.street2 = owner.getStreet2();
+        form.city = owner.getCity();
+        form.state = owner.getState();
+        form.zipCode = owner.getZipCode();
         return form;
     }
 
@@ -68,7 +80,11 @@ public class OwnerForm {
         owner.setFirstName(firstName);
         owner.setLastName(lastName);
         owner.setDob(dob);
-        owner.setHomeAddress(blankToNull(homeAddress));
+        owner.setStreet1(blankToNull(street1));
+        owner.setStreet2(blankToNull(street2));
+        owner.setCity(blankToNull(city));
+        owner.setState(upperOrNull(state));
+        owner.setZipCode(blankToNull(zipCode));
         if (blankToNull(ssn) != null) {
             owner.setSsn(ssn);
         }
@@ -76,6 +92,11 @@ public class OwnerForm {
 
     private static String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value;
+    }
+
+    private static String upperOrNull(String value) {
+        String trimmed = blankToNull(value);
+        return trimmed == null ? null : trimmed.toUpperCase();
     }
 
     public String getFirstName() {
@@ -110,12 +131,44 @@ public class OwnerForm {
         this.ssn = ssn;
     }
 
-    public String getHomeAddress() {
-        return homeAddress;
+    public String getStreet1() {
+        return street1;
     }
 
-    public void setHomeAddress(String homeAddress) {
-        this.homeAddress = homeAddress;
+    public void setStreet1(String street1) {
+        this.street1 = street1;
+    }
+
+    public String getStreet2() {
+        return street2;
+    }
+
+    public void setStreet2(String street2) {
+        this.street2 = street2;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getZipCode() {
+        return zipCode;
+    }
+
+    public void setZipCode(String zipCode) {
+        this.zipCode = zipCode;
     }
 
     public Long getGroupId() {

@@ -45,7 +45,6 @@
                 <th>DBA</th>
                 <th>NPI</th>
                 <th>Tax ID</th>
-                <th>Specialty</th>
                 <th class="table__actions"></th>
             </tr>
             </thead>
@@ -66,10 +65,6 @@
                 <td>
                     <a class="rowlink" th:href="@{/groups/{id}(id=${group.id})}"
                        th:text="${group.taxId}"></a>
-                </td>
-                <td>
-                    <a class="rowlink" th:href="@{/groups/{id}(id=${group.id})}"
-                       th:text="${group.specialty} ?: '—'"></a>
                 </td>
                 <td class="table__actions">
                     <div class="row-actions">

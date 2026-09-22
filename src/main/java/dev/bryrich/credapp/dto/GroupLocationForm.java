@@ -3,6 +3,10 @@ package dev.bryrich.credapp.dto;
 import dev.bryrich.credapp.entity.GroupLocation;
 import jakarta.validation.constraints.NotBlank;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class GroupLocationForm {
 
     @NotBlank(message = "Location name is required")
@@ -14,6 +18,8 @@ public class GroupLocationForm {
     private String faxNumber;
     private String phoneNumber;
     private String handicapAccess;
+
+    /** Comma-separated in the UI; stored as a TEXT[] on the entity. */
     private String languages;
 
     /** Empty form, for the create screen. */
@@ -28,7 +34,7 @@ public class GroupLocationForm {
         form.faxNumber = location.getFaxNumber();
         form.phoneNumber = location.getPhoneNumber();
         form.handicapAccess = location.getHandicapAccess();
-        form.languages = location.getLanguages();
+        form.languages = String.join(", ", location.getLanguages());
         return form;
     }
 
@@ -45,11 +51,22 @@ public class GroupLocationForm {
         location.setFaxNumber(blankToNull(faxNumber));
         location.setPhoneNumber(blankToNull(phoneNumber));
         location.setHandicapAccess(blankToNull(handicapAccess));
-        location.setLanguages(blankToNull(languages));
+        location.setLanguages(splitList(languages));
     }
 
     private static String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value;
+    }
+
+    /** "English, Spanish" -> ["English", "Spanish"]; blank entries dropped. */
+    private static List<String> splitList(String value) {
+        if (value == null || value.isBlank()) {
+            return new ArrayList<>();
+        }
+        return Arrays.stream(value.split(","))
+                .map(String::trim)
+                .filter(part -> !part.isEmpty())
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
     }
 
     public String getLocationName() {

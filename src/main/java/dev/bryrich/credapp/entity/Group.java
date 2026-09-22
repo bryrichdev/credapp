@@ -28,7 +28,6 @@ public class Group {
     @Column(nullable = false)
     private String taxId;
 
-    private String specialty;
 
     @CreationTimestamp
     @Column(updatable = false)
@@ -87,14 +86,6 @@ public class Group {
 
     public void setTaxId(String taxId) {
         this.taxId = taxId;
-    }
-
-    public String getSpecialty() {
-        return specialty;
-    }
-
-    public void setSpecialty(String specialty) {
-        this.specialty = specialty;
     }
 
     public Instant getCreatedAt() {

@@ -2,9 +2,13 @@ package dev.bryrich.credapp.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "group_locations")
@@ -27,7 +31,11 @@ public class GroupLocation {
     private String faxNumber;
     private String phoneNumber;
     private String handicapAccess;
-    private String languages;
+
+    /** Stored as a Postgres TEXT[]; empty rather than null when unknown. */
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(nullable = false)
+    private List<String> languages = new ArrayList<>();
 
     @CreationTimestamp
     @Column(updatable = false)
@@ -95,12 +103,12 @@ public class GroupLocation {
         this.handicapAccess = handicapAccess;
     }
 
-    public String getLanguages() {
+    public List<String> getLanguages() {
         return languages;
     }
 
-    public void setLanguages(String languages) {
-        this.languages = languages;
+    public void setLanguages(List<String> languages) {
+        this.languages = languages == null ? new ArrayList<>() : new ArrayList<>(languages);
     }
 
     public Instant getCreatedAt() {

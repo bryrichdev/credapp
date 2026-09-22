@@ -3,6 +3,7 @@ package dev.bryrich.credapp.dto;
 import dev.bryrich.credapp.entity.GroupLocation;
 
 import java.time.Instant;
+import java.util.List;
 
 public record GroupLocationResponse(
         Long id,
@@ -12,7 +13,7 @@ public record GroupLocationResponse(
         String faxNumber,
         String phoneNumber,
         String handicapAccess,
-        String languages,
+        List<String> languages,
         Instant createdAt
 ) {
     public static GroupLocationResponse from(GroupLocation l) {

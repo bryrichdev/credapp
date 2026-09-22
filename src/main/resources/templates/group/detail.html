@@ -44,8 +44,6 @@
             <dt>Tax ID</dt>
             <dd th:text="${group.taxId}"></dd>
 
-            <dt>Specialty</dt>
-            <dd th:text="${#strings.isEmpty(group.specialty)} ? '—' : ${group.specialty}"></dd>
 
             <dt>Added</dt>
             <dd th:text="${group.createdAt}"></dd>
@@ -91,10 +89,6 @@
                     <span class="field__error" th:if="${#fields.hasErrors('taxId')}" th:errors="*{taxId}"></span>
                 </label>
 
-                <label class="field field--wide">
-                    <span class="field__label">Specialty</span>
-                    <input class="field__input" type="text" th:field="*{specialty}">
-                </label>
             </div>
         </section>
 
@@ -133,7 +127,7 @@
                 <td th:text="${location.address}"></td>
                 <td th:text="${location.phoneNumber} ?: '—'"></td>
                 <td th:text="${location.faxNumber} ?: '—'"></td>
-                <td th:text="${location.languages} ?: '—'"></td>
+                <td th:text="${#lists.isEmpty(location.languages)} ? '—' : ${#strings.listJoin(location.languages, ', ')}"></td>
                 <td class="table__actions">
                     <div class="row-actions">
                         <a class="button button--quiet button--small"

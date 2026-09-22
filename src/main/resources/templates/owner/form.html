@@ -54,8 +54,35 @@
                 </label>
 
                 <label class="field field--wide">
-                    <span class="field__label">Home address</span>
-                    <input class="field__input" type="text" th:field="*{homeAddress}">
+                    <span class="field__label">Street</span>
+                    <input class="field__input" type="text" th:field="*{street1}">
+                </label>
+
+                <label class="field field--wide">
+                    <span class="field__label">Street 2</span>
+                    <input class="field__input" type="text" th:field="*{street2}"
+                           placeholder="Apt, suite, unit">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">City</span>
+                    <input class="field__input" type="text" th:field="*{city}">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">State</span>
+                    <input class="field__input" type="text" th:field="*{state}"
+                           th:classappend="${#fields.hasErrors('state')} ? 'field__input--invalid'"
+                           maxlength="2" placeholder="MI">
+                    <span class="field__error" th:if="${#fields.hasErrors('state')}" th:errors="*{state}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">ZIP</span>
+                    <input class="field__input" type="text" th:field="*{zipCode}"
+                           th:classappend="${#fields.hasErrors('zipCode')} ? 'field__input--invalid'"
+                           placeholder="49425">
+                    <span class="field__error" th:if="${#fields.hasErrors('zipCode')}" th:errors="*{zipCode}"></span>
                 </label>
 
                 <label class="field">
