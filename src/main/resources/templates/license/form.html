@@ -67,7 +67,7 @@
 
                 <label class="field">
                     <span class="field__label">License type</span>
-                    <input class="field__input" placeholder="MD" th:classappend="${#fields.hasErrors('licenseType')} ? 'field__input--invalid'"
+                    <input class="field__input" placeholder="DEA, CS, Professional License, etc." th:classappend="${#fields.hasErrors('licenseType')} ? 'field__input--invalid'"
                            th:field="*{licenseType}"
                            type="text">
                     <span class="field__error" th:errors="*{licenseType}"
