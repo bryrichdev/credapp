@@ -4,14 +4,19 @@ import dev.bryrich.credapp.dto.OwnerForm;
 import dev.bryrich.credapp.dto.OwnerGroupForm;
 import dev.bryrich.credapp.entity.GroupOwner;
 import dev.bryrich.credapp.entity.Owner;
+import dev.bryrich.credapp.entity.enums.SsnSubjectType;
 import dev.bryrich.credapp.exception.OwnershipPercentExceededException;
 import dev.bryrich.credapp.service.GroupOwnershipService;
 import dev.bryrich.credapp.service.GroupService;
+import dev.bryrich.credapp.security.CredAppUserDetails;
 import dev.bryrich.credapp.service.OwnerService;
+import dev.bryrich.credapp.service.SsnAccessService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -19,7 +24,9 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Owners are people, kept separate from any one group. The same person can own several,
@@ -32,13 +39,40 @@ public class OwnerWebController {
     private final OwnerService ownerService;
     private final GroupOwnershipService ownershipService;
     private final GroupService groupService;
+    private final SsnAccessService ssnAccessService;
 
     public OwnerWebController(OwnerService ownerService,
                               GroupOwnershipService ownershipService,
-                              GroupService groupService) {
+                              GroupService groupService,
+                              SsnAccessService ssnAccessService) {
         this.ownerService = ownerService;
         this.ownershipService = ownershipService;
         this.groupService = groupService;
+        this.ssnAccessService = ssnAccessService;
+    }
+
+    /**
+     * Hands back one decrypted SSN and logs the fact. Answers JSON rather than rendering
+     * the number into the page, so it never reaches page source, browser history or a
+     * cached response.
+     */
+    @PostMapping("/{id}/ssn")
+    @ResponseBody
+    public Map<String, String> revealSsn(@AuthenticationPrincipal CredAppUserDetails principal,
+                                         @PathVariable Long id,
+                                         HttpServletRequest request) {
+        String ssn = ssnAccessService.revealOwnerSsn(principal.getUser(), id, clientIp(request));
+        Map<String, String> body = new HashMap<>();
+        body.put("ssn", ssn);
+        return body;
+    }
+
+    private static String clientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 
     /** Blank text inputs submit "" — store null instead. */
@@ -177,5 +211,8 @@ public class OwnerWebController {
         List<GroupOwner> stakes = ownershipService.findGroupsOwnedBy(id);
         model.addAttribute("owner", owner);
         model.addAttribute("stakes", stakes);
+        model.addAttribute("ssnOnFile", ssnAccessService.ownerSsnOnFile(id));
+        model.addAttribute("ssnAccess",
+                ssnAccessService.recentAccess(SsnSubjectType.OWNER, id));
     }
 }

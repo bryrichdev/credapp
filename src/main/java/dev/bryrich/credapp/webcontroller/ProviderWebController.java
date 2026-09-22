@@ -7,20 +7,27 @@ import dev.bryrich.credapp.entity.License;
 import dev.bryrich.credapp.entity.enums.LicenseStatus;
 import dev.bryrich.credapp.entity.Provider;
 import dev.bryrich.credapp.entity.enums.Sex;
+import dev.bryrich.credapp.security.CredAppUserDetails;
 import dev.bryrich.credapp.service.GroupProviderService;
 import dev.bryrich.credapp.service.GroupService;
 import dev.bryrich.credapp.service.LicenseService;
 import dev.bryrich.credapp.service.ProviderService;
+import dev.bryrich.credapp.service.SsnAccessService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/providers")
@@ -30,15 +37,41 @@ public class ProviderWebController {
     private final LicenseService licenseService;
     private final GroupProviderService groupProviderService;
     private final GroupService groupService;
+    private final SsnAccessService ssnAccessService;
 
     public ProviderWebController(ProviderService providerService,
                                  LicenseService licenseService,
                                  GroupProviderService groupProviderService,
-                                 GroupService groupService) {
+                                 GroupService groupService,
+                                 SsnAccessService ssnAccessService) {
         this.providerService = providerService;
         this.licenseService = licenseService;
         this.groupProviderService = groupProviderService;
         this.groupService = groupService;
+        this.ssnAccessService = ssnAccessService;
+    }
+
+    /**
+     * Same contract as the owner endpoint. Nothing writes providers.ssn through the web
+     * UI yet, so this reports nothing on file until a field for it exists.
+     */
+    @PostMapping("/{id}/ssn")
+    @ResponseBody
+    public Map<String, String> revealSsn(@AuthenticationPrincipal CredAppUserDetails principal,
+                                         @PathVariable Long id,
+                                         HttpServletRequest request) {
+        String ssn = ssnAccessService.revealProviderSsn(principal.getUser(), id, clientIp(request));
+        Map<String, String> body = new HashMap<>();
+        body.put("ssn", ssn);
+        return body;
+    }
+
+    private static String clientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 
     /** Blank text inputs submit "" — store null instead. */

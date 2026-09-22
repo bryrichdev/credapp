@@ -40,6 +40,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return problem;
     }
 
+    @ExceptionHandler(SsnAccessDeniedException.class)
+    public ProblemDetail handleSsnAccessDenied(SsnAccessDeniedException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN, ex.getMessage());
+        problem.setTitle("Not allowed");
+        return problem;
+    }
+
     @ExceptionHandler(OwnershipPercentExceededException.class)
     public ProblemDetail handleOwnershipPercentExceeded(OwnershipPercentExceededException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(

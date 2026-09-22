@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${owner.firstName} + ' ' + ${owner.lastName} + ' · CredApp'">Owner &middot; CredApp</title>
+    <meta name="_csrf" th:content="${_csrf?.token}">
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}">
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
@@ -44,8 +46,15 @@
 
             <dt>SSN</dt>
             <dd>
-                <span class="badge" th:classappend="${owner.ssn != null} ? 'badge--active' : 'badge--inactive'"
-                      th:text="${owner.ssn != null} ? 'On file, encrypted' : 'Not on file'"></span>
+                <span class="row-actions row-actions--start">
+                    <span class="badge" id="ssnBadge"
+                          th:classappend="${ssnOnFile} ? 'badge--active' : 'badge--inactive'"
+                          th:text="${ssnOnFile} ? 'On file, encrypted' : 'Not on file'"></span>
+                    <button class="button button--quiet button--small" type="button" id="revealSsn"
+                            th:if="${ssnOnFile and user.role.canRevealSsn()}"
+                            th:attr="data-url=@{/owners/{id}/ssn(id=${owner.id})}">Show SSN</button>
+                </span>
+                <span class="field__error" id="ssnError" hidden></span>
             </dd>
 
             <dt>Added</dt>
@@ -157,6 +166,31 @@
         </div>
     </section>
 
+    <!-- ============ who has looked at this SSN ============ -->
+    <section class="card card--flush" th:if="${!ssnAccess.isEmpty()}">
+        <div class="card__header">
+            <h2>SSN access</h2>
+            <span class="count-pill" th:text="${ssnAccess.size()}">0</span>
+        </div>
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th>When</th>
+                <th>Who</th>
+                <th>From</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="entry : ${ssnAccess}">
+                <td th:text="${entry.accessedAt}"></td>
+                <td th:text="${entry.userEmail}"></td>
+                <td th:text="${entry.ipAddress} ?: '—'"></td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
     <section class="card danger-zone" th:unless="${editing}">
         <div>
             <h2>Delete owner</h2>
@@ -204,6 +238,78 @@
             if (dirty) {
                 event.preventDefault();
                 event.returnValue = '';
+            }
+        });
+    })();
+</script>
+
+<script>
+    (function () {
+        const button = document.getElementById('revealSsn');
+        const badge = document.getElementById('ssnBadge');
+        const error = document.getElementById('ssnError');
+        if (!button || !badge) {
+            return;
+        }
+
+        const HIDE_AFTER_MS = 30000;
+        const originalText = badge.textContent;
+        const originalClass = badge.className;
+        let hideTimer = null;
+
+        function conceal() {
+            badge.textContent = originalText;
+            badge.className = originalClass;
+            button.textContent = 'Show SSN';
+            button.disabled = false;
+            hideTimer = null;
+        }
+
+        button.addEventListener('click', async function () {
+            // A second click while the number is up puts it away early.
+            if (hideTimer) {
+                clearTimeout(hideTimer);
+                conceal();
+                return;
+            }
+
+            error.hidden = true;
+            button.disabled = true;
+            button.textContent = 'Checking…';
+
+            const csrfToken = document.querySelector('meta[name="_csrf"]');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
+            const headers = { 'Accept': 'application/json' };
+            if (csrfToken && csrfHeader && csrfHeader.content) {
+                headers[csrfHeader.content] = csrfToken.content;
+            }
+
+            try {
+                const response = await fetch(button.dataset.url, {
+                    method: 'POST',
+                    headers: headers,
+                    credentials: 'same-origin'
+                });
+                if (!response.ok) {
+                    throw new Error(response.status === 403
+                        ? 'You are not allowed to view stored SSNs.'
+                        : 'Could not retrieve the SSN.');
+                }
+                const body = await response.json();
+                if (!body.ssn) {
+                    throw new Error('No SSN is stored for this owner.');
+                }
+
+                badge.textContent = body.ssn;
+                badge.className = 'badge badge--alert';
+                button.textContent = 'Hide';
+                button.disabled = false;
+                // Put it away on its own, so it can't be left on screen.
+                hideTimer = setTimeout(conceal, HIDE_AFTER_MS);
+            } catch (failure) {
+                error.textContent = failure.message;
+                error.hidden = false;
+                conceal();
             }
         });
     })();
