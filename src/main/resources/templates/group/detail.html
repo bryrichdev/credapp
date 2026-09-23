@@ -115,8 +115,9 @@
                 <tfoot>
                 <tr>
                     <td>Total</td>
-                    <td th:text="${totalPercent} + '%'">0%</td>
-                    <td>
+                    <td data-label="Owned" th:text="${totalPercent} + '%'">0%</td>
+                    <!-- On a phone this summary row stacks like the others; this label beats "Effective". -->
+                    <td data-label="Status">
                         <span class="badge"
                               th:classappend="${remainingPercent.signum() == 0} ? 'badge--active' : 'badge--pending'"
                               th:text="${remainingPercent.signum() == 0}

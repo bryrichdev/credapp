@@ -3,43 +3,62 @@
 <body>
 
 <th:block th:fragment="topbar(user, section)">
-<header class="topbar">
+<header class="topbar" data-topbar>
     <div class="topbar__left">
         <a class="topbar__brand" th:href="@{/}">
             <span class="topbar__mark">CA</span>
             <span>CredApp</span>
         </a>
 
-        <nav class="topnav" aria-label="Main navigation">
+        <nav class="topnav" id="topbar-nav" aria-label="Main navigation">
             <a class="topnav__link" th:classappend="${section == 'providers'} ? 'topnav__link--active'"
+               th:attr="aria-current=${section == 'providers'} ? 'page'"
                th:href="@{/providers}">Providers</a>
             <a class="topnav__link" th:classappend="${section == 'licenses'} ? 'topnav__link--active'"
+               th:attr="aria-current=${section == 'licenses'} ? 'page'"
                th:href="@{/licenses}">Licenses</a>
             <a class="topnav__link" th:classappend="${section == 'groups'} ? 'topnav__link--active'"
+               th:attr="aria-current=${section == 'groups'} ? 'page'"
                th:href="@{/groups}">Groups</a>
             <a class="topnav__link" th:classappend="${section == 'owners'} ? 'topnav__link--active'"
+               th:attr="aria-current=${section == 'owners'} ? 'page'"
                th:href="@{/owners}">Owners</a>
             <a class="topnav__link" th:classappend="${section == 'payers'} ? 'topnav__link--active'"
+               th:attr="aria-current=${section == 'payers'} ? 'page'"
                th:href="@{/payers}">Payers</a>
             <a class="topnav__link" th:classappend="${section == 'users'} ? 'topnav__link--active'"
+               th:attr="aria-current=${section == 'users'} ? 'page'"
                th:href="@{/admin/users}"
                th:if="${isAdmin}">Users</a>
             <a class="topnav__link" th:classappend="${section == 'import'} ? 'topnav__link--active'"
+               th:attr="aria-current=${section == 'import'} ? 'page'"
                th:href="@{/admin/import}"
                th:if="${isAdmin}">Import</a>
         </nav>
     </div>
 
     <div class="topbar__right">
-        <span class="badge badge--inactive" th:unless="${canEdit}">Read only</span>
-        <a class="topbar__user" th:classappend="${section == 'account'} ? 'topbar__user--active'"
-           th:href="@{/account}" th:text="${user.email}"
-           th:title="'My account: ' + ${user.email}">user@example.com</a>
-        <form method="post" th:action="@{/logout}">
-            <button class="button button--quiet" type="submit">Sign out</button>
-        </form>
+        <div class="topbar__account">
+            <span class="badge badge--inactive" th:unless="${canEdit}">Read only</span>
+            <a class="topbar__user" th:classappend="${section == 'account'} ? 'topbar__user--active'"
+               th:href="@{/account}" th:title="'My account: ' + ${user.email}">
+                <span class="topbar__user-label">My account</span>
+                <span class="topbar__user-email" th:text="${user.email}">user@example.com</span>
+            </a>
+            <form method="post" th:action="@{/logout}">
+                <button class="button button--quiet" type="submit">Sign out</button>
+            </form>
+        </div>
+
+        <!-- Phones only; layout.js wires it up. Without the script the full bar shows instead. -->
+        <button class="topbar__menu-button" type="button" aria-expanded="false"
+                aria-controls="topbar-nav" data-topbar-toggle hidden>
+            <span class="topbar__menu-icon" aria-hidden="true"></span>
+            <span>Menu</span>
+        </button>
     </div>
 </header>
+<script th:src="@{/js/layout.js}" defer></script>
 
 <!-- A superuser looking at another user group: say whose it is and that it's read-only. -->
 <div class="viewing-banner" role="status" th:if="${viewingGroupName != null}">

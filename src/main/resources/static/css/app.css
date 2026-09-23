@@ -111,6 +111,27 @@ a {
     white-space: nowrap;
 }
 
+.topbar__account {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 0;
+}
+
+/* Read by screen readers everywhere; shown as a heading only in the phone menu. */
+.topbar__user-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.topbar__menu-button {
+    display: none;
+}
+
 /* ---------- layout ---------- */
 
 .page {
@@ -1133,15 +1154,6 @@ input.field__input[type="date"] {
         padding: 0.75rem 1rem;
     }
 
-    .topbar__right {
-        gap: 0.5rem;
-    }
-
-    .topbar__user {
-        max-width: 7rem;
-        font-size: 0.75rem;
-    }
-
     .page {
         padding: 1.25rem 1rem calc(2rem + env(safe-area-inset-bottom));
     }
@@ -1275,16 +1287,6 @@ input.field__input[type="date"] {
 }
 
 @media (max-width: 400px) {
-    .topbar__right {
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        max-width: 9rem;
-    }
-
-    .topbar__user {
-        max-width: 9rem;
-    }
-
     .pagination {
         gap: 0.5rem;
     }
@@ -1540,4 +1542,323 @@ a.topbar__user:hover,
 
 .account-form__confirm {
     border-left: 4px solid var(--teal-600);
+}
+
+/* ============ phone menu ============
+ * Below tablet width the bar is the brand and a Menu button, kept at the top while
+ * scrolling; the button opens the nav and your account as a full-width panel. Only once
+ * layout.js has marked the bar ready, so it never hides the nav without a way to open it.
+ */
+
+@media (max-width: 860px) {
+    .topbar--menu-ready {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0;
+        padding: 0.6rem 1rem;
+    }
+
+    .topbar--menu-ready .topbar__left,
+    .topbar--menu-ready .topbar__right {
+        display: contents;
+    }
+
+    .topbar--menu-ready .topbar__brand {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .topbar--menu-ready .topbar__menu-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        grid-column: 2;
+        grid-row: 1;
+        min-height: 2.75rem;
+        padding: 0 0.9rem;
+        border: 1px solid var(--slate-300);
+        border-radius: var(--radius);
+        background: #ffffff;
+        color: var(--slate-900);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .topbar__menu-icon,
+    .topbar__menu-icon::before,
+    .topbar__menu-icon::after {
+        display: block;
+        width: 18px;
+        height: 2px;
+        border-radius: 2px;
+        background: currentColor;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .topbar__menu-icon {
+        position: relative;
+    }
+
+    .topbar__menu-icon::before,
+    .topbar__menu-icon::after {
+        content: "";
+        position: absolute;
+        left: 0;
+    }
+
+    .topbar__menu-icon::before {
+        top: -6px;
+    }
+
+    .topbar__menu-icon::after {
+        top: 6px;
+    }
+
+    .topbar--open .topbar__menu-icon {
+        background: transparent;
+    }
+
+    .topbar--open .topbar__menu-icon::before {
+        transform: translateY(6px) rotate(45deg);
+    }
+
+    .topbar--open .topbar__menu-icon::after {
+        transform: translateY(-6px) rotate(-45deg);
+    }
+
+    .topbar--menu-ready .topnav,
+    .topbar--menu-ready .topbar__account {
+        display: none;
+    }
+
+    .topbar--open .topnav {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        grid-column: 1 / -1;
+        grid-row: 2;
+        margin: 0.75rem 0 0;
+        padding: 0.6rem 0 0;
+        border-top: 1px solid var(--slate-200);
+        overflow: visible;
+    }
+
+    .topbar--open .topnav__link {
+        min-height: 3rem;
+        padding: 0.5rem 0.75rem;
+        font-size: 1rem;
+    }
+
+    .topbar--open .topbar__account {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.6rem;
+        grid-column: 1 / -1;
+        grid-row: 3;
+        margin-top: 0.6rem;
+        padding: 0.75rem 0 0.25rem;
+        border-top: 1px solid var(--slate-200);
+    }
+
+    .topbar--open .topbar__account .badge {
+        align-self: flex-start;
+        margin-left: 0.75rem;
+    }
+
+    .topbar--open .topbar__user {
+        display: flex;
+        flex-direction: column;
+        max-width: none;
+        padding: 0.5rem 0.75rem;
+        white-space: normal;
+    }
+
+    .topbar--open .topbar__user-label {
+        position: static;
+        width: auto;
+        height: auto;
+        overflow: visible;
+        clip: auto;
+        color: var(--slate-900);
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .topbar--open .topbar__user-email {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--slate-500);
+        font-size: 0.875rem;
+    }
+
+    .topbar--open .topbar__account form .button {
+        width: 100%;
+        min-height: 2.75rem;
+    }
+}
+
+/* layout.js wraps every table cell's contents; on wide screens that changes nothing. */
+.table__label {
+    display: none;
+}
+
+.table__value {
+    display: contents;
+}
+
+/* ============ tables as cards on phones ============
+ * layout.js labels every cell with its column header and marks the table table--stack.
+ * Each row then becomes a card: the first column as its title, every other value under
+ * its label, and the row's buttons along the bottom. Tapping a card whose row links
+ * somewhere follows that link, as tapping the row does on a wide screen.
+ */
+
+@media (max-width: 640px) {
+    .table-scroll:has(> .table--stack) {
+        overflow: visible;
+    }
+
+    .table-scroll:has(> .table--stack)::before {
+        content: none;
+        display: none;
+    }
+
+    .table-scroll .table.table--stack {
+        min-width: 0;
+    }
+
+    .table.table--stack,
+    .table.table--stack tbody,
+    .table.table--stack tfoot,
+    .table.table--stack tr {
+        display: block;
+        width: 100%;
+    }
+
+    .table.table--stack thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+
+    .table.table--stack tr {
+        position: relative;
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid var(--slate-200);
+    }
+
+    .table.table--stack tbody tr:last-child,
+    .table.table--stack tfoot tr:last-child {
+        border-bottom: 0;
+    }
+
+    .table.table--stack tfoot tr {
+        border-top: 1px solid var(--slate-200);
+    }
+
+    /* Label and value side by side on a shared baseline. The value is one element (layout.js
+       wraps each cell's contents), so a value made of several pieces, such as an email and
+       a badge, stays together in its column and wraps within it. */
+    .card--flush .table.table--stack td,
+    .card--flush .table.table--stack td:first-child,
+    .card--flush .table.table--stack td:last-child,
+    .card--flush .table.table--stack td:has(.rowlink),
+    .table.table--stack td,
+    .table.table--stack td:has(.rowlink) {
+        display: grid;
+        grid-template-columns: minmax(0, 40%) minmax(0, 1fr);
+        column-gap: 0.75rem;
+        align-items: baseline;
+        width: auto;
+        padding: 0.25rem 0;
+        border: 0;
+        text-align: left;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .table.table--stack .table__label {
+        display: block;
+        color: var(--slate-500);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        line-height: 1.35;
+        text-transform: uppercase;
+        overflow-wrap: normal;
+    }
+
+    .table.table--stack .table__value {
+        display: block;
+        min-width: 0;
+    }
+
+    /* The first column names the row. It stays unpositioned so the row link's cover
+       below is sized to the whole card, not to this cell. */
+    .card--flush .table.table--stack td:first-child,
+    .table.table--stack td:first-child {
+        display: block;
+        padding: 0 0 0.35rem;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .table.table--stack td:first-child .table__label,
+    .table.table--stack td[data-label=""] .table__label {
+        display: none;
+    }
+
+    /* A column with no header is the row's buttons. */
+    .card--flush .table.table--stack td[data-label=""],
+    .table.table--stack td[data-label=""] {
+        display: block;
+        position: relative;
+        z-index: 1;
+        padding: 0.65rem 0 0;
+    }
+
+    .table.table--stack .row-actions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .card--flush .table.table--stack td:first-child .rowlink,
+    .card--flush .table.table--stack td:last-child .rowlink,
+    .card--flush .table.table--stack td .rowlink,
+    .table.table--stack .rowlink {
+        display: inline;
+        padding: 0;
+    }
+
+    /* The row's own link covers the card, as the row is clickable on a wide screen;
+       buttons and form controls sit above it. */
+    .table.table--stack td:first-child .rowlink::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+    }
+
+    .table.table--stack td select,
+    .table.table--stack td form,
+    .table.table--stack td .button,
+    .table.table--stack td a:not(.rowlink) {
+        position: relative;
+        z-index: 1;
+    }
+
+    .table.table--stack tbody tr:hover {
+        background: transparent;
+    }
+
+    .table.table--stack tbody tr:has(.rowlink):active {
+        background: var(--slate-50);
+    }
 }
