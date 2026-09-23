@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Import &middot; CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'import')}"></div>
+
+<main class="page">
+
+    <div class="page__header">
+        <h1>Import from a spreadsheet</h1>
+        <p class="page__subtitle">
+            Add groups, owners and providers in bulk, with everything attached to them, into
+            <strong th:text="${targetGroup}">your user group</strong>.
+        </p>
+    </div>
+
+    <div class="alert alert--error" th:if="${uploadError}" th:text="${uploadError}"></div>
+    <div class="alert alert--info" th:if="${viewingGroupName != null and report == null}">
+        You're viewing <strong th:text="${viewingGroupName}">this group</strong> read-only, but an import here
+        goes into it: that's the one change a superuser can make while viewing.
+    </div>
+
+    <!-- ============ result of an upload ============ -->
+    <th:block th:if="${report != null}">
+
+        <section class="card import-result import-result--problems" th:if="${report.hasProblems()}">
+            <div class="import-result__head">
+                <h2 th:if="${changedSincePreview}">Nothing was imported</h2>
+                <h2 th:unless="${changedSincePreview}"
+                    th:text="${report.problems().size() == 1} ? '1 problem to fix' : ${report.problems().size()} + ' problems to fix'">
+                    Problems to fix</h2>
+                <p th:if="${changedSincePreview}">
+                    Something in CredApp changed after the preview, and the file no longer imports cleanly.
+                    Nothing was saved. Fix these and upload it again.
+                </p>
+                <p th:unless="${changedSincePreview}">
+                    <span th:text="${fileName}">The file</span> can't be imported until these are fixed. Nothing
+                    has been saved. Fix them in the workbook and upload it again.
+                </p>
+            </div>
+            <div class="table-scroll" role="region" tabindex="0" aria-label="Problems">
+                <table class="table problem-table">
+                    <thead>
+                    <tr>
+                        <th>Sheet</th>
+                        <th>Row</th>
+                        <th>Column</th>
+                        <th>Problem</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="problem, stat : ${report.problems()}" th:if="${stat.index < 250}">
+                        <td th:text="${problem.sheet()} ?: 'Whole file'">Providers</td>
+                        <td class="problem-table__num" th:text="${problem.row()} ?: '—'">4</td>
+                        <td th:text="${problem.column()} ?: '—'">NPI</td>
+                        <td th:text="${problem.message()}">Problem</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="import-result__more" th:if="${report.problems().size() > 250}"
+               th:text="'…and ' + ${report.problems().size() - 250} + ' more. Fix these first; the rest will show on the next upload.'">
+            </p>
+        </section>
+
+        <section class="card import-result import-result--ready" th:unless="${report.hasProblems()}">
+            <div class="import-result__head">
+                <h2>Ready to import</h2>
+                <p>
+                    <span th:text="${fileName}">The file</span> checked out: every row passed the same rules as
+                    the forms, and nothing clashes with what's already in CredApp. Nothing is saved until you
+                    click Import.
+                </p>
+            </div>
+
+            <dl class="import-stats">
+                <div th:each="count : ${report.counts()}">
+                    <dt th:text="${count.sheet()}">Providers</dt>
+                    <dd th:text="${count.rows()}">0</dd>
+                </div>
+            </dl>
+
+            <details class="import-names" th:if="${!report.groups().isEmpty()}">
+                <summary th:text="${report.groups().size() == 1} ? '1 group' : ${report.groups().size()} + ' groups'">Groups</summary>
+                <ul><li th:each="name : ${report.groups()}" th:text="${name}"></li></ul>
+            </details>
+            <details class="import-names" th:if="${!report.providers().isEmpty()}">
+                <summary th:text="${report.providers().size() == 1} ? '1 provider' : ${report.providers().size()} + ' providers'">Providers</summary>
+                <ul><li th:each="name : ${report.providers()}" th:text="${name}"></li></ul>
+            </details>
+
+            <div class="import-result__actions">
+                <form method="post" th:action="@{/admin/import/confirm}">
+                    <input type="hidden" name="token" th:value="${token}">
+                    <button class="button" type="submit"
+                            th:text="'Import into ' + ${targetGroup}">Import</button>
+                </form>
+                <form method="post" th:action="@{/admin/import/cancel}">
+                    <button class="button button--quiet" type="submit">Cancel</button>
+                </form>
+            </div>
+        </section>
+    </th:block>
+
+    <!-- ============ the two steps ============ -->
+    <div class="import-steps">
+        <section class="card import-step">
+            <span class="import-step__number">1</span>
+            <div>
+                <h2>Download the template</h2>
+                <p>
+                    One sheet per kind of record: groups, locations, owners, providers, licenses and the rest.
+                    The first sheet explains every column. Rows link to each other with short IDs you make up,
+                    such as G1 and P1.
+                </p>
+                <a class="button button--quiet" th:href="@{/admin/import/template}" download>Download template (.xlsx)</a>
+            </div>
+        </section>
+
+        <section class="card import-step">
+            <span class="import-step__number">2</span>
+            <div>
+                <h2 th:text="${report != null} ? 'Upload it again' : 'Upload it'">Upload it</h2>
+                <p>
+                    You'll see a preview first. It checks every row the way the forms do and flags anything
+                    already in CredApp. Nothing is saved until you click Import, and then everything is saved
+                    together or not at all.
+                </p>
+                <form class="import-upload" method="post" enctype="multipart/form-data"
+                      th:action="@{/admin/import/preview}">
+                    <label class="button button--quiet import-upload__pick">
+                        <input class="import-upload__input" type="file" name="file" required
+                               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                               data-import-file>
+                        Choose file
+                    </label>
+                    <button class="button" type="submit">Check file</button>
+                    <p class="import-upload__name" data-import-file-name aria-live="polite">No file chosen</p>
+                </form>
+            </div>
+        </section>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+<script th:src="@{/js/import-upload.js}"></script>
+
+</body>
+</html>

@@ -1328,3 +1328,182 @@ input.field__input[type="date"] {
 .viewing-banner form {
     margin: 0;
 }
+
+/* ============ spreadsheet import ============ */
+
+.import-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.import-steps .card + .card {
+    margin-top: 0;
+}
+
+.import-step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.import-step h2 {
+    margin: 2px 0 6px;
+    font-size: 1.05rem;
+}
+
+.import-step p {
+    margin: 0 0 14px;
+    color: var(--slate-700);
+    line-height: 1.5;
+}
+
+.import-step__number {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--teal-50);
+    color: var(--teal-700);
+    font-weight: 700;
+}
+
+.import-upload {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+/*
+ * The browser's own file control squeezes the chosen name into a fixed box and cuts out
+ * its middle, so it's hidden behind a plain button and the name is shown in full below.
+ */
+.import-upload__pick {
+    position: relative;
+    cursor: pointer;
+}
+
+.import-upload__input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.import-upload__pick:focus-within {
+    outline: 2px solid var(--teal-600);
+    outline-offset: 2px;
+}
+
+.import-upload__name {
+    flex: 1 1 100%;
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--slate-500);
+    overflow-wrap: anywhere;
+}
+
+.import-upload__name--chosen {
+    color: var(--slate-900);
+    font-weight: 600;
+}
+
+.import-result {
+    border-left: 4px solid var(--teal-600);
+}
+
+.import-result--problems {
+    border-left-color: var(--red-700);
+    padding-bottom: 8px;
+}
+
+.import-result__head h2 {
+    margin: 0 0 6px;
+    font-size: 1.15rem;
+}
+
+.import-result--problems .import-result__head h2 {
+    color: var(--red-700);
+}
+
+.import-result__head p {
+    margin: 0 0 14px;
+    color: var(--slate-700);
+    line-height: 1.5;
+}
+
+.import-result__more {
+    margin: 10px 0 4px;
+    color: var(--slate-500);
+    font-size: 0.9rem;
+}
+
+.problem-table td {
+    vertical-align: top;
+}
+
+.problem-table td:first-child,
+.problem-table td:nth-child(3) {
+    white-space: nowrap;
+}
+
+.problem-table__num {
+    font-variant-numeric: tabular-nums;
+}
+
+.import-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 8px;
+    margin: 0 0 14px;
+}
+
+.import-stats div {
+    background: var(--slate-50);
+    border: 1px solid var(--slate-200);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+}
+
+.import-stats dt {
+    font-size: 0.8rem;
+    color: var(--slate-500);
+}
+
+.import-stats dd {
+    margin: 2px 0 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--slate-900);
+    font-variant-numeric: tabular-nums;
+}
+
+.import-names {
+    margin: 0 0 8px;
+}
+
+.import-names summary {
+    cursor: pointer;
+    color: var(--teal-700);
+    font-weight: 600;
+}
+
+.import-names ul {
+    margin: 6px 0 0;
+    padding-left: 20px;
+    columns: 2 240px;
+    color: var(--slate-700);
+}
+
+.import-result__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+}

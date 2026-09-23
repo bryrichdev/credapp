@@ -24,6 +24,9 @@
             <a class="topnav__link" th:classappend="${section == 'users'} ? 'topnav__link--active'"
                th:href="@{/admin/users}"
                th:if="${isAdmin}">Users</a>
+            <a class="topnav__link" th:classappend="${section == 'import'} ? 'topnav__link--active'"
+               th:href="@{/admin/import}"
+               th:if="${isAdmin}">Import</a>
         </nav>
     </div>
 

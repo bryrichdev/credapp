@@ -12,6 +12,8 @@
 
 <main class="page">
 
+    <div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
+
     <div class="page__header page__header--row">
         <div>
         <h1>Providers</h1>
@@ -22,7 +24,10 @@
                   th:text="${page.totalElements} + ' result(s) for &quot;' + ${lastName} + '&quot;'">0 results</span>
         </p>
         </div>
-        <a class="button" th:href="@{/providers/new}" th:if="${canEdit}">Add provider</a>
+        <div class="row-actions">
+            <a class="button button--quiet" th:href="@{/admin/import}" th:if="${isAdmin}">Import spreadsheet</a>
+            <a class="button" th:href="@{/providers/new}" th:if="${canEdit}">Add provider</a>
+        </div>
     </div>
 
     <form class="toolbar" th:action="@{/providers}" method="get">

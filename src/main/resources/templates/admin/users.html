@@ -70,6 +70,13 @@
                         <div class="row-actions">
                             <a class="button button--quiet button--small"
                                th:href="@{/admin/users(group=${group.id})}">Accounts</a>
+                            <a th:if="${own}" class="button button--quiet button--small"
+                               th:href="@{/admin/import}">Import</a>
+                            <form th:unless="${own}" method="post"
+                                  th:action="@{/admin/user-groups/{id}/view(id=${group.id})}">
+                                <input type="hidden" name="next" value="import">
+                                <button class="button button--quiet button--small" type="submit">Import</button>
+                            </form>
                             <form th:unless="${own}" method="post"
                                   th:action="@{/admin/user-groups/{id}/view(id=${group.id})}">
                                 <button class="button button--small" type="submit">View as admin</button>

@@ -22,13 +22,16 @@ import java.util.regex.Pattern;
  *
  * The few posts that don't change records stay open: leaving the view, switching to
  * another group, signing out, and SSN reveals (which are reads, logged against the
- * superuser in that group's audit trail).
+ * superuser in that group's audit trail). The one deliberate write is the spreadsheet
+ * import, which is how a superuser onboards a practice on its behalf.
  */
 public class GroupViewFilter extends OncePerRequestFilter {
 
     private static final Set<String> READS = Set.of("GET", "HEAD", "OPTIONS");
     private static final Pattern ALLOWED_POSTS = Pattern.compile(
-            "^/(logout|admin/user-groups/view/exit|admin/user-groups/\\d+/view|providers/\\d+/ssn|owners/\\d+/ssn)$");
+            "^/(logout|admin/user-groups/view/exit|admin/user-groups/\\d+/view|providers/\\d+/ssn|owners/\\d+/ssn"
+                    // A superuser onboarding a practice imports into the group they're viewing.
+                    + "|admin/import/(preview|confirm|cancel))$");
     private static final Pattern READABLE_PAGE = Pattern.compile("^(/admin)?/[a-z-]+(/\\d+)?$");
     private static final Pattern EDIT_SCREEN = Pattern.compile("^(.*?)/(new|edit)(/.*)?$");
 

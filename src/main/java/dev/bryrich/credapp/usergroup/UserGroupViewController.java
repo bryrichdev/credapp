@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -32,6 +33,7 @@ public class UserGroupViewController {
     @PostMapping("/{id}/view")
     public String view(@AuthenticationPrincipal CredAppUserDetails principal,
                        @PathVariable Long id,
+                       @RequestParam(required = false) String next,
                        HttpServletRequest request,
                        RedirectAttributes redirectAttributes) {
         if (principal.getUser().getRole() != Role.SUPERUSER) {
@@ -39,14 +41,19 @@ public class UserGroupViewController {
         }
         UserGroup group = userGroups.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "No such user group"));
+        // "import" goes on to the spreadsheet import for that group; nothing else is accepted,
+        // so this can't be used to redirect anywhere else.
+        String destination = "import".equals(next) ? "redirect:/admin/import" : "redirect:/providers";
         if (group.getId().equals(principal.getUser().getUserGroupId())) {
             ViewedGroup.stop(request.getSession());
-            return "redirect:/providers";
+            return destination;
         }
         ViewedGroup.start(request.getSession(), group);
-        redirectAttributes.addFlashAttribute("message",
-                "You're viewing " + group.getName() + " as its admin sees it. Nothing can be changed here.");
-        return "redirect:/providers";
+        if (!"import".equals(next)) {
+            redirectAttributes.addFlashAttribute("message",
+                    "You're viewing " + group.getName() + " as its admin sees it. Nothing can be changed here.");
+        }
+        return destination;
     }
 
     @PostMapping("/view/exit")
