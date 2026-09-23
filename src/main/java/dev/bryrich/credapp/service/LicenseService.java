@@ -52,6 +52,15 @@ public class LicenseService {
         return licenseRepository.findExpiringWithProvider(LicenseStatus.ACTIVE, today, today.plusDays(days));
     }
 
+    /** With the provider loaded, for the Licenses tab's edit screen. */
+    @Transactional(readOnly = true)
+    public License findById(Long id) {
+        License license = licenseRepository.findById(id)
+                .orElseThrow(() -> new LicenseNotFoundException(id));
+        license.getProvider().getFirstName();
+        return license;
+    }
+
     @Transactional(readOnly = true)
     public License findByIdAndProviderId(Long id, Long providerId) {
         return licenseRepository.findByIdAndProviderId(id, providerId)

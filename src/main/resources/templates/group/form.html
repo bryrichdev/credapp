@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Add group &middot; CredApp</title>
+    <title th:text="${group != null} ? 'Edit ' + ${group.lbn} + ' · CredApp' : 'Add group · CredApp'">Add group &middot; CredApp</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
@@ -12,56 +12,207 @@
 
 <main class="page">
 
-    <a class="backlink" th:href="@{/groups}">&larr; All groups</a>
+    <a class="backlink" th:if="${group == null}" th:href="@{/groups}">&larr; All groups</a>
+    <a class="backlink" th:if="${group != null}" th:href="@{/groups/{id}(id=${group.id})}">&larr; Back to group</a>
 
     <div class="page__header">
-        <h1>Add group</h1>
-        <p class="page__subtitle">Legal business name and tax ID are required.</p>
+        <h1 th:text="${group != null} ? 'Edit ' + ${group.lbn} : 'Add group'">Add group</h1>
+        <p class="page__subtitle">
+            Only the legal business name and tax ID are required. Fill in what you have now; everything is saved together.
+        </p>
     </div>
 
-    <section class="card">
-        <form th:action="@{/groups}" th:object="${form}" method="post">
+    <nav class="section-nav" aria-label="Form sections">
+        <a class="section-nav__link" href="#details">Details</a>
+        <a class="section-nav__link" href="#locations">Locations</a>
+        <a class="section-nav__link" href="#owners">Owners</a>
+        <a class="section-nav__link" href="#relations">Owner relationships</a>
+        <a class="section-nav__link" href="#providers">Providers</a>
+        <a class="section-nav__link" href="#specialties">Specialties</a>
+        <a class="section-nav__link" href="#policies">Malpractice policies</a>
+    </nav>
+
+    <form id="profileForm" data-profile-form method="post" th:object="${form}" novalidate
+          th:action="${group != null} ? @{/groups/{id}/edit(id=${group.id})} : @{/groups}">
+
+        <div class="alert alert--error" th:if="${#fields.hasGlobalErrors()}">
+            <p class="alert__line" th:each="message : ${#fields.globalErrors()}" th:text="${message}"></p>
+        </div>
+
+        <!-- ============ group details ============ -->
+        <section class="card form-section" id="details">
+            <h2>Group details</h2>
 
             <div class="form-grid">
                 <label class="field">
                     <span class="field__label">Legal business name</span>
-                    <input class="field__input" type="text" th:field="*{lbn}"
-                           th:classappend="${#fields.hasErrors('lbn')} ? 'field__input--invalid'">
-                    <span class="field__error" th:if="${#fields.hasErrors('lbn')}" th:errors="*{lbn}"></span>
+                    <input class="field__input" type="text" th:field="*{details.lbn}"
+                           th:classappend="${#fields.hasErrors('details.lbn')} ? 'field__input--invalid'">
+                    <span class="field__error" th:if="${#fields.hasErrors('details.lbn')}" th:errors="*{details.lbn}"></span>
                 </label>
 
                 <label class="field">
                     <span class="field__label">DBA</span>
-                    <input class="field__input" type="text" th:field="*{dba}"
-                           placeholder="Leave blank if same as legal name">
+                    <input class="field__input" type="text" th:field="*{details.dba}">
                 </label>
 
                 <label class="field">
                     <span class="field__label">Group NPI</span>
-                    <input class="field__input" type="text" inputmode="numeric" th:field="*{npi}"
-                           th:classappend="${#fields.hasErrors('npi')} ? 'field__input--invalid'"
+                    <input class="field__input" type="text" inputmode="numeric" th:field="*{details.npi}"
+                           th:classappend="${#fields.hasErrors('details.npi')} ? 'field__input--invalid'"
                            placeholder="10 digits">
-                    <span class="field__error" th:if="${#fields.hasErrors('npi')}" th:errors="*{npi}"></span>
+                    <span class="field__error" th:if="${#fields.hasErrors('details.npi')}" th:errors="*{details.npi}"></span>
                 </label>
 
                 <label class="field">
                     <span class="field__label">Tax ID</span>
-                    <input class="field__input" type="text" inputmode="numeric" th:field="*{taxId}"
-                           th:classappend="${#fields.hasErrors('taxId')} ? 'field__input--invalid'"
+                    <input class="field__input" type="text" inputmode="numeric" th:field="*{details.taxId}"
+                           th:classappend="${#fields.hasErrors('details.taxId')} ? 'field__input--invalid'"
                            placeholder="9 digits">
-                    <span class="field__error" th:if="${#fields.hasErrors('taxId')}" th:errors="*{taxId}"></span>
+                    <span class="field__error" th:if="${#fields.hasErrors('details.taxId')}" th:errors="*{details.taxId}"></span>
                 </label>
 
             </div>
+        </section>
 
-            <div class="form-actions">
-                <button class="button" type="submit">Save group</button>
-                <a class="button button--quiet" th:href="@{/groups}">Cancel</a>
+        <!-- ============ locations ============ -->
+        <section class="card card--flush form-section" id="locations" data-section="locations">
+            <div class="card__header">
+                <h2>Locations</h2>
+                <span class="count-pill" data-count>0</span>
+                <button class="button button--quiet toolbar__end" type="button" data-add-row>Add location</button>
             </div>
-        </form>
-    </section>
+            <div class="form-section__body">
+                <div data-rows>
+                    <th:block th:each="r, st : *{locations}" th:if="${r != null}">
+                        <div th:replace="~{group/rows :: location(${'locations[' + st.index + ']'}, ${r}, true)}"></div>
+                    </th:block>
+                </div>
+                <p class="form-section__empty" data-empty>No locations yet.</p>
+            </div>
+            <template data-row-template>
+                <div th:replace="~{group/rows :: location('locations[0]', ${blank.location}, false)}"></div>
+            </template>
+        </section>
+
+        <!-- ============ owners ============ -->
+        <section class="card card--flush form-section" id="owners" data-section="owners"
+                 data-link-source="owners" data-link-fallback="New owner (not saved yet)">
+            <div class="card__header">
+                <h2>Owners</h2>
+                <span class="count-pill" data-count>0</span>
+                <button class="button button--quiet toolbar__end" type="button" data-add-row>Add owner</button>
+            </div>
+            <div class="form-section__body">
+                <p class="form-section__hint">Pick someone already on file, or add a new owner here. Stakes can total 100% at most.</p>
+                <div data-rows>
+                    <th:block th:each="r, st : *{owners}" th:if="${r != null}">
+                        <div th:replace="~{group/rows :: owner(${'owners[' + st.index + ']'}, ${r}, true)}"></div>
+                    </th:block>
+                </div>
+                <p class="form-section__empty" data-empty>No owners yet.</p>
+            </div>
+            <template data-row-template>
+                <div th:replace="~{group/rows :: owner('owners[0]', ${blank.owner}, false)}"></div>
+            </template>
+        </section>
+
+        <!-- ============ owner relationships ============ -->
+        <section class="card card--flush form-section" id="relations" data-section="relations">
+            <div class="card__header">
+                <h2>Owner relationships</h2>
+                <span class="count-pill" data-count>0</span>
+                <button class="button button--quiet toolbar__end" type="button" data-add-row>Add relationship</button>
+            </div>
+            <div class="form-section__body">
+                <p class="form-section__hint">Payers ask whether any of this group's owners are related to each other.</p>
+                <div data-rows>
+                    <th:block th:each="r, st : *{relations}" th:if="${r != null}">
+                        <div th:replace="~{group/rows :: relation(${'relations[' + st.index + ']'}, ${r}, true)}"></div>
+                    </th:block>
+                </div>
+                <p class="form-section__empty" data-empty>No relationships recorded.</p>
+            </div>
+            <template data-row-template>
+                <div th:replace="~{group/rows :: relation('relations[0]', ${blank.relation}, false)}"></div>
+            </template>
+        </section>
+
+        <!-- ============ providers ============ -->
+        <section class="card card--flush form-section" id="providers" data-section="providers">
+            <div class="card__header">
+                <h2>Providers</h2>
+                <span class="count-pill" data-count>0</span>
+                <button class="button button--quiet toolbar__end" type="button" data-add-row>Add provider</button>
+            </div>
+            <div class="form-section__body">
+                <div data-rows>
+                    <th:block th:each="r, st : *{providers}" th:if="${r != null}">
+                        <div th:replace="~{group/rows :: provider(${'providers[' + st.index + ']'}, ${r}, true)}"></div>
+                    </th:block>
+                </div>
+                <p class="form-section__empty" data-empty>No providers yet.</p>
+            </div>
+            <template data-row-template>
+                <div th:replace="~{group/rows :: provider('providers[0]', ${blank.provider}, false)}"></div>
+            </template>
+        </section>
+
+        <!-- ============ specialties ============ -->
+        <section class="card card--flush form-section" id="specialties" data-section="taxonomies">
+            <div class="card__header">
+                <h2>Specialties</h2>
+                <span class="count-pill" data-count>0</span>
+                <button class="button button--quiet toolbar__end" type="button" data-add-row>Add specialty</button>
+            </div>
+            <div class="form-section__body">
+                <p class="form-section__hint">At most one can be primary.</p>
+                <div data-rows>
+                    <th:block th:each="r, st : *{taxonomies}" th:if="${r != null}">
+                        <div th:replace="~{group/rows :: taxonomy(${'taxonomies[' + st.index + ']'}, ${r}, true)}"></div>
+                    </th:block>
+                </div>
+                <p class="form-section__empty" data-empty>No specialties yet.</p>
+            </div>
+            <template data-row-template>
+                <div th:replace="~{group/rows :: taxonomy('taxonomies[0]', ${blank.taxonomy}, false)}"></div>
+            </template>
+        </section>
+
+        <!-- ============ malpractice policies ============ -->
+        <section class="card card--flush form-section" id="policies" data-section="policies">
+            <div class="card__header">
+                <h2>Malpractice policies</h2>
+                <span class="count-pill" data-count>0</span>
+                <button class="button button--quiet toolbar__end" type="button" data-add-row>Add policy</button>
+            </div>
+            <div class="form-section__body">
+                <div data-rows>
+                    <th:block th:each="r, st : *{policies}" th:if="${r != null}">
+                        <div th:replace="~{group/rows :: policy(${'policies[' + st.index + ']'}, ${r}, true)}"></div>
+                    </th:block>
+                </div>
+                <p class="form-section__empty" data-empty>No policies yet.</p>
+            </div>
+            <template data-row-template>
+                <div th:replace="~{group/rows :: policy('policies[0]', ${blank.policy}, false)}"></div>
+            </template>
+        </section>
+
+        <div class="savebar">
+            <span class="savebar__text">Saves every section at once</span>
+            <div class="savebar__actions">
+                <a class="button button--quiet"
+                   th:href="${group != null} ? @{/groups/{id}(id=${group.id})} : @{/groups}">Cancel</a>
+                <button class="button" type="submit"
+                        th:text="${group != null} ? 'Save changes' : 'Save group'">Save group</button>
+            </div>
+        </div>
+    </form>
 
 </main>
+
+<script th:src="@{/js/profile-form.js}"></script>
 
 <div th:replace="~{fragments/layout :: footer}"></div>
 

@@ -2,6 +2,7 @@ package dev.bryrich.credapp.webcontroller;
 
 
 import dev.bryrich.credapp.dto.LicenseForm;
+import dev.bryrich.credapp.entity.License;
 import dev.bryrich.credapp.entity.enums.LicenseStatus;
 import dev.bryrich.credapp.service.LicenseService;
 
@@ -17,6 +18,7 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -61,6 +63,9 @@ public class LicenseWebController {
                          BindingResult binding,
                          Model model,
                          RedirectAttributes redirectAttributes) {
+        if (form.getProviderId() == null) {
+            binding.rejectValue("providerId", "required", "Provider is required");
+        }
         if (binding.hasErrors()) {
             addFormOptions(model);
             return "license/form";
@@ -68,6 +73,48 @@ public class LicenseWebController {
         licenseService.addLicense(form.getProviderId(), form.toEntity());
         redirectAttributes.addFlashAttribute("message", "License added.");
         return "redirect:/providers/" + form.getProviderId();
+    }
+
+    // Quick renewals from this list. Adding and removing licenses otherwise happens on the
+    // provider form.
+
+    @GetMapping("/{id}/edit")
+    public String editLicense(@PathVariable Long id, Model model) {
+        License license = licenseService.findById(id);
+        LicenseForm form = LicenseForm.from(license);
+        form.setProviderId(license.getProvider().getId());
+        model.addAttribute("provider", license.getProvider());
+        model.addAttribute("form", form);
+        model.addAttribute("licenseId", id);
+        model.addAttribute("statuses", LicenseStatus.values());
+        return "license/form";
+    }
+
+    @PostMapping("/{id}/edit")
+    public String updateLicense(@PathVariable Long id,
+                                @Valid @ModelAttribute("form") LicenseForm form,
+                                BindingResult binding,
+                                Model model,
+                                RedirectAttributes redirectAttributes) {
+        License license = licenseService.findById(id);
+        Long providerId = license.getProvider().getId();
+        if (binding.hasErrors()) {
+            model.addAttribute("provider", license.getProvider());
+            model.addAttribute("licenseId", id);
+            model.addAttribute("statuses", LicenseStatus.values());
+            return "license/form";
+        }
+        licenseService.update(id, providerId, form::applyTo);
+        redirectAttributes.addFlashAttribute("message", "License updated.");
+        return "redirect:/licenses";
+    }
+
+    @PostMapping("/{id}/delete")
+    public String deleteLicense(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        License license = licenseService.findById(id);
+        licenseService.delete(id, license.getProvider().getId());
+        redirectAttributes.addFlashAttribute("message", "License deleted.");
+        return "redirect:/licenses";
     }
 
     private void addFormOptions(Model model) {

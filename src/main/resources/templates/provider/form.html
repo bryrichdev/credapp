@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Add provider &middot; CredApp</title>
+    <title th:text="${provider != null} ? 'Edit ' + ${provider.firstName} + ' ' + ${provider.lastName} + ' · CredApp' : 'Add provider · CredApp'">Add provider &middot; CredApp</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
@@ -12,89 +12,421 @@
 
 <main class="page">
 
-    <a class="backlink" th:href="@{/providers}">&larr; All providers</a>
+    <a class="backlink" th:if="${provider == null}" th:href="@{/providers}">&larr; All providers</a>
+    <a class="backlink" th:if="${provider != null}" th:href="@{/providers/{id}(id=${provider.id})}">&larr; Back to provider</a>
 
     <div class="page__header">
-        <h1>Add provider</h1>
-        <p class="page__subtitle">First and last name are required. A group can be added now or later.</p>
+        <h1 th:text="${provider != null} ? 'Edit ' + ${provider.firstName} + ' ' + ${provider.lastName} : 'Add provider'">Add provider</h1>
+        <p class="page__subtitle">
+            Only first and last name are required. Fill in what you have now; everything is saved together.
+        </p>
     </div>
 
-    <section class="card">
-        <form th:action="@{/providers}" th:object="${form}" method="post">
+    <nav class="section-nav" aria-label="Form sections">
+        <a class="section-nav__link" href="#details">Details</a>
+        <a class="section-nav__link" href="#groups">Groups</a>
+        <a class="section-nav__link" href="#locations">Practice locations</a>
+        <a class="section-nav__link" href="#specialties">Specialties</a>
+        <a class="section-nav__link" href="#licenses">Licenses</a>
+        <a class="section-nav__link" href="#certifications">Board certifications</a>
+        <a class="section-nav__link" href="#privileges">Hospital privileges</a>
+        <a class="section-nav__link" href="#policies">Malpractice policies</a>
+        <a class="section-nav__link" href="#claims">Malpractice claims</a>
+        <a class="section-nav__link" href="#references">References</a>
+        <a class="section-nav__link" href="#disclosures">Disclosures</a>
+    </nav>
+
+    <form id="profileForm" data-profile-form method="post" th:object="${form}" novalidate
+          th:action="${provider != null} ? @{/providers/{id}/edit(id=${provider.id})} : @{/providers}">
+
+        <div class="alert alert--error" th:if="${#fields.hasGlobalErrors()}">
+            <p class="alert__line" th:each="message : ${#fields.globalErrors()}" th:text="${message}"></p>
+        </div>
+
+        <!-- ============ provider details ============ -->
+        <section class="card form-section" id="details">
+            <h2>Provider details</h2>
 
             <div class="form-grid">
                 <label class="field">
                     <span class="field__label">First name</span>
-                    <input class="field__input" type="text" th:field="*{firstName}"
-                           th:classappend="${#fields.hasErrors('firstName')} ? 'field__input--invalid'">
-                    <span class="field__error" th:if="${#fields.hasErrors('firstName')}"
-                          th:errors="*{firstName}"></span>
+                    <input class="field__input" type="text" th:field="*{details.firstName}"
+                           th:classappend="${#fields.hasErrors('details.firstName')} ? 'field__input--invalid'">
+                    <span class="field__error" th:if="${#fields.hasErrors('details.firstName')}" th:errors="*{details.firstName}"></span>
                 </label>
 
                 <label class="field">
                     <span class="field__label">Last name</span>
-                    <input class="field__input" type="text" th:field="*{lastName}"
-                           th:classappend="${#fields.hasErrors('lastName')} ? 'field__input--invalid'">
-                    <span class="field__error" th:if="${#fields.hasErrors('lastName')}"
-                          th:errors="*{lastName}"></span>
+                    <input class="field__input" type="text" th:field="*{details.lastName}"
+                           th:classappend="${#fields.hasErrors('details.lastName')} ? 'field__input--invalid'">
+                    <span class="field__error" th:if="${#fields.hasErrors('details.lastName')}" th:errors="*{details.lastName}"></span>
                 </label>
 
                 <label class="field">
                     <span class="field__label">Date of birth</span>
-                    <input class="field__input" type="date" th:field="*{dob}"
-                           th:classappend="${#fields.hasErrors('dob')} ? 'field__input--invalid'">
-                    <span class="field__error" th:if="${#fields.hasErrors('dob')}" th:errors="*{dob}"></span>
+                    <input class="field__input" type="date" th:field="*{details.dob}">
                 </label>
 
                 <label class="field">
                     <span class="field__label">Place of birth</span>
-                    <input class="field__input" type="text" th:field="*{placeOfBirth}">
+                    <input class="field__input" type="text" th:field="*{details.placeOfBirth}">
                 </label>
 
                 <label class="field">
                     <span class="field__label">NPI</span>
-                    <input class="field__input" type="text" inputmode="numeric" th:field="*{npi}"
-                           th:classappend="${#fields.hasErrors('npi')} ? 'field__input--invalid'"
+                    <input class="field__input" type="text" inputmode="numeric" th:field="*{details.npi}"
+                           th:classappend="${#fields.hasErrors('details.npi')} ? 'field__input--invalid'"
                            placeholder="10 digits">
-                    <span class="field__error" th:if="${#fields.hasErrors('npi')}" th:errors="*{npi}"></span>
+                    <span class="field__error" th:if="${#fields.hasErrors('details.npi')}" th:errors="*{details.npi}"></span>
                 </label>
 
                 <label class="field">
                     <span class="field__label">Sex</span>
-                    <select class="field__input" th:field="*{sex}"
-                            th:classappend="${#fields.hasErrors('sex')} ? 'field__input--invalid'">
+                    <select class="field__input" th:field="*{details.sex}">
                         <option value="">Not recorded</option>
                         <option th:each="option : ${sexes}"
                                 th:value="${option}"
                                 th:text="${option.label}"></option>
                     </select>
-                    <span class="field__error" th:if="${#fields.hasErrors('sex')}" th:errors="*{sex}"></span>
                 </label>
 
                 <label class="field">
                     <span class="field__label">Phone</span>
-                    <input class="field__input" type="tel" th:field="*{phoneNumber}">
+                    <input class="field__input" type="tel" th:field="*{details.phoneNumber}">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Email</span>
+                    <input class="field__input" type="email" th:field="*{details.emailAddress}"
+                           th:classappend="${#fields.hasErrors('details.emailAddress')} ? 'field__input--invalid'">
+                    <span class="field__error" th:if="${#fields.hasErrors('details.emailAddress')}" th:errors="*{details.emailAddress}"></span>
                 </label>
 
                 <label class="field field--wide">
-                    <span class="field__label">Group</span>
-                    <select class="field__input" th:field="*{groupId}">
-                        <option th:value="''">No group yet</option>
-                        <option th:each="option : ${groups}"
-                                th:value="${option.id}"
-                                th:text="${option.lbn}"></option>
+                    <span class="field__label">Street</span>
+                    <input class="field__input" type="text" th:field="*{details.street1}">
+                </label>
+
+                <label class="field field--wide">
+                    <span class="field__label">Street 2</span>
+                    <input class="field__input" type="text" th:field="*{details.street2}" placeholder="Apt, suite, unit">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">City</span>
+                    <input class="field__input" type="text" th:field="*{details.city}">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">State</span>
+                    <input class="field__input" type="text" maxlength="2" th:field="*{details.state}"
+                           th:classappend="${#fields.hasErrors('details.state')} ? 'field__input--invalid'" placeholder="MI">
+                    <span class="field__error" th:if="${#fields.hasErrors('details.state')}" th:errors="*{details.state}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">ZIP</span>
+                    <input class="field__input" type="text" th:field="*{details.zipCode}"
+                           th:classappend="${#fields.hasErrors('details.zipCode')} ? 'field__input--invalid'" placeholder="49425">
+                    <span class="field__error" th:if="${#fields.hasErrors('details.zipCode')}" th:errors="*{details.zipCode}"></span>
+                </label>
+
+                <label class="field field--wide">
+                    <span class="field__label">Former names</span>
+                    <input class="field__input" type="text" th:field="*{details.prevNames}"
+                           placeholder="Comma separated">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">US citizen</span>
+                    <select class="field__input" th:field="*{details.usCitizen}">
+                        <option value="">Not recorded</option>
+                        <option value="true">Yes</option>
+                        <option value="false">No</option>
                     </select>
                 </label>
-            </div>
 
-            <div class="form-actions">
-                <button class="button" type="submit">Save provider</button>
-                <a class="button button--quiet" th:href="@{/providers}">Cancel</a>
+                <label class="field">
+                    <span class="field__label">Degree</span>
+                    <input class="field__input" type="text" th:field="*{details.degree}" placeholder="MD, DO, NP, PA">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">ECFMG</span>
+                    <input class="field__input" type="text" th:field="*{details.ecfmg}">
+                    <span class="field__hint">For graduates of non-US medical schools</span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Medical school</span>
+                    <input class="field__input" type="text" th:field="*{details.schoolName}">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Graduation date</span>
+                    <input class="field__input" type="date" th:field="*{details.graduationDate}">
+                </label>
+
+                <label class="field field--wide">
+                    <span class="field__label">Languages</span>
+                    <input class="field__input" type="text" th:field="*{details.languages}"
+                           placeholder="English, Spanish">
+                </label>
+
+                <label class="field field--wide">
+                    <span class="field__label">Modalities</span>
+                    <input class="field__input" type="text" th:field="*{details.modalities}"
+                           placeholder="Comma separated">
+                </label>
+
+                <label class="field field--wide">
+                    <span class="field__label">Areas of expertise</span>
+                    <input class="field__input" type="text" th:field="*{details.areasOfExpertise}"
+                           placeholder="Comma separated">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">CAQH ID</span>
+                    <input class="field__input" type="text" th:field="*{details.caqhId}">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">CAQH username</span>
+                    <input class="field__input" type="text" th:field="*{details.caqhUsername}">
+                    <span class="field__hint">The password is held outside this app and is never entered here</span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Flu shot date</span>
+                    <input class="field__input" type="date" th:field="*{details.fluShotDate}">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">TB test date</span>
+                    <input class="field__input" type="date" th:field="*{details.tbTestDate}">
+                </label>
             </div>
-        </form>
-    </section>
+        </section>
+
+        <!-- ============ groups ============ -->
+        <section class="card card--flush form-section" id="groups" data-section="groups">
+            <div class="card__header">
+                <h2>Groups</h2>
+                <span class="count-pill" data-count>0</span>
+                <button class="button button--quiet toolbar__end" type="button" data-add-row>Add group</button>
+            </div>
+            <div class="form-section__body">
+                <p class="form-section__hint">A provider can belong to more than one group.</p>
+                <div data-rows>
+                    <th:block th:each="r, st : *{groups}" th:if="${r != null}">
+                        <div th:replace="~{provider/rows :: group(${'groups[' + st.index + ']'}, ${r}, true)}"></div>
+                    </th:block>
+                </div>
+                <p class="form-section__empty" data-empty>Not in any group yet.</p>
+            </div>
+            <template data-row-template>
+                <div th:replace="~{provider/rows :: group('groups[0]', ${blank.group}, false)}"></div>
+            </template>
+        </section>
+
+        <!-- ============ practice locations ============ -->
+        <section class="card card--flush form-section" id="locations" data-section="locations">
+            <div class="card__header">
+                <h2>Practice locations</h2>
+                <span class="count-pill" data-count>0</span>
+                <button class="button button--quiet toolbar__end" type="button" data-add-row>Add location</button>
+            </div>
+            <div class="form-section__body">
+                <p class="form-section__hint">Only locations of the groups listed above can be picked.</p>
+                <div data-rows>
+                    <th:block th:each="r, st : *{locations}" th:if="${r != null}">
+                        <div th:replace="~{provider/rows :: location(${'locations[' + st.index + ']'}, ${r}, true)}"></div>
+                    </th:block>
+                </div>
+                <p class="form-section__empty" data-empty>No practice locations yet.</p>
+            </div>
+            <template data-row-template>
+                <div th:replace="~{provider/rows :: location('locations[0]', ${blank.location}, false)}"></div>
+            </template>
+        </section>
+
+        <!-- ============ specialties ============ -->
+        <section class="card card--flush form-section" id="specialties" data-section="taxonomies">
+            <div class="card__header">
+                <h2>Specialties</h2>
+                <span class="count-pill" data-count>0</span>
+                <button class="button button--quiet toolbar__end" type="button" data-add-row>Add specialty</button>
+            </div>
+            <div class="form-section__body">
+                <p class="form-section__hint">At most one can be primary.</p>
+                <div data-rows>
+                    <th:block th:each="r, st : *{taxonomies}" th:if="${r != null}">
+                        <div th:replace="~{provider/rows :: taxonomy(${'taxonomies[' + st.index + ']'}, ${r}, true)}"></div>
+                    </th:block>
+                </div>
+                <p class="form-section__empty" data-empty>No specialties yet.</p>
+            </div>
+            <template data-row-template>
+                <div th:replace="~{provider/rows :: taxonomy('taxonomies[0]', ${blank.taxonomy}, false)}"></div>
+            </template>
+        </section>
+
+        <!-- ============ licenses ============ -->
+        <section class="card card--flush form-section" id="licenses" data-section="licenses">
+            <div class="card__header">
+                <h2>Licenses</h2>
+                <span class="count-pill" data-count>0</span>
+                <button class="button button--quiet toolbar__end" type="button" data-add-row>Add license</button>
+            </div>
+            <div class="form-section__body">
+                <div data-rows>
+                    <th:block th:each="r, st : *{licenses}" th:if="${r != null}">
+                        <div th:replace="~{provider/rows :: license(${'licenses[' + st.index + ']'}, ${r}, true)}"></div>
+                    </th:block>
+                </div>
+                <p class="form-section__empty" data-empty>No licenses yet.</p>
+            </div>
+            <template data-row-template>
+                <div th:replace="~{provider/rows :: license('licenses[0]', ${blank.license}, false)}"></div>
+            </template>
+        </section>
+
+        <!-- ============ board certifications ============ -->
+        <section class="card card--flush form-section" id="certifications" data-section="certifications">
+            <div class="card__header">
+                <h2>Board certifications</h2>
+                <span class="count-pill" data-count>0</span>
+                <button class="button button--quiet toolbar__end" type="button" data-add-row>Add certification</button>
+            </div>
+            <div class="form-section__body">
+                <div data-rows>
+                    <th:block th:each="r, st : *{certifications}" th:if="${r != null}">
+                        <div th:replace="~{provider/rows :: certification(${'certifications[' + st.index + ']'}, ${r}, true)}"></div>
+                    </th:block>
+                </div>
+                <p class="form-section__empty" data-empty>No certifications yet.</p>
+            </div>
+            <template data-row-template>
+                <div th:replace="~{provider/rows :: certification('certifications[0]', ${blank.certification}, false)}"></div>
+            </template>
+        </section>
+
+        <!-- ============ hospital privileges ============ -->
+        <section class="card card--flush form-section" id="privileges" data-section="privileges">
+            <div class="card__header">
+                <h2>Hospital privileges</h2>
+                <span class="count-pill" data-count>0</span>
+                <button class="button button--quiet toolbar__end" type="button" data-add-row>Add privilege</button>
+            </div>
+            <div class="form-section__body">
+                <div data-rows>
+                    <th:block th:each="r, st : *{privileges}" th:if="${r != null}">
+                        <div th:replace="~{provider/rows :: privilege(${'privileges[' + st.index + ']'}, ${r}, true)}"></div>
+                    </th:block>
+                </div>
+                <p class="form-section__empty" data-empty>No privileges yet.</p>
+            </div>
+            <template data-row-template>
+                <div th:replace="~{provider/rows :: privilege('privileges[0]', ${blank.privilege}, false)}"></div>
+            </template>
+        </section>
+
+        <!-- ============ malpractice policies ============ -->
+        <section class="card card--flush form-section" id="policies" data-section="policies"
+                 data-link-source="policies" data-link-separator=" — " data-link-fallback="New policy (not saved yet)">
+            <div class="card__header">
+                <h2>Malpractice policies</h2>
+                <span class="count-pill" data-count>0</span>
+                <button class="button button--quiet toolbar__end" type="button" data-add-row>Add policy</button>
+            </div>
+            <div class="form-section__body">
+                <div data-rows>
+                    <th:block th:each="r, st : *{policies}" th:if="${r != null}">
+                        <div th:replace="~{provider/rows :: policy(${'policies[' + st.index + ']'}, ${r}, true)}"></div>
+                    </th:block>
+                </div>
+                <p class="form-section__empty" data-empty>No policies yet.</p>
+            </div>
+            <template data-row-template>
+                <div th:replace="~{provider/rows :: policy('policies[0]', ${blank.policy}, false)}"></div>
+            </template>
+        </section>
+
+        <!-- ============ malpractice claims ============ -->
+        <section class="card card--flush form-section" id="claims" data-section="claims">
+            <div class="card__header">
+                <h2>Malpractice claims</h2>
+                <span class="count-pill" data-count>0</span>
+                <button class="button button--quiet toolbar__end" type="button" data-add-row>Add claim</button>
+            </div>
+            <div class="form-section__body">
+                <div data-rows>
+                    <th:block th:each="r, st : *{claims}" th:if="${r != null}">
+                        <div th:replace="~{provider/rows :: claim(${'claims[' + st.index + ']'}, ${r}, true)}"></div>
+                    </th:block>
+                </div>
+                <p class="form-section__empty" data-empty>No claims.</p>
+            </div>
+            <template data-row-template>
+                <div th:replace="~{provider/rows :: claim('claims[0]', ${blank.claim}, false)}"></div>
+            </template>
+        </section>
+
+        <!-- ============ references ============ -->
+        <section class="card card--flush form-section" id="references" data-section="references">
+            <div class="card__header">
+                <h2>References</h2>
+                <span class="count-pill" data-count>0</span>
+                <button class="button button--quiet toolbar__end" type="button" data-add-row>Add reference</button>
+            </div>
+            <div class="form-section__body">
+                <div data-rows>
+                    <th:block th:each="r, st : *{references}" th:if="${r != null}">
+                        <div th:replace="~{provider/rows :: reference(${'references[' + st.index + ']'}, ${r}, true)}"></div>
+                    </th:block>
+                </div>
+                <p class="form-section__empty" data-empty>No references yet.</p>
+            </div>
+            <template data-row-template>
+                <div th:replace="~{provider/rows :: reference('references[0]', ${blank.reference}, false)}"></div>
+            </template>
+        </section>
+
+        <!-- ============ disclosures ============ -->
+        <section class="card card--flush form-section" id="disclosures" data-section="charges">
+            <div class="card__header">
+                <h2>Disclosures</h2>
+                <span class="count-pill" data-count>0</span>
+                <button class="button button--quiet toolbar__end" type="button" data-add-row>Add charge</button>
+            </div>
+            <div class="form-section__body">
+                <p class="form-section__hint">Criminal charges the provider has disclosed.</p>
+                <div data-rows>
+                    <th:block th:each="r, st : *{charges}" th:if="${r != null}">
+                        <div th:replace="~{provider/rows :: charge(${'charges[' + st.index + ']'}, ${r}, true)}"></div>
+                    </th:block>
+                </div>
+                <p class="form-section__empty" data-empty>Nothing disclosed.</p>
+            </div>
+            <template data-row-template>
+                <div th:replace="~{provider/rows :: charge('charges[0]', ${blank.charge}, false)}"></div>
+            </template>
+        </section>
+
+        <div class="savebar">
+            <span class="savebar__text">Saves every section at once</span>
+            <div class="savebar__actions">
+                <a class="button button--quiet"
+                   th:href="${provider != null} ? @{/providers/{id}(id=${provider.id})} : @{/providers}">Cancel</a>
+                <button class="button" type="submit"
+                        th:text="${provider != null} ? 'Save changes' : 'Save provider'">Save provider</button>
+            </div>
+        </div>
+    </form>
 
 </main>
+
+<script th:src="@{/js/profile-form.js}"></script>
 
 <div th:replace="~{fragments/layout :: footer}"></div>
 

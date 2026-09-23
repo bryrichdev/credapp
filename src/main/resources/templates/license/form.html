@@ -26,10 +26,8 @@
         </p>
 
         <form method="post" th:action="${licenseId != null}
-                ? @{/providers/{pid}/licenses/{lid}/edit(pid=${provider.id}, lid=${licenseId})}
-                : (${provider != null}
-                ? @{/providers/{pid}/licenses(pid=${provider.id})}
-                : @{/licenses})"
+                ? @{/licenses/{lid}/edit(lid=${licenseId})}
+                : @{/licenses}"
               th:object="${form}">
 
             <input th:field="*{providerId}" th:if="${provider != null}" type="hidden">

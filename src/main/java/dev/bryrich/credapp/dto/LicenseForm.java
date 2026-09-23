@@ -32,7 +32,7 @@ public class LicenseForm {
     @NotNull(message = "Status is required")
     private LicenseStatus status = LicenseStatus.ACTIVE;
 
-    @NotNull(message = "Provider is required")
+    /** Required on the Licenses tab form; the provider form supplies it from the path. */
     private Long providerId;
 
     private String restrictions;

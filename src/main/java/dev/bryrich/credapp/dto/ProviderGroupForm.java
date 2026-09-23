@@ -1,5 +1,6 @@
 package dev.bryrich.credapp.dto;
 
+import dev.bryrich.credapp.entity.GroupProvider;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -18,6 +19,14 @@ public class ProviderGroupForm {
     private LocalDate effectiveDate;
 
     public ProviderGroupForm() {
+    }
+
+    /** Copies a saved membership's values in, so the edit screen renders them. */
+    public static ProviderGroupForm from(GroupProvider membership) {
+        ProviderGroupForm form = new ProviderGroupForm();
+        form.groupId = membership.getGroup().getId();
+        form.effectiveDate = membership.getEffectiveDate();
+        return form;
     }
 
     public Long getGroupId() {

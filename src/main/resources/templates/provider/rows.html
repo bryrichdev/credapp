@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<body>
+
+<!--
+    One fragment per repeatable row on the provider form. Each takes:
+      p    - the name prefix, such as licenses[0]
+      row  - the object to show
+      live - false for the blank copy inside a <template>, which skips error lookups
+    The page script renumbers the [n] in every name after a row is added or removed.
+-->
+
+<!-- ============ group membership ============ -->
+<div class="row-card" data-row th:fragment="group(p, row, live)">
+    <button class="button button--quiet button--small row-card__remove" type="button" data-remove-row
+            aria-label="Remove this row">Remove</button>
+    <div class="form-grid">
+        <label class="field">
+            <span class="field__label">Group</span>
+            <select class="field__input" data-group-select th:name="${p + '.groupId'}"
+                    th:classappend="${live and #fields.hasErrors(p + '.groupId')} ? 'field__input--invalid'">
+                <option value="">Select a group</option>
+                <option th:each="o : ${groupOptions}" th:value="${o.id}" th:text="${o.lbn}"
+                        th:selected="${row.groupId == o.id}"></option>
+            </select>
+            <span th:replace="~{fragments/rows :: err(${p + '.groupId'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Effective date</span>
+            <input class="field__input" type="date" th:name="${p + '.effectiveDate'}" th:value="${row.effectiveDate}"
+                    th:classappend="${live and #fields.hasErrors(p + '.effectiveDate')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.effectiveDate'}, ${live})}"></span>
+        </label>
+    </div>
+</div>
+
+<!-- ============ practice location ============ -->
+<div class="row-card" data-row th:fragment="location(p, row, live)">
+    <button class="button button--quiet button--small row-card__remove" type="button" data-remove-row
+            aria-label="Remove this row">Remove</button>
+    <div class="form-grid">
+        <label class="field">
+            <span class="field__label">Location</span>
+            <select class="field__input" data-location-select th:name="${p + '.locationId'}"
+                    th:classappend="${live and #fields.hasErrors(p + '.locationId')} ? 'field__input--invalid'">
+                <option value="">Select a location</option>
+                <option th:each="o : ${locationOptions}" th:value="${o.id}" th:text="${o.group.lbn + ' — ' + o.locationName}" th:data-group="${o.group.id}"
+                        th:selected="${row.locationId == o.id}"></option>
+            </select>
+            <span th:replace="~{fragments/rows :: err(${p + '.locationId'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">PCP or SCP</span>
+            <select class="field__input" th:name="${p + '.pcpScp'}"
+                    th:classappend="${live and #fields.hasErrors(p + '.pcpScp')} ? 'field__input--invalid'">
+                <option value="">Select</option>
+                <option th:each="o : ${pcpScpOptions}" th:value="${o}" th:text="${o.value}"
+                        th:selected="${row.pcpScp == o}"></option>
+            </select>
+            <span th:replace="~{fragments/rows :: err(${p + '.pcpScp'}, ${live})}"></span>
+        </label>
+    </div>
+</div>
+
+<!-- ============ specialty ============ -->
+<div class="row-card" data-row th:fragment="taxonomy(p, row, live)">
+    <button class="button button--quiet button--small row-card__remove" type="button" data-remove-row
+            aria-label="Remove this row">Remove</button>
+    <div class="form-grid">
+        <label class="field">
+            <span class="field__label">Specialty</span>
+            <select class="field__input" th:name="${p + '.code'}"
+                    th:classappend="${live and #fields.hasErrors(p + '.code')} ? 'field__input--invalid'">
+                <option value="">Select a specialty</option>
+                <option th:each="o : ${taxonomyOptions}" th:value="${o.code}" th:text="${o.label}"
+                        th:selected="${row.code == o.code}"></option>
+            </select>
+            <span th:replace="~{fragments/rows :: err(${p + '.code'}, ${live})}"></span>
+        </label>
+        <div class="field">
+            <span class="field__label">Primary</span>
+            <label class="check">
+                <input type="checkbox" value="true" th:name="${p + '.primary'}" th:checked="${row.primary}" data-primary>
+                <span>Primary specialty</span>
+            </label>
+            <span th:replace="~{fragments/rows :: err(${p + '.primary'}, ${live})}"></span>
+        </div>
+    </div>
+</div>
+
+<!-- ============ license ============ -->
+<div class="row-card" data-row th:fragment="license(p, row, live)">
+    <button class="button button--quiet button--small row-card__remove" type="button" data-remove-row
+            aria-label="Remove this row">Remove</button>
+    <input type="hidden" th:name="${p + '.id'}" th:value="${row.id}">
+    <div class="form-grid">
+        <label class="field">
+            <span class="field__label">State</span>
+            <input class="field__input" type="text" maxlength="2" placeholder="UT" th:name="${p + '.state'}" th:value="${row.state}"
+                    th:classappend="${live and #fields.hasErrors(p + '.state')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.state'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">License number</span>
+            <input class="field__input" type="text" th:name="${p + '.licenseNumber'}" th:value="${row.licenseNumber}"
+                    th:classappend="${live and #fields.hasErrors(p + '.licenseNumber')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.licenseNumber'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">License type</span>
+            <input class="field__input" type="text" placeholder="DEA, CS, Professional License, etc." th:name="${p + '.licenseType'}" th:value="${row.licenseType}"
+                    th:classappend="${live and #fields.hasErrors(p + '.licenseType')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.licenseType'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Status</span>
+            <select class="field__input" th:name="${p + '.status'}"
+                    th:classappend="${live and #fields.hasErrors(p + '.status')} ? 'field__input--invalid'">
+                <option th:each="o : ${licenseStatuses}" th:value="${o}" th:text="${o.value}"
+                        th:selected="${row.status == o}"></option>
+            </select>
+            <span th:replace="~{fragments/rows :: err(${p + '.status'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Issue date</span>
+            <input class="field__input" type="date" th:name="${p + '.issueDate'}" th:value="${row.issueDate}"
+                    th:classappend="${live and #fields.hasErrors(p + '.issueDate')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.issueDate'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Expiration date</span>
+            <input class="field__input" type="date" th:name="${p + '.expirationDate'}" th:value="${row.expirationDate}"
+                    th:classappend="${live and #fields.hasErrors(p + '.expirationDate')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.expirationDate'}, ${live})}"></span>
+        </label>
+        <label class="field field--wide">
+            <span class="field__label">Restrictions</span>
+            <input class="field__input" type="text" placeholder="Leave blank if none" th:name="${p + '.restrictions'}" th:value="${row.restrictions}"
+                    th:classappend="${live and #fields.hasErrors(p + '.restrictions')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.restrictions'}, ${live})}"></span>
+        </label>
+    </div>
+</div>
+
+<!-- ============ board certification ============ -->
+<div class="row-card" data-row th:fragment="certification(p, row, live)">
+    <button class="button button--quiet button--small row-card__remove" type="button" data-remove-row
+            aria-label="Remove this row">Remove</button>
+    <input type="hidden" th:name="${p + '.id'}" th:value="${row.id}">
+    <div class="form-grid">
+        <label class="field field--wide">
+            <span class="field__label">Board</span>
+            <input class="field__input" type="text" placeholder="American Board of Family Medicine" th:name="${p + '.board'}" th:value="${row.board}"
+                    th:classappend="${live and #fields.hasErrors(p + '.board')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.board'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Effective date</span>
+            <input class="field__input" type="date" th:name="${p + '.effectiveDate'}" th:value="${row.effectiveDate}"
+                    th:classappend="${live and #fields.hasErrors(p + '.effectiveDate')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.effectiveDate'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Expiration date</span>
+            <input class="field__input" type="date" th:name="${p + '.expirationDate'}" th:value="${row.expirationDate}"
+                    th:classappend="${live and #fields.hasErrors(p + '.expirationDate')} ? 'field__input--invalid'">
+            <span class="field__hint">Leave blank for a lifetime certification</span>
+            <span th:replace="~{fragments/rows :: err(${p + '.expirationDate'}, ${live})}"></span>
+            <span th:replace="~{fragments/rows :: err(${p + '.expirationAfterEffective'}, ${live})}"></span>
+        </label>
+    </div>
+</div>
+
+<!-- ============ hospital privilege ============ -->
+<div class="row-card" data-row th:fragment="privilege(p, row, live)">
+    <button class="button button--quiet button--small row-card__remove" type="button" data-remove-row
+            aria-label="Remove this row">Remove</button>
+    <input type="hidden" th:name="${p + '.id'}" th:value="${row.id}">
+    <div class="form-grid">
+        <label class="field field--wide">
+            <span class="field__label">Hospital</span>
+            <input class="field__input" type="text" th:name="${p + '.name'}" th:value="${row.name}"
+                    th:classappend="${live and #fields.hasErrors(p + '.name')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.name'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Status</span>
+            <select class="field__input" th:name="${p + '.status'}"
+                    th:classappend="${live and #fields.hasErrors(p + '.status')} ? 'field__input--invalid'">
+                <option th:each="o : ${privilegeStatuses}" th:value="${o}" th:text="${o.value}"
+                        th:selected="${row.status == o}"></option>
+            </select>
+            <span th:replace="~{fragments/rows :: err(${p + '.status'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Admitting physician</span>
+            <select class="field__input" th:name="${p + '.admittingPhysicianId'}"
+                    th:classappend="${live and #fields.hasErrors(p + '.admittingPhysicianId')} ? 'field__input--invalid'">
+                <option value="">None — admits under own privileges</option>
+                <option th:each="o : ${colleagues}" th:value="${o.id}" th:text="${o.lastName + ', ' + o.firstName}"
+                        th:selected="${row.admittingPhysicianId == o.id}"></option>
+            </select>
+            <span class="field__hint">Name a colleague only when this provider does not admit themselves</span>
+            <span th:replace="~{fragments/rows :: err(${p + '.admittingPhysicianId'}, ${live})}"></span>
+        </label>
+    </div>
+</div>
+
+<!-- ============ malpractice policy ============ -->
+<div class="row-card" data-row th:fragment="policy(p, row, live)">
+    <button class="button button--quiet button--small row-card__remove" type="button" data-remove-row
+            aria-label="Remove this row">Remove</button>
+    <input type="hidden" th:name="${p + '.id'}" th:value="${row.id}">
+    <input type="hidden" th:name="${p + '.key'}" th:value="${row.key}" data-key>
+    <div class="form-grid">
+        <label class="field">
+            <span class="field__label">Carrier</span>
+            <input class="field__input" type="text" data-label-part th:name="${p + '.carrierName'}" th:value="${row.carrierName}"
+                    th:classappend="${live and #fields.hasErrors(p + '.carrierName')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.carrierName'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Policy number</span>
+            <input class="field__input" type="text" data-label-part th:name="${p + '.policyNumber'}" th:value="${row.policyNumber}"
+                    th:classappend="${live and #fields.hasErrors(p + '.policyNumber')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.policyNumber'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Type of coverage</span>
+            <input class="field__input" type="text" placeholder="Claims-made, occurrence" th:name="${p + '.typeOfCoverage'}" th:value="${row.typeOfCoverage}"
+                    th:classappend="${live and #fields.hasErrors(p + '.typeOfCoverage')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.typeOfCoverage'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Shared or individual</span>
+            <select class="field__input" th:name="${p + '.sharedIndividual'}"
+                    th:classappend="${live and #fields.hasErrors(p + '.sharedIndividual')} ? 'field__input--invalid'">
+                <option value="">Select</option>
+                <option th:each="o : ${scopes}" th:value="${o}" th:text="${o.value}"
+                        th:selected="${row.sharedIndividual == o}"></option>
+            </select>
+            <span th:replace="~{fragments/rows :: err(${p + '.sharedIndividual'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Effective date</span>
+            <input class="field__input" type="date" th:name="${p + '.effectiveDate'}" th:value="${row.effectiveDate}"
+                    th:classappend="${live and #fields.hasErrors(p + '.effectiveDate')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.effectiveDate'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Expiration date</span>
+            <input class="field__input" type="date" th:name="${p + '.expirationDate'}" th:value="${row.expirationDate}"
+                    th:classappend="${live and #fields.hasErrors(p + '.expirationDate')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.expirationDate'}, ${live})}"></span>
+            <span th:replace="~{fragments/rows :: err(${p + '.expirationAfterEffective'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Original effective date</span>
+            <input class="field__input" type="date" th:name="${p + '.originalEffectiveDate'}" th:value="${row.originalEffectiveDate}"
+                    th:classappend="${live and #fields.hasErrors(p + '.originalEffectiveDate')} ? 'field__input--invalid'">
+            <span class="field__hint">When coverage with this carrier first began</span>
+            <span th:replace="~{fragments/rows :: err(${p + '.originalEffectiveDate'}, ${live})}"></span>
+            <span th:replace="~{fragments/rows :: err(${p + '.originalOnOrBeforeEffective'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Coverage per occurrence</span>
+            <input class="field__input" type="number" step="0.01" min="0" placeholder="1000000.00" th:name="${p + '.amountOfCoveragePerOccurrence'}" th:value="${row.amountOfCoveragePerOccurrence}"
+                    th:classappend="${live and #fields.hasErrors(p + '.amountOfCoveragePerOccurrence')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.amountOfCoveragePerOccurrence'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Coverage per aggregate</span>
+            <input class="field__input" type="number" step="0.01" min="0" placeholder="3000000.00" th:name="${p + '.amountOfCoveragePerAggregate'}" th:value="${row.amountOfCoveragePerAggregate}"
+                    th:classappend="${live and #fields.hasErrors(p + '.amountOfCoveragePerAggregate')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.amountOfCoveragePerAggregate'}, ${live})}"></span>
+        </label>
+    </div>
+</div>
+
+<!-- ============ malpractice claim ============ -->
+<div class="row-card" data-row th:fragment="claim(p, row, live)">
+    <button class="button button--quiet button--small row-card__remove" type="button" data-remove-row
+            aria-label="Remove this row">Remove</button>
+    <input type="hidden" th:name="${p + '.id'}" th:value="${row.id}">
+    <div class="form-grid">
+        <label class="field">
+            <span class="field__label">Carrier</span>
+            <input class="field__input" type="text" th:name="${p + '.carrierName'}" th:value="${row.carrierName}"
+                    th:classappend="${live and #fields.hasErrors(p + '.carrierName')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.carrierName'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Claim number</span>
+            <input class="field__input" type="text" th:name="${p + '.claimNumber'}" th:value="${row.claimNumber}"
+                    th:classappend="${live and #fields.hasErrors(p + '.claimNumber')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.claimNumber'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Policy</span>
+            <select class="field__input" th:name="${p + '.policyKey'}" data-link-target="policies"
+                    th:classappend="${live and #fields.hasErrors(p + '.policyKey')} ? 'field__input--invalid'">
+                <option value="" data-static>Not linked to a policy</option>
+                <option th:each="o : ${outsidePolicies}" data-static
+                        th:value="${'p' + o.id}" th:text="${o.carrierName + ' — ' + o.policyNumber + ' (group policy)'}"
+                        th:selected="${row.policyKey == 'p' + o.id}"></option>
+                <option th:each="o : ${form.policies}" th:if="${o != null and o.key != null}"
+                        th:value="${o.key}" th:text="${o.carrierName + ' — ' + o.policyNumber}"
+                        th:selected="${row.policyKey == o.key}"></option>
+            </select>
+            <span class="field__hint">Pick from the policies above. Claims often surface before the policy is recorded.</span>
+            <span th:replace="~{fragments/rows :: err(${p + '.policyKey'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Outcome</span>
+            <input class="field__input" type="text" placeholder="Settled, dismissed, pending" th:name="${p + '.outcome'}" th:value="${row.outcome}"
+                    th:classappend="${live and #fields.hasErrors(p + '.outcome')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.outcome'}, ${live})}"></span>
+        </label>
+    </div>
+</div>
+
+<!-- ============ reference ============ -->
+<div class="row-card" data-row th:fragment="reference(p, row, live)">
+    <button class="button button--quiet button--small row-card__remove" type="button" data-remove-row
+            aria-label="Remove this row">Remove</button>
+    <input type="hidden" th:name="${p + '.id'}" th:value="${row.id}">
+    <div class="form-grid">
+        <label class="field">
+            <span class="field__label">Name</span>
+            <input class="field__input" type="text" th:name="${p + '.name'}" th:value="${row.name}"
+                    th:classappend="${live and #fields.hasErrors(p + '.name')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.name'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Title</span>
+            <input class="field__input" type="text" placeholder="MD, DO, NP" th:name="${p + '.title'}" th:value="${row.title}"
+                    th:classappend="${live and #fields.hasErrors(p + '.title')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.title'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Relationship</span>
+            <input class="field__input" type="text" placeholder="Colleague, supervisor, partner" th:name="${p + '.relationship'}" th:value="${row.relationship}"
+                    th:classappend="${live and #fields.hasErrors(p + '.relationship')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.relationship'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Email</span>
+            <input class="field__input" type="email" th:name="${p + '.emailAddress'}" th:value="${row.emailAddress}"
+                    th:classappend="${live and #fields.hasErrors(p + '.emailAddress')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.emailAddress'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Phone</span>
+            <input class="field__input" type="tel" th:name="${p + '.phoneNumber'}" th:value="${row.phoneNumber}"
+                    th:classappend="${live and #fields.hasErrors(p + '.phoneNumber')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.phoneNumber'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Street</span>
+            <input class="field__input" type="text" th:name="${p + '.street1'}" th:value="${row.street1}"
+                    th:classappend="${live and #fields.hasErrors(p + '.street1')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.street1'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Street 2</span>
+            <input class="field__input" type="text" placeholder="Suite, unit" th:name="${p + '.street2'}" th:value="${row.street2}"
+                    th:classappend="${live and #fields.hasErrors(p + '.street2')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.street2'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">City</span>
+            <input class="field__input" type="text" th:name="${p + '.city'}" th:value="${row.city}"
+                    th:classappend="${live and #fields.hasErrors(p + '.city')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.city'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">State</span>
+            <input class="field__input" type="text" maxlength="2" placeholder="MI" th:name="${p + '.state'}" th:value="${row.state}"
+                    th:classappend="${live and #fields.hasErrors(p + '.state')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.state'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">ZIP</span>
+            <input class="field__input" type="text" placeholder="49425" th:name="${p + '.zipCode'}" th:value="${row.zipCode}"
+                    th:classappend="${live and #fields.hasErrors(p + '.zipCode')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.zipCode'}, ${live})}"></span>
+        </label>
+    </div>
+</div>
+
+<!-- ============ criminal charge ============ -->
+<div class="row-card" data-row th:fragment="charge(p, row, live)">
+    <button class="button button--quiet button--small row-card__remove" type="button" data-remove-row
+            aria-label="Remove this row">Remove</button>
+    <input type="hidden" th:name="${p + '.id'}" th:value="${row.id}">
+    <div class="form-grid">
+        <label class="field">
+            <span class="field__label">Classification</span>
+            <select class="field__input" th:name="${p + '.classification'}"
+                    th:classappend="${live and #fields.hasErrors(p + '.classification')} ? 'field__input--invalid'">
+                <option value="">Select</option>
+                <option th:each="o : ${chargeClassifications}" th:value="${o}" th:text="${o.value}"
+                        th:selected="${row.classification == o}"></option>
+            </select>
+            <span th:replace="~{fragments/rows :: err(${p + '.classification'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Status</span>
+            <select class="field__input" th:name="${p + '.status'}"
+                    th:classappend="${live and #fields.hasErrors(p + '.status')} ? 'field__input--invalid'">
+                <option value="">Select</option>
+                <option th:each="o : ${chargeStatuses}" th:value="${o}" th:text="${o.value}"
+                        th:selected="${row.status == o}"></option>
+            </select>
+            <span th:replace="~{fragments/rows :: err(${p + '.status'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Incident date</span>
+            <input class="field__input" type="date" th:name="${p + '.incidentDate'}" th:value="${row.incidentDate}"
+                    th:classappend="${live and #fields.hasErrors(p + '.incidentDate')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.incidentDate'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Date of filing</span>
+            <input class="field__input" type="date" th:name="${p + '.dateOfFiling'}" th:value="${row.dateOfFiling}"
+                    th:classappend="${live and #fields.hasErrors(p + '.dateOfFiling')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.dateOfFiling'}, ${live})}"></span>
+            <span th:replace="~{fragments/rows :: err(${p + '.filingOnOrAfterIncident'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Case number</span>
+            <input class="field__input" type="text" th:name="${p + '.caseNumber'}" th:value="${row.caseNumber}"
+                    th:classappend="${live and #fields.hasErrors(p + '.caseNumber')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.caseNumber'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Court</span>
+            <input class="field__input" type="text" th:name="${p + '.court'}" th:value="${row.court}"
+                    th:classappend="${live and #fields.hasErrors(p + '.court')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.court'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Statutory citation</span>
+            <input class="field__input" type="text" th:name="${p + '.statutoryCitation'}" th:value="${row.statutoryCitation}"
+                    th:classappend="${live and #fields.hasErrors(p + '.statutoryCitation')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.statutoryCitation'}, ${live})}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Sentencing terms</span>
+            <input class="field__input" type="text" placeholder="Probation, fines, conditions" th:name="${p + '.sentencingTerms'}" th:value="${row.sentencingTerms}"
+                    th:classappend="${live and #fields.hasErrors(p + '.sentencingTerms')} ? 'field__input--invalid'">
+            <span th:replace="~{fragments/rows :: err(${p + '.sentencingTerms'}, ${live})}"></span>
+        </label>
+    </div>
+</div>
+
+</body>
+</html>

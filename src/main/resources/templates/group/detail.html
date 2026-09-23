@@ -24,12 +24,11 @@
                 NPI <span th:text="${#strings.isEmpty(group.npi)} ? 'not on file' : ${group.npi}"></span>
             </p>
         </div>
-        <a class="button button--quiet" th:unless="${editing}"
-           th:href="@{/groups/{id}(id=${group.id}, edit=1)}">Edit group</a>
+        <a class="button" th:href="@{/groups/{id}/edit(id=${group.id})}">Edit group</a>
     </div>
 
     <!-- ============ read view ============ -->
-    <section class="card" th:unless="${editing}">
+    <section class="card">
         <h2>Group details</h2>
         <dl class="detail-list">
             <dt>Legal business name</dt>
@@ -50,64 +49,12 @@
         </dl>
     </section>
 
-    <!-- ============ edit view ============ -->
-    <form th:if="${editing}"
-          id="groupEditForm"
-          th:action="@{/groups/{id}/edit(id=${group.id})}"
-          th:object="${form}"
-          method="post">
-
-        <section class="card">
-            <h2>Edit group</h2>
-
-            <div class="form-grid">
-                <label class="field">
-                    <span class="field__label">Legal business name</span>
-                    <input class="field__input" type="text" th:field="*{lbn}"
-                           th:classappend="${#fields.hasErrors('lbn')} ? 'field__input--invalid'">
-                    <span class="field__error" th:if="${#fields.hasErrors('lbn')}" th:errors="*{lbn}"></span>
-                </label>
-
-                <label class="field">
-                    <span class="field__label">DBA</span>
-                    <input class="field__input" type="text" th:field="*{dba}">
-                </label>
-
-                <label class="field">
-                    <span class="field__label">Group NPI</span>
-                    <input class="field__input" type="text" inputmode="numeric" th:field="*{npi}"
-                           th:classappend="${#fields.hasErrors('npi')} ? 'field__input--invalid'"
-                           placeholder="10 digits">
-                    <span class="field__error" th:if="${#fields.hasErrors('npi')}" th:errors="*{npi}"></span>
-                </label>
-
-                <label class="field">
-                    <span class="field__label">Tax ID</span>
-                    <input class="field__input" type="text" inputmode="numeric" th:field="*{taxId}"
-                           th:classappend="${#fields.hasErrors('taxId')} ? 'field__input--invalid'"
-                           placeholder="9 digits">
-                    <span class="field__error" th:if="${#fields.hasErrors('taxId')}" th:errors="*{taxId}"></span>
-                </label>
-
-            </div>
-        </section>
-
-        <div class="savebar" id="saveBar" hidden>
-            <span class="savebar__text">You have unsaved changes</span>
-            <div class="savebar__actions">
-                <a class="button button--quiet" th:href="@{/groups/{id}(id=${group.id})}">Cancel</a>
-                <button class="button" type="submit">Save changes</button>
-            </div>
-        </div>
-    </form>
 
     <!-- ============ locations ============ -->
     <section class="card card--flush">
         <div class="card__header">
             <h2>Locations</h2>
             <span class="count-pill" th:text="${locations.size()}">0</span>
-            <a class="button toolbar__end"
-               th:href="@{/groups/{id}/locations/new(id=${group.id})}">Add location</a>
         </div>
 
         <table class="table" th:unless="${locations.isEmpty()}">
@@ -118,7 +65,6 @@
                 <th>Phone</th>
                 <th>Fax</th>
                 <th>Languages</th>
-                <th class="table__actions"></th>
             </tr>
             </thead>
             <tbody>
@@ -128,17 +74,6 @@
                 <td th:text="${location.phoneNumber} ?: '—'"></td>
                 <td th:text="${location.faxNumber} ?: '—'"></td>
                 <td th:text="${#lists.isEmpty(location.languages)} ? '—' : ${#strings.listJoin(location.languages, ', ')}"></td>
-                <td class="table__actions">
-                    <div class="row-actions">
-                        <a class="button button--quiet button--small"
-                           th:href="@{/groups/{gid}/locations/{lid}/edit(gid=${group.id}, lid=${location.id})}">Edit</a>
-                        <form th:action="@{/groups/{gid}/locations/{lid}/delete(gid=${group.id}, lid=${location.id})}"
-                              method="post"
-                              onsubmit="return confirm('Delete this location?');">
-                            <button class="button button--danger button--small" type="submit">Delete</button>
-                        </form>
-                    </div>
-                </td>
             </tr>
             </tbody>
         </table>
@@ -154,8 +89,6 @@
         <div class="card__header">
             <h2>Owners</h2>
             <span class="count-pill" th:text="${owners.size()}">0</span>
-            <a class="button toolbar__end"
-               th:href="@{/groups/{id}/owners/new(id=${group.id})}">Add owner</a>
         </div>
 
         <table class="table" th:unless="${owners.isEmpty()}">
@@ -164,7 +97,6 @@
                 <th>Owner</th>
                 <th>Percent owned</th>
                 <th>Effective</th>
-                <th class="table__actions"></th>
             </tr>
             </thead>
             <tbody>
@@ -175,24 +107,13 @@
                 </td>
                 <td th:text="${stake.percentOwned != null} ? ${stake.percentOwned} + '%' : '—'"></td>
                 <td th:text="${stake.effectiveDate} ?: '—'"></td>
-                <td class="table__actions">
-                    <div class="row-actions">
-                        <a class="button button--quiet button--small"
-                           th:href="@{/groups/{gid}/owners/{oid}/edit(gid=${group.id}, oid=${stake.owner.id})}">Edit</a>
-                        <form th:action="@{/groups/{gid}/owners/{oid}/delete(gid=${group.id}, oid=${stake.owner.id})}"
-                              method="post"
-                              onsubmit="return confirm('Remove this owner from the group? Their relationships here go too.');">
-                            <button class="button button--danger button--small" type="submit">Remove</button>
-                        </form>
-                    </div>
-                </td>
             </tr>
             </tbody>
             <tfoot>
             <tr>
                 <td>Total</td>
                 <td th:text="${totalPercent} + '%'">0%</td>
-                <td colspan="2">
+                <td>
                     <span class="badge"
                           th:classappend="${remainingPercent.signum() == 0} ? 'badge--active' : 'badge--pending'"
                           th:text="${remainingPercent.signum() == 0}
@@ -214,9 +135,6 @@
         <div class="card__header">
             <h2>Owner relationships</h2>
             <span class="count-pill" th:text="${relations.size()}">0</span>
-            <a class="button toolbar__end"
-               th:if="${owners.size() >= 2}"
-               th:href="@{/groups/{id}/relations/new(id=${group.id})}">Add relationship</a>
         </div>
 
         <table class="table" th:unless="${relations.isEmpty()}">
@@ -225,7 +143,6 @@
                 <th>Owner</th>
                 <th>Is the</th>
                 <th>Of</th>
-                <th class="table__actions"></th>
             </tr>
             </thead>
             <tbody>
@@ -235,16 +152,6 @@
                     <span class="badge badge--inactive" th:text="${relation.relationship.dbValue()}"></span>
                 </td>
                 <td th:text="${relation.relatedOwner.owner.firstName} + ' ' + ${relation.relatedOwner.owner.lastName}"></td>
-                <td class="table__actions">
-                    <div class="row-actions">
-                        <form th:action="@{/groups/{gid}/relations/{a}/{b}/delete(gid=${group.id},
-                                  a=${relation.id.ownerId}, b=${relation.id.relatedOwnerId})}"
-                              method="post"
-                              onsubmit="return confirm('Remove this relationship?');">
-                            <button class="button button--danger button--small" type="submit">Remove</button>
-                        </form>
-                    </div>
-                </td>
             </tr>
             </tbody>
         </table>
@@ -265,8 +172,6 @@
         <div class="card__header">
             <h2>Providers</h2>
             <span class="count-pill" th:text="${providers.size()}">0</span>
-            <a class="button toolbar__end"
-               th:href="@{/groups/{id}/providers/new(id=${group.id})}">Assign provider</a>
         </div>
 
         <table class="table" th:unless="${providers.isEmpty()}">
@@ -275,7 +180,6 @@
                 <th>Provider</th>
                 <th>NPI</th>
                 <th>Effective</th>
-                <th class="table__actions"></th>
             </tr>
             </thead>
             <tbody>
@@ -286,15 +190,6 @@
                 </td>
                 <td th:text="${link.provider.npi} ?: '—'"></td>
                 <td th:text="${link.effectiveDate} ?: '—'"></td>
-                <td class="table__actions">
-                    <div class="row-actions">
-                        <form th:action="@{/groups/{gid}/providers/{pid}/delete(gid=${group.id}, pid=${link.provider.id})}"
-                              method="post"
-                              onsubmit="return confirm('Unassign this provider from the group?');">
-                            <button class="button button--danger button--small" type="submit">Unassign</button>
-                        </form>
-                    </div>
-                </td>
             </tr>
             </tbody>
         </table>
@@ -311,8 +206,6 @@
         <div class="card__header">
             <h2>Specialties</h2>
             <span class="count-pill" th:text="${taxonomies.size()}">0</span>
-            <a class="button toolbar__end"
-               th:href="@{/groups/{id}/taxonomies/new(id=${group.id})}">Add specialty</a>
         </div>
 
         <table class="table" th:unless="${taxonomies.isEmpty()}">
@@ -321,7 +214,6 @@
                 <th>Specialty</th>
                 <th>Taxonomy code</th>
                 <th>Primary</th>
-                <th class="table__actions"></th>
             </tr>
             </thead>
             <tbody>
@@ -331,20 +223,6 @@
                 <td>
                     <span class="badge badge--active" th:if="${tax.primary}">Primary</span>
                     <span th:unless="${tax.primary}">&mdash;</span>
-                </td>
-                <td class="table__actions">
-                    <div class="row-actions">
-                        <form th:unless="${tax.primary}"
-                              th:action="@{/groups/{gid}/taxonomies/{code}/primary(gid=${group.id}, code=${tax.taxonomy.code})}"
-                              method="post">
-                            <button class="button button--quiet button--small" type="submit">Make primary</button>
-                        </form>
-                        <form th:action="@{/groups/{gid}/taxonomies/{code}/delete(gid=${group.id}, code=${tax.taxonomy.code})}"
-                              method="post"
-                              onsubmit="return confirm('Remove this specialty?');">
-                            <button class="button button--danger button--small" type="submit">Remove</button>
-                        </form>
-                    </div>
                 </td>
             </tr>
             </tbody>
@@ -361,8 +239,6 @@
         <div class="card__header">
             <h2>Malpractice policies</h2>
             <span class="count-pill" th:text="${policies.size()}">0</span>
-            <a class="button toolbar__end"
-               th:href="@{/groups/{id}/policies/new(id=${group.id})}">Add policy</a>
         </div>
 
         <table class="table" th:unless="${policies.isEmpty()}">
@@ -373,7 +249,6 @@
                 <th>Coverage</th>
                 <th>Effective</th>
                 <th>Expires</th>
-                <th class="table__actions"></th>
             </tr>
             </thead>
             <tbody>
@@ -384,17 +259,6 @@
                         ? ${#numbers.formatCurrency(policy.amountOfCoveragePerOccurrence)} : '&mdash;'"></td>
                 <td th:text="${policy.effectiveDate}"></td>
                 <td th:text="${policy.expirationDate} ?: '&mdash;'"></td>
-                <td class="table__actions">
-                    <div class="row-actions">
-                        <a class="button button--quiet button--small"
-                           th:href="@{/groups/{gid}/policies/{mid}/edit(gid=${group.id}, mid=${policy.id})}">Edit</a>
-                        <form th:action="@{/groups/{gid}/policies/{mid}/delete(gid=${group.id}, mid=${policy.id})}"
-                              method="post"
-                              onsubmit="return confirm('Delete this policy?');">
-                            <button class="button button--danger button--small" type="submit">Delete</button>
-                        </form>
-                    </div>
-                </td>
             </tr>
             </tbody>
         </table>
@@ -405,7 +269,7 @@
         </div>
     </section>
 
-    <section class="card danger-zone" th:unless="${editing}">
+    <section class="card danger-zone" >
         <div>
             <h2>Delete group</h2>
             <p class="empty__hint">
@@ -421,42 +285,6 @@
 
 </main>
 
-<script>
-    (function () {
-        const form = document.getElementById('groupEditForm');
-        const saveBar = document.getElementById('saveBar');
-        if (!form || !saveBar) {
-            return;
-        }
-
-        // Remember what every field looked like when the page loaded.
-        const fields = Array.from(form.querySelectorAll('input, select, textarea'));
-        const initial = new Map(fields.map(field => [field, field.value]));
-        let dirty = false;
-
-        function check() {
-            dirty = fields.some(field => field.value !== initial.get(field));
-            saveBar.hidden = !dirty;
-        }
-
-        fields.forEach(field => {
-            field.addEventListener('input', check);
-            field.addEventListener('change', check);
-        });
-
-        // Don't warn when the change is being saved on purpose.
-        form.addEventListener('submit', () => {
-            dirty = false;
-        });
-
-        window.addEventListener('beforeunload', event => {
-            if (dirty) {
-                event.preventDefault();
-                event.returnValue = '';
-            }
-        });
-    })();
-</script>
 
 <div th:replace="~{fragments/layout :: footer}"></div>
 

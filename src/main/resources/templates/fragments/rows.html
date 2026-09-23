@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<body>
+
+<!--
+    Shared by the provider and group forms, whose rows are named by string (licenses[3].state)
+    rather than th:field, so the same markup can also sit in a <template> for new rows.
+    live is false for that <template> copy: there is no bound row to look errors up on.
+-->
+<span class="field__error" th:fragment="err(path, live)"
+      th:if="${live and #fields.hasErrors(path)}"
+      th:text="${#strings.listJoin(#fields.errors(path), ' ')}"></span>
+
+</body>
+</html>

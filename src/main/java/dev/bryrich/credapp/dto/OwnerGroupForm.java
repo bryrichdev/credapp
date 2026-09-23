@@ -11,8 +11,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
- * Gives an owner a stake in a group from the owner's own page. The mirror image of
- * GroupOwnerForm, which does the same thing from the group's page.
+ * Gives an owner a stake in a group from the owner's own page. From the group's side,
+ * stakes are owner rows on the group form (GroupProfileForm.OwnerRow).
  */
 public class OwnerGroupForm {
 

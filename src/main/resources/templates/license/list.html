@@ -12,6 +12,8 @@
 
 <main class="page">
 
+    <div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
+
     <div class="page__header page__header--row">
         <div>
         <h1>Licenses</h1>
@@ -88,8 +90,8 @@
                 <td class="table__actions">
                     <div class="row-actions">
                         <a class="button button--quiet button--small"
-                           th:href="@{/providers/{pid}/licenses/{lid}/edit(pid=${license.provider.id}, lid=${license.id})}">Edit</a>
-                        <form th:action="@{/providers/{pid}/licenses/{lid}/delete(pid=${license.provider.id}, lid=${license.id})}"
+                           th:href="@{/licenses/{lid}/edit(lid=${license.id})}">Edit</a>
+                        <form th:action="@{/licenses/{lid}/delete(lid=${license.id})}"
                               method="post"
                               onsubmit="return confirm('Delete this license?');">
                             <button class="button button--danger button--small" type="submit">Delete</button>

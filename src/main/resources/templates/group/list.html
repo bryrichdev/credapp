@@ -69,7 +69,7 @@
                 <td class="table__actions">
                     <div class="row-actions">
                         <a class="button button--quiet button--small"
-                           th:href="@{/groups/{id}(id=${group.id}, edit=1)}">Edit</a>
+                           th:href="@{/groups/{id}/edit(id=${group.id})}">Edit</a>
                         <form th:action="@{/groups/{id}/delete(id=${group.id})}" method="post"
                               onsubmit="return confirm('Delete this group, its locations and its ownership records?');">
                             <button class="button button--danger button--small" type="submit">Delete</button>

@@ -69,7 +69,7 @@
                 <td class="table__actions">
                     <div class="row-actions">
                         <a class="button button--quiet button--small"
-                           th:href="@{/providers/{id}(id=${provider.id}, edit=1)}">Edit</a>
+                           th:href="@{/providers/{id}/edit(id=${provider.id})}">Edit</a>
                         <form th:action="@{/providers/{id}/delete(id=${provider.id})}" method="post"
                               onsubmit="return confirm('Delete this provider and all of their licenses?');">
                             <button class="button button--danger button--small" type="submit">Delete</button>

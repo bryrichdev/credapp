@@ -1,12 +1,18 @@
 package dev.bryrich.credapp.webcontroller;
 
-import dev.bryrich.credapp.dto.LicenseForm;
-import dev.bryrich.credapp.dto.ProviderForm;
 import dev.bryrich.credapp.dto.ProviderGroupForm;
-import dev.bryrich.credapp.entity.License;
-import dev.bryrich.credapp.entity.enums.LicenseStatus;
+import dev.bryrich.credapp.dto.ProviderLocationForm;
+import dev.bryrich.credapp.dto.ProviderProfileForm;
+import dev.bryrich.credapp.dto.ProviderTaxonomyForm;
 import dev.bryrich.credapp.entity.Provider;
+import dev.bryrich.credapp.entity.enums.ChargeClassification;
+import dev.bryrich.credapp.entity.enums.ChargeStatus;
+import dev.bryrich.credapp.entity.enums.CoverageScope;
+import dev.bryrich.credapp.entity.enums.LicenseStatus;
+import dev.bryrich.credapp.entity.enums.PcpScp;
+import dev.bryrich.credapp.entity.enums.PrivilegeStatus;
 import dev.bryrich.credapp.entity.enums.Sex;
+import dev.bryrich.credapp.repository.GroupLocationRepository;
 import dev.bryrich.credapp.security.CredAppUserDetails;
 import dev.bryrich.credapp.service.CertificationService;
 import dev.bryrich.credapp.service.CriminalChargeService;
@@ -17,13 +23,16 @@ import dev.bryrich.credapp.service.LicenseService;
 import dev.bryrich.credapp.service.MalpracticeClaimService;
 import dev.bryrich.credapp.service.MalpracticePolicyService;
 import dev.bryrich.credapp.service.ProviderLocationService;
+import dev.bryrich.credapp.service.ProviderProfileService;
 import dev.bryrich.credapp.service.ProviderReferenceService;
 import dev.bryrich.credapp.service.ProviderService;
 import dev.bryrich.credapp.service.ProviderTaxonomyService;
 import dev.bryrich.credapp.service.SsnAccessService;
+import dev.bryrich.credapp.service.TaxonomyService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -42,9 +51,12 @@ import java.util.Map;
 public class ProviderWebController {
 
     private final ProviderService providerService;
+    private final ProviderProfileService profileService;
     private final LicenseService licenseService;
     private final GroupProviderService groupProviderService;
     private final GroupService groupService;
+    private final GroupLocationRepository groupLocationRepository;
+    private final TaxonomyService taxonomyService;
     private final SsnAccessService ssnAccessService;
     private final ProviderTaxonomyService providerTaxonomyService;
     private final ProviderLocationService providerLocationService;
@@ -56,9 +68,12 @@ public class ProviderWebController {
     private final MalpracticeClaimService claimService;
 
     public ProviderWebController(ProviderService providerService,
+                                 ProviderProfileService profileService,
                                  LicenseService licenseService,
                                  GroupProviderService groupProviderService,
                                  GroupService groupService,
+                                 GroupLocationRepository groupLocationRepository,
+                                 TaxonomyService taxonomyService,
                                  SsnAccessService ssnAccessService,
                                  ProviderTaxonomyService providerTaxonomyService,
                                  ProviderLocationService providerLocationService,
@@ -69,9 +84,12 @@ public class ProviderWebController {
                                  MalpracticePolicyService policyService,
                                  MalpracticeClaimService claimService) {
         this.providerService = providerService;
+        this.profileService = profileService;
         this.licenseService = licenseService;
         this.groupProviderService = groupProviderService;
         this.groupService = groupService;
+        this.groupLocationRepository = groupLocationRepository;
+        this.taxonomyService = taxonomyService;
         this.ssnAccessService = ssnAccessService;
         this.providerTaxonomyService = providerTaxonomyService;
         this.providerLocationService = providerLocationService;
@@ -126,171 +144,8 @@ public class ProviderWebController {
     }
 
     @GetMapping("/{id}")
-    public String detail(@PathVariable Long id,
-                         @RequestParam(name = "edit", defaultValue = "false") boolean edit,
-                         Model model) {
+    public String detail(@PathVariable Long id, Model model) {
         Provider provider = providerService.findById(id);
-        addDetailAttributes(id, provider, model);
-        model.addAttribute("editing", edit);
-        if (edit) {
-            model.addAttribute("form", ProviderForm.from(provider));
-            model.addAttribute("sexes", Sex.values());
-        }
-        return "provider/detail";
-    }
-
-    @PostMapping("/{id}/edit")
-    public String updateProvider(@PathVariable Long id,
-                                 @Valid @ModelAttribute("form") ProviderForm form,
-                                 BindingResult binding,
-                                 Model model,
-                                 RedirectAttributes redirectAttributes) {
-        if (binding.hasErrors()) {
-            addDetailAttributes(id, providerService.findById(id), model);
-            model.addAttribute("editing", true);
-            model.addAttribute("sexes", Sex.values());
-            return "provider/detail";
-        }
-        providerService.update(id, form::applyTo);
-        redirectAttributes.addFlashAttribute("message", "Provider updated.");
-        return "redirect:/providers/" + id;
-    }
-
-    @GetMapping("/new")
-    public String newProvider(Model model) {
-        model.addAttribute("form", new ProviderForm());
-        model.addAttribute("sexes", Sex.values());
-        model.addAttribute("groups", groupService.findAllForSelect());
-        return "provider/form";
-    }
-
-    @PostMapping
-    public String create(@Valid @ModelAttribute("form") ProviderForm form,
-                         BindingResult binding,
-                         Model model) {
-        if (binding.hasErrors()) {
-            model.addAttribute("sexes", Sex.values());
-            model.addAttribute("groups", groupService.findAllForSelect());
-            return "provider/form";
-        }
-        Provider saved = providerService.create(form.toEntity());
-        if (form.getGroupId() != null) {
-            groupProviderService.assign(form.getGroupId(), saved.getId(), null);
-        }
-        return "redirect:/providers/" + saved.getId();
-    }
-
-    @GetMapping("/{id}/licenses/new")
-    public String newLicense(@PathVariable Long id, Model model) {
-        LicenseForm form = new LicenseForm();
-        form.setProviderId(id);
-        model.addAttribute("provider", providerService.findById(id));
-        model.addAttribute("form", form);
-        model.addAttribute("statuses", LicenseStatus.values());
-        return "license/form";
-    }
-
-    @PostMapping("/{id}/licenses")
-    public String createLicense(@PathVariable Long id,
-                                @Valid @ModelAttribute("form") LicenseForm form,
-                                BindingResult binding,
-                                Model model,
-                                RedirectAttributes redirectAttributes) {
-        if (binding.hasErrors()) {
-            model.addAttribute("provider", providerService.findById(id));
-            model.addAttribute("statuses", LicenseStatus.values());
-            return "license/form";
-        }
-        licenseService.addLicense(id, form.toEntity());
-        redirectAttributes.addFlashAttribute("message", "License added.");
-        return "redirect:/providers/" + id;
-    }
-
-    @GetMapping("/{providerId}/licenses/{licenseId}/edit")
-    public String editLicense(@PathVariable Long providerId,
-                              @PathVariable Long licenseId,
-                              Model model) {
-        License license = licenseService.findByIdAndProviderId(licenseId, providerId);
-        LicenseForm form = LicenseForm.from(license);
-        form.setProviderId(providerId);
-        model.addAttribute("provider", providerService.findById(providerId));
-        model.addAttribute("form", form);
-        model.addAttribute("statuses", LicenseStatus.values());
-        model.addAttribute("licenseId", licenseId);
-        return "license/form";
-    }
-
-    @PostMapping("/{providerId}/licenses/{licenseId}/edit")
-    public String updateLicense(@PathVariable Long providerId,
-                                @PathVariable Long licenseId,
-                                @Valid @ModelAttribute("form") LicenseForm form,
-                                BindingResult binding,
-                                Model model,
-                                RedirectAttributes redirectAttributes) {
-        if (binding.hasErrors()) {
-            model.addAttribute("provider", providerService.findById(providerId));
-            model.addAttribute("statuses", LicenseStatus.values());
-            model.addAttribute("licenseId", licenseId);
-            return "license/form";
-        }
-        licenseService.update(licenseId, providerId, form::applyTo);
-        redirectAttributes.addFlashAttribute("message", "License updated.");
-        return "redirect:/providers/" + providerId;
-    }
-
-    // ============ groups this provider belongs to ============
-
-    @GetMapping("/{id}/groups/new")
-    public String newProviderGroup(@PathVariable Long id, Model model) {
-        model.addAttribute("provider", providerService.findById(id));
-        model.addAttribute("form", new ProviderGroupForm());
-        model.addAttribute("groups", groupService.findAllForSelect());
-        return "provider/group-form";
-    }
-
-    @PostMapping("/{id}/groups")
-    public String addProviderGroup(@PathVariable Long id,
-                                   @Valid @ModelAttribute("form") ProviderGroupForm form,
-                                   BindingResult binding,
-                                   Model model,
-                                   RedirectAttributes redirectAttributes) {
-        if (binding.hasErrors()) {
-            model.addAttribute("provider", providerService.findById(id));
-            model.addAttribute("groups", groupService.findAllForSelect());
-            return "provider/group-form";
-        }
-        groupProviderService.assign(form.getGroupId(), id, form.getEffectiveDate());
-        redirectAttributes.addFlashAttribute("message", "Group added.");
-        return "redirect:/providers/" + id;
-    }
-
-    @PostMapping("/{providerId}/groups/{groupId}/delete")
-    public String removeProviderGroup(@PathVariable Long providerId,
-                                      @PathVariable Long groupId,
-                                      RedirectAttributes redirectAttributes) {
-        groupProviderService.unassign(groupId, providerId);
-        redirectAttributes.addFlashAttribute("message", "Group removed.");
-        return "redirect:/providers/" + providerId;
-    }
-
-    @PostMapping("/{id}/delete")
-    public String deleteProvider(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        providerService.delete(id);
-        redirectAttributes.addFlashAttribute("message", "Provider deleted.");
-        return "redirect:/providers";
-    }
-
-    @PostMapping("/{providerId}/licenses/{licenseId}/delete")
-    public String deleteLicense(@PathVariable Long providerId,
-                                @PathVariable Long licenseId,
-                                RedirectAttributes redirectAttributes) {
-        licenseService.delete(licenseId, providerId);
-        redirectAttributes.addFlashAttribute("message", "License deleted.");
-        return "redirect:/providers/" + providerId;
-    }
-
-    /** Everything the provider detail page lists, in one place so both entry points match. */
-    private void addDetailAttributes(Long id, Provider provider, Model model) {
         model.addAttribute("provider", provider);
         model.addAttribute("licenses", licenseService.findByProviderId(id));
         model.addAttribute("groups", groupProviderService.findGroups(id));
@@ -302,5 +157,103 @@ public class ProviderWebController {
         model.addAttribute("charges", chargeService.findByProviderId(id));
         model.addAttribute("policies", policyService.findByProviderId(id));
         model.addAttribute("claims", claimService.findByProviderId(id));
+        return "provider/detail";
+    }
+
+    // ============ the one form: new and edit ============
+
+    @GetMapping("/new")
+    public String newProvider(Model model) {
+        model.addAttribute("form", new ProviderProfileForm());
+        addFormOptions(null, model);
+        return "provider/form";
+    }
+
+    @PostMapping
+    public String create(@Valid @ModelAttribute("form") ProviderProfileForm form,
+                         BindingResult binding,
+                         Model model,
+                         RedirectAttributes redirectAttributes) {
+        return save(null, form, binding, model, redirectAttributes);
+    }
+
+    @GetMapping("/{id}/edit")
+    public String edit(@PathVariable Long id, Model model) {
+        model.addAttribute("form", profileService.load(id));
+        addFormOptions(id, model);
+        return "provider/form";
+    }
+
+    @PostMapping("/{id}/edit")
+    public String update(@PathVariable Long id,
+                         @Valid @ModelAttribute("form") ProviderProfileForm form,
+                         BindingResult binding,
+                         Model model,
+                         RedirectAttributes redirectAttributes) {
+        providerService.findById(id);
+        return save(id, form, binding, model, redirectAttributes);
+    }
+
+    private String save(Long id, ProviderProfileForm form, BindingResult binding,
+                        Model model, RedirectAttributes redirectAttributes) {
+        profileService.validate(id, form, binding);
+        if (binding.hasErrors()) {
+            binding.reject("form.invalid", "Some fields need attention. They're marked below.");
+            addFormOptions(id, model);
+            return "provider/form";
+        }
+        Provider saved;
+        try {
+            saved = profileService.save(id, form);
+        } catch (DataIntegrityViolationException ex) {
+            binding.reject("save.conflict",
+                    "Nothing was saved. A policy or claim number is already on file for that carrier, "
+                            + "or an item being removed is still referenced elsewhere.");
+            addFormOptions(id, model);
+            return "provider/form";
+        }
+        redirectAttributes.addFlashAttribute("message", id == null ? "Provider added." : "Provider saved.");
+        return "redirect:/providers/" + saved.getId();
+    }
+
+    @PostMapping("/{id}/delete")
+    public String deleteProvider(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        providerService.delete(id);
+        redirectAttributes.addFlashAttribute("message", "Provider deleted.");
+        return "redirect:/providers";
+    }
+
+    /** Pick-lists for every section, plus a blank row of each kind for the "Add" buttons. */
+    private void addFormOptions(Long providerId, Model model) {
+        if (providerId != null) {
+            model.addAttribute("provider", providerService.findById(providerId));
+        }
+        model.addAttribute("sexes", Sex.values());
+        model.addAttribute("groupOptions", groupService.findAllForSelect());
+        model.addAttribute("locationOptions", groupLocationRepository.findAllWithGroup());
+        model.addAttribute("taxonomyOptions", taxonomyService.findAllForSelect());
+        model.addAttribute("colleagues", providerService.findAllForSelect().stream()
+                .filter(p -> !p.getId().equals(providerId))
+                .toList());
+        model.addAttribute("outsidePolicies", profileService.findOutsidePolicies(providerId));
+        model.addAttribute("pcpScpOptions", PcpScp.values());
+        model.addAttribute("licenseStatuses", LicenseStatus.values());
+        model.addAttribute("privilegeStatuses", PrivilegeStatus.values());
+        model.addAttribute("scopes", CoverageScope.values());
+        model.addAttribute("chargeClassifications", ChargeClassification.values());
+        model.addAttribute("chargeStatuses", ChargeStatus.values());
+
+        Map<String, Object> blank = new HashMap<>();
+        blank.put("group", new ProviderGroupForm());
+        blank.put("location", new ProviderLocationForm());
+        blank.put("taxonomy", new ProviderTaxonomyForm());
+        blank.put("license", new ProviderProfileForm.LicenseRow());
+        blank.put("certification", new ProviderProfileForm.CertificationRow());
+        blank.put("privilege", new ProviderProfileForm.PrivilegeRow());
+        blank.put("policy", new ProviderProfileForm.PolicyRow());
+        blank.put("claim", new ProviderProfileForm.ClaimRow());
+        blank.put("reference", new ProviderProfileForm.ReferenceRow());
+        blank.put("charge", new ProviderProfileForm.ChargeRow());
+        model.addAttribute("blank", blank);
     }
 }

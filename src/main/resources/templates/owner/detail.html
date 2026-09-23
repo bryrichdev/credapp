@@ -175,7 +175,7 @@
                 <td class="table__actions">
                     <div class="row-actions">
                         <a class="button button--quiet button--small"
-                           th:href="@{/groups/{gid}/owners/{oid}/edit(gid=${stake.group.id}, oid=${owner.id})}">Edit</a>
+                           th:href="@{/groups/{gid}/edit(gid=${stake.group.id})} + '#owners'">Edit</a>
                         <form th:action="@{/owners/{oid}/groups/{gid}/delete(oid=${owner.id}, gid=${stake.group.id})}"
                               method="post"
                               onsubmit="return confirm('Remove this owner from the group? Their relationships there go too.');">
