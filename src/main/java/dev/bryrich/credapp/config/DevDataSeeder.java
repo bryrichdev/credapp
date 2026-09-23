@@ -1,8 +1,8 @@
 package dev.bryrich.credapp.config;
 
-import dev.bryrich.credapp.entity.User;
-import dev.bryrich.credapp.entity.enums.Role;
-import dev.bryrich.credapp.service.UserService;
+import dev.bryrich.credapp.user.Role;
+import dev.bryrich.credapp.user.User;
+import dev.bryrich.credapp.user.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;

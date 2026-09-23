@@ -1,0 +1,63 @@
+package dev.bryrich.credapp.provider;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+
+@Service
+public class ProviderService {
+    private final ProviderRepository providerRepository;
+    public ProviderService (ProviderRepository providerRepository) {
+        this.providerRepository = providerRepository;
+    }
+    @Transactional(readOnly = true)
+    public Provider findById(Long id) {
+        return providerRepository.findById(id)
+                .orElseThrow(() -> new ProviderNotFoundException(id));
+    }
+
+    @Transactional(readOnly = true)
+    public Provider findByIdWithLicenses(Long id) {
+        return providerRepository.findByIdWithLicenses(id)
+                .orElseThrow(() -> new ProviderNotFoundException(id));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Provider> search(String lastName, Pageable pageable) {
+        return providerRepository.findByLastNameContainingIgnoreCase(lastName, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Provider> findAll(Pageable pageable) {
+        return providerRepository.findAll(pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Provider> findAllForSelect() { return providerRepository.findAll(Sort.by("lastName", "firstName")); }
+
+    @Transactional
+    public Provider create(Provider provider) {
+        return providerRepository.save(provider);
+    }
+
+    @Transactional
+    public Provider update(Long id, java.util.function.Consumer<Provider> changes) {
+        Provider provider = providerRepository.findById(id)
+                .orElseThrow(() -> new ProviderNotFoundException(id));
+        changes.accept(provider);
+        return provider;
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        Provider provider = providerRepository.findById(id)
+                .orElseThrow(() -> new ProviderNotFoundException(id));
+        providerRepository.delete(provider);
+    }
+
+}

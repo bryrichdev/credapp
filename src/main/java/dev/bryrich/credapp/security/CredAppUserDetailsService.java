@@ -1,7 +1,7 @@
 package dev.bryrich.credapp.security;
 
-import dev.bryrich.credapp.entity.User;
-import dev.bryrich.credapp.service.UserService;
+import dev.bryrich.credapp.user.User;
+import dev.bryrich.credapp.user.UserService;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
