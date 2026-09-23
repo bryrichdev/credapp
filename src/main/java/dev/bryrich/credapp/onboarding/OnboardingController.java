@@ -30,7 +30,7 @@ import java.util.UUID;
 public class OnboardingController {
 
     static final long MAX_UPLOAD_BYTES = 10L * 1024 * 1024;
-    static final String TEMPLATE_FILE_NAME = "credapp-onboarding-template.xlsx";
+    static final String TEMPLATE_FILE_NAME = "credcloud-onboarding-template.xlsx";
     static final MediaType XLSX =
             MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 

@@ -48,7 +48,8 @@ public class SecurityConfig {
     public SecurityFilterChain webSecurityFilterChain(HttpSecurity http, UserRepository users) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/login", "/register", "/css/**", "/js/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/login", "/register", "/css/**", "/js/**",
+                                "/favicon.ico", "/favicon.svg", "/apple-touch-icon.png").permitAll()
                         .requestMatchers(HttpMethod.POST, "/login", "/register").anonymous()
                         .requestMatchers("/admin/**").hasAnyRole("SUPERUSER", "ADMIN")
                         // Reveals are reads with a server-generated audit entry, never record edits.

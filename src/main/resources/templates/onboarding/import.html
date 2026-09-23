@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Import &middot; CredApp</title>
+    <title>Import &middot; CredCloud</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any">
+    <link rel="icon" th:href="@{/favicon.svg}" type="image/svg+xml">
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}">
 </head>
 <body>
 
@@ -36,7 +39,7 @@
                     th:text="${report.problems().size() == 1} ? '1 problem to fix' : ${report.problems().size()} + ' problems to fix'">
                     Problems to fix</h2>
                 <p th:if="${changedSincePreview}">
-                    Something in CredApp changed after the preview, and the file no longer imports cleanly.
+                    Something in CredCloud changed after the preview, and the file no longer imports cleanly.
                     Nothing was saved. Fix these and upload it again.
                 </p>
                 <p th:unless="${changedSincePreview}">
@@ -74,7 +77,7 @@
                 <h2>Ready to import</h2>
                 <p>
                     <span th:text="${fileName}">The file</span> checked out: every row passed the same rules as
-                    the forms, and nothing clashes with what's already in CredApp. Nothing is saved until you
+                    the forms, and nothing clashes with what's already in CredCloud. Nothing is saved until you
                     click Import.
                 </p>
             </div>
@@ -133,7 +136,7 @@
                 <h2 th:text="${report != null} ? 'Upload it again' : 'Upload it'">Upload it</h2>
                 <p>
                     You'll see a preview first. It checks every row the way the forms do and flags anything
-                    already in CredApp. Nothing is saved until you click Import, and then everything is saved
+                    already in CredCloud. Nothing is saved until you click Import, and then everything is saved
                     together or not at all.
                 </p>
                 <form class="import-upload" method="post" enctype="multipart/form-data"

@@ -209,7 +209,7 @@ class OnboardingImportServiceTest {
                 .bytes());
 
         assertThat(report.problems()).isEmpty();
-        assertThat(report.payers()).containsExactly("AETNA (PAY1, already in CredApp)");
+        assertThat(report.payers()).containsExactly("AETNA (PAY1, already in CredCloud)");
         assertThat(payers.count()).isEqualTo(1);
         Group group = groups.findByTaxId("123456789").getFirst();
         assertThat(enrollments.findForGroup(group.getId())).singleElement()
@@ -292,7 +292,7 @@ class OnboardingImportServiceTest {
                         org.assertj.core.groups.Tuple.tuple("Licenses", 2, "Expiration date",
                                 "Expiration date is required"),
                         org.assertj.core.groups.Tuple.tuple("Provider Specialties", 2, "Taxonomy code",
-                                "NOT-A-CODE isn't a taxonomy code CredApp knows"));
+                                "NOT-A-CODE isn't a taxonomy code CredCloud knows"));
         assertThat(report.problems()).anySatisfy(problem -> {
             assertThat(problem.sheet()).isEqualTo("Notes");
             assertThat(problem.message()).contains("isn't part of the template");
@@ -338,7 +338,7 @@ class OnboardingImportServiceTest {
 
         assertThat(again.problems()).singleElement().satisfies(problem -> {
             assertThat(problem.column()).isEqualTo("NPI");
-            assertThat(problem.message()).isEqualTo("A provider with NPI 1111111111 is already in CredApp");
+            assertThat(problem.message()).isEqualTo("A provider with NPI 1111111111 is already in CredCloud");
         });
         assertThat(providers.count()).isEqualTo(1);
     }

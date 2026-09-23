@@ -62,7 +62,7 @@ import static dev.bryrich.credapp.onboarding.OnboardingTemplate.RELATED_OWNER;
  * Turns parsed rows into an OnboardingPlan. Each row is bound onto the same form class the
  * web page uses and checked with that form's rules, so a sheet row and a form row pass or
  * fail alike. On top of that it resolves the IDs that link sheets together and looks for
- * records that are already in CredApp, since onboarding only ever creates.
+ * records that are already in CredCloud, since onboarding only ever creates.
  *
  * Nothing here writes. Rules that depend on saved rows (ownership totals, one primary
  * specialty and so on) run later, through the profile services, when the import saves.
@@ -156,7 +156,7 @@ public class OnboardingPlanner {
                     if (earlier != null) {
                         problems.at(row, "npi", "Same NPI as row " + earlier.number());
                     } else if (groupRepository.existsByNpi(form.getNpi())) {
-                        problems.at(row, "npi", "A group with NPI " + form.getNpi() + " is already in CredApp");
+                        problems.at(row, "npi", "A group with NPI " + form.getNpi() + " is already in CredCloud");
                     }
                 }
                 if (form.getTaxId() != null && form.getLbn() != null) {
@@ -166,7 +166,7 @@ public class OnboardingPlanner {
                         problems.at(row, "lbn", "Same group as row " + earlier.number() + " (same name and tax ID)");
                     } else if (groupRepository.findByTaxId(form.getTaxId()).stream()
                             .anyMatch(group -> group.getLbn().equalsIgnoreCase(form.getLbn().trim()))) {
-                        problems.at(row, "lbn", form.getLbn() + " with this tax ID is already in CredApp");
+                        problems.at(row, "lbn", form.getLbn() + " with this tax ID is already in CredCloud");
                     }
                 }
                 if (key != null) {
@@ -205,8 +205,8 @@ public class OnboardingPlanner {
                                     form.getLastName().trim(), form.getFirstName().trim()).stream()
                             .anyMatch(owner -> form.getDob().equals(owner.getDob()))) {
                         problems.at(row, null, form.getFirstName() + " " + form.getLastName()
-                                + ", born " + form.getDob() + ", is already in CredApp. Take them off this file "
-                                + "and add their stake in CredApp after the import.");
+                                + ", born " + form.getDob() + ", is already in CredCloud. Take them off this file "
+                                + "and add their stake in CredCloud after the import.");
                     }
                 }
                 if (key != null) {
@@ -286,7 +286,7 @@ public class OnboardingPlanner {
                     if (earlier != null) {
                         problems.at(row, "npi", "Same NPI as row " + earlier.number());
                     } else if (providerRepository.findByNpi(form.getNpi()).isPresent()) {
-                        problems.at(row, "npi", "A provider with NPI " + form.getNpi() + " is already in CredApp");
+                        problems.at(row, "npi", "A provider with NPI " + form.getNpi() + " is already in CredCloud");
                     }
                 }
                 if (key != null) {
@@ -423,7 +423,7 @@ public class OnboardingPlanner {
                     if (earlier != null) {
                         problems.at(row, "policyNumber", "Same carrier and policy number as row " + earlier.number());
                     } else if (policyRepository.findByCarrierNameAndPolicyNumber(carrier, number).isPresent()) {
-                        problems.at(row, "policyNumber", carrier + " policy " + number + " is already in CredApp");
+                        problems.at(row, "policyNumber", carrier + " policy " + number + " is already in CredCloud");
                     }
                 }
 
@@ -460,7 +460,7 @@ public class OnboardingPlanner {
                     if (earlier != null) {
                         problems.at(row, "claimNumber", "Same carrier and claim number as row " + earlier.number());
                     } else if (claimRepository.findByCarrierNameAndClaimNumber(carrier, number).isPresent()) {
-                        problems.at(row, "claimNumber", carrier + " claim " + number + " is already in CredApp");
+                        problems.at(row, "claimNumber", carrier + " claim " + number + " is already in CredCloud");
                     }
                 }
                 if (provider == null) {
@@ -655,7 +655,7 @@ public class OnboardingPlanner {
             }
             boolean known = taxonomyCodes.computeIfAbsent(code, taxonomyRepository::existsById);
             if (!known) {
-                problems.at(row, "code", code + " isn't a taxonomy code CredApp knows");
+                problems.at(row, "code", code + " isn't a taxonomy code CredCloud knows");
             }
             return known;
         }

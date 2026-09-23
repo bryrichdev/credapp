@@ -130,7 +130,7 @@ class TrackingWebIntegrationTest {
     void theExportIsAWorkbookOfTheSameRows() throws Exception {
         byte[] file = mvc.perform(get("/tracking/export").param("category", "LICENSES").with(signedIn(admin)))
                 .andExpect(status().isOk())
-                .andExpect(header().string("Content-Disposition", containsString("credapp-tracking-")))
+                .andExpect(header().string("Content-Disposition", containsString("credcloud-tracking-")))
                 .andReturn().getResponse().getContentAsByteArray();
 
         XlsxWorkbook workbook = XlsxReader.read(new ByteArrayInputStream(file));

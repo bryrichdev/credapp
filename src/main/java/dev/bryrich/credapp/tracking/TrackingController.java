@@ -117,7 +117,7 @@ public class TrackingController {
                 new Column("For", 28, false, Format.GENERAL, List.of()),
                 new Column("Provider or group", 16, false, Format.GENERAL, List.of()),
                 new Column("Category", 22, false, Format.GENERAL, List.of())), rows)));
-        String name = "credapp-tracking-" + LocalDate.now() + ".xlsx";
+        String name = "credcloud-tracking-" + LocalDate.now() + ".xlsx";
         return ResponseEntity.ok()
                 .contentType(XLSX)
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename(name).build().toString())

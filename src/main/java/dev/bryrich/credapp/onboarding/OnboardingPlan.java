@@ -43,7 +43,7 @@ public class OnboardingPlan {
         }
     }
 
-    /** A payer on the Payers sheet: new, or one already in CredApp matched by name (existingId). */
+    /** A payer on the Payers sheet: new, or one already in CredCloud matched by name (existingId). */
     public static class PayerPlan {
         final String key;
         final ParsedRow row;
@@ -58,7 +58,7 @@ public class OnboardingPlan {
         }
 
         String label() {
-            return form.getName() + " (" + key + (existingId == null ? ", new)" : ", already in CredApp)");
+            return form.getName() + " (" + key + (existingId == null ? ", new)" : ", already in CredCloud)");
         }
     }
 

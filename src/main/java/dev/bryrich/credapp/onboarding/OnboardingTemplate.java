@@ -147,7 +147,7 @@ public final class OnboardingTemplate {
                     required("lastName", "Last name", ValueType.TEXT, 16, null),
                     optional("dob", "Date of birth", ValueType.DATE, 13, null),
                     optional("ssn", "SSN", ValueType.digits(9, "Social Security number"), 12,
-                            "Stored encrypted. Leave blank to add it later in CredApp.")),
+                            "Stored encrypted. Leave blank to add it later in CredCloud.")),
                     address("Home")));
 
     public static final Sheet OWNERSHIP = new Sheet("Ownership",
@@ -314,7 +314,7 @@ public final class OnboardingTemplate {
     }
 
     public static final Sheet PAYERS = new Sheet("Payers",
-            "Payers the practice is enrolled or enrolling with. A payer already in CredApp with the same name "
+            "Payers the practice is enrolled or enrolling with. A payer already in CredCloud with the same name "
                     + "is used as it is; only new payers are added.", List.of(
             ownId("PAY"),
             required("name", "Name", ValueType.TEXT, 26, null),
@@ -380,22 +380,22 @@ public final class OnboardingTemplate {
 
     private static XlsxWriter.TextSheet instructions() {
         List<TextRow> rows = new ArrayList<>();
-        rows.add(new TextRow(List.of(new Cell("CredApp onboarding workbook", Style.TITLE)), false, 24));
+        rows.add(new TextRow(List.of(new Cell("CredCloud onboarding workbook", Style.TITLE)), false, 24));
         rows.add(TextRow.of());
         rows.add(TextRow.of(new Cell("How it works", Style.HEADING)));
         for (String line : List.of(
                 "Fill in one sheet per kind of record. Leave a sheet empty if it doesn't apply to you.",
-                "Keep row 1 on every sheet as it is: CredApp finds each column by its header. Column order doesn't matter.",
+                "Keep row 1 on every sheet as it is: CredCloud finds each column by its header. Column order doesn't matter.",
                 "Green headers marked * are required on every row you fill in.",
                 "Give each group, location, owner, provider and payer a short ID you make up: G1, L1, O1, P1, "
                         + "PAY1 and so on. "
                         + "Other sheets use these IDs to say which record a row belongs to. They only need to be "
                         + "unique within their sheet, and they only mean something inside this file.",
                 "Dates can be typed as 2025-01-31 or 1/31/2025. Where a column has a dropdown, pick from it.",
-                "Provider SSNs aren't collected here. Add them in CredApp after the import.",
-                "Payers already in CredApp are matched by name and used as they are, so list Aetna even if it's "
+                "Provider SSNs aren't collected here. Add them in CredCloud after the import.",
+                "Payers already in CredCloud are matched by name and used as they are, so list Aetna even if it's "
                         + "on file: its row just gives the other sheets a Payer ID to point at.",
-                "To import: in CredApp, open Import, upload this file and check the preview. Nothing is saved until "
+                "To import: in CredCloud, open Import, upload this file and check the preview. Nothing is saved until "
                         + "you click Import, and then everything is saved together or not at all.")) {
             rows.add(new TextRow(List.of(new Cell("•", Style.WRAP), Cell.of(line)), true, heightFor(line, 115)));
         }

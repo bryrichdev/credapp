@@ -194,10 +194,10 @@ public class OnboardingImportService {
         if (ex instanceof DataIntegrityViolationException integrity) {
             String cause = integrity.getMostSpecificCause().getMessage();
             String firstLine = cause == null ? "" : cause.lines().findFirst().orElse("");
-            return "CredApp couldn't save this row because it breaks a database rule: " + firstLine;
+            return "CredCloud couldn't save this row because it breaks a database rule: " + firstLine;
         }
         return ex.getMessage() == null
-                ? "CredApp couldn't save this row (" + ex.getClass().getSimpleName() + ")"
+                ? "CredCloud couldn't save this row (" + ex.getClass().getSimpleName() + ")"
                 : ex.getMessage();
     }
 

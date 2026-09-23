@@ -3,15 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Sign in &middot; Credapp</title>
+    <title>Sign in &middot; CredCloud</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any">
+    <link rel="icon" th:href="@{/favicon.svg}" type="image/svg+xml">
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}">
 </head>
 <body class="signin">
 
 <main class="signin__card">
     <div class="signin__brand">
-        <span class="topbar__mark">CP</span>
-        <span class="topbar__brand">Credapp</span>
+        <span class="topbar__mark">CC</span>
+        <span class="topbar__brand">CredCloud</span>
     </div>
 
     <h1 class="signin__title">Sign in</h1>
@@ -38,7 +41,7 @@
 
         <button class="button button--block" type="submit">Sign in</button>
     </form>
-    <p class="signin__hint signin__footer">New to CredApp? <a th:href="@{/register}">Create account</a></p>
+    <p class="signin__hint signin__footer">New to CredCloud? <a th:href="@{/register}">Create account</a></p>
 </main>
 
 </body>
