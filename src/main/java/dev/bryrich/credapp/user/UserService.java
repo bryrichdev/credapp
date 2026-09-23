@@ -76,6 +76,56 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    // ============ your own account ============
+
+    /**
+     * Someone changing their own name, email or password from the My account page, whatever
+     * their role. The current password has to match first, so a session left open on a
+     * shared computer can't be used to take the account over. A blank new password keeps
+     * the current one.
+     */
+    @Transactional
+    public User updateOwnAccount(Long userId, String currentPassword, String email, String fullName,
+                                 String newPassword) {
+        User user = findById(userId);
+        if (currentPassword == null || !passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw new WrongPasswordException();
+        }
+
+        // Every check runs before anything changes, so a refused save leaves the account as it was.
+        boolean changesPassword = newPassword != null && !newPassword.isEmpty();
+        if (changesPassword) {
+            requireValidPassword(newPassword);
+            if (passwordEncoder.matches(newPassword, user.getPasswordHash())) {
+                throw new IllegalArgumentException("Choose a password different from your current one");
+            }
+        }
+        String normalized = User.normalizeEmail(email);
+        boolean changesEmail = !normalized.equals(user.getEmail());
+        if (changesEmail && userRepository.existsByEmail(normalized)) {
+            throw new EmailAlreadyExistsException(normalized);
+        }
+
+        if (changesEmail) {
+            user.setEmail(normalized);
+        }
+        user.setFullName(fullName == null || fullName.isBlank() ? null : fullName.trim());
+        if (changesPassword) {
+            user.setPasswordHash(passwordEncoder.encode(newPassword));
+        }
+        return user;
+    }
+
+    /** The password rules: 12 characters at least, and no more than bcrypt reads (72 bytes). */
+    public static void requireValidPassword(String password) {
+        if (password == null || password.length() < MIN_PASSWORD_LENGTH) {
+            throw new IllegalArgumentException("Password must be at least " + MIN_PASSWORD_LENGTH + " characters");
+        }
+        if (password.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+            throw new IllegalArgumentException("Password must be at most 72 bytes (use fewer characters)");
+        }
+    }
+
     // ============ account administration ============
     //
     // Every method below takes the signed-in account as `actor` and checks what that

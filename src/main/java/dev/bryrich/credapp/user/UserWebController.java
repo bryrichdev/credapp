@@ -128,8 +128,11 @@ public class UserWebController {
                            Model model,
                            RedirectAttributes redirectAttributes) {
         User actor = principal.getUser();
+        if (id.equals(actor.getId())) {
+            return "redirect:/account";
+        }
         User target = userService.findByIdAs(actor, id);
-        if (!target.getId().equals(actor.getId()) && !actor.getRole().canManage(target.getRole())) {
+        if (!actor.getRole().canManage(target.getRole())) {
             redirectAttributes.addFlashAttribute("errorMessage",
                     "You are not allowed to manage " + target.getRole().getLabel() + " accounts.");
             return "redirect:/admin/users";
@@ -148,6 +151,11 @@ public class UserWebController {
                              Model model,
                              RedirectAttributes redirectAttributes) {
         User actor = principal.getUser();
+        if (id.equals(actor.getId())) {
+            // Your own account changes on My account, which asks for your current password.
+            redirectAttributes.addFlashAttribute("message", "Change your own account here.");
+            return "redirect:/account";
+        }
         userService.findByIdAs(actor, id);
         if (binding.hasErrors()) {
             model.addAttribute("roles", actor.getRole().assignableRoles());

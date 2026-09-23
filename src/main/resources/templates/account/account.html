@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>My account &middot; CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'account')}"></div>
+
+<main class="page page--narrow">
+
+    <div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
+
+    <div class="page__header">
+        <h1>My account</h1>
+        <p class="page__subtitle">
+            <span class="badge badge--active" th:text="${account.role.label}">Coordinator</span>
+            <span th:if="${accountGroup != null}"> in <strong th:text="${accountGroup}">Lakeside Clinic</strong></span>
+        </p>
+    </div>
+
+    <form method="post" th:action="@{/account}" th:object="${form}" class="account-form">
+
+        <section class="card">
+            <h2>Profile</h2>
+            <div class="form-grid">
+                <label class="field">
+                    <span class="field__label">Full name</span>
+                    <input class="field__input" type="text" th:field="*{fullName}" autocomplete="name" maxlength="200"
+                           th:classappend="${#fields.hasErrors('fullName')} ? 'field__input--invalid'">
+                    <span class="field__error" th:errors="*{fullName}" th:if="${#fields.hasErrors('fullName')}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Email</span>
+                    <input class="field__input" type="email" th:field="*{email}" autocomplete="username" required
+                           th:classappend="${#fields.hasErrors('email')} ? 'field__input--invalid'">
+                    <span class="field__hint">You sign in with this.</span>
+                    <span class="field__error" th:errors="*{email}" th:if="${#fields.hasErrors('email')}"></span>
+                </label>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Change password</h2>
+            <p class="account-form__note">
+                Leave these blank to keep your current password. A new one needs at least 12 characters, and
+                changing it signs you out on your other devices.
+            </p>
+            <div class="form-grid">
+                <label class="field">
+                    <span class="field__label">New password</span>
+                    <input class="field__input" type="password" th:field="*{newPassword}" autocomplete="new-password"
+                           minlength="12" maxlength="72"
+                           th:classappend="${#fields.hasErrors('newPassword')} ? 'field__input--invalid'">
+                    <span class="field__error" th:errors="*{newPassword}" th:if="${#fields.hasErrors('newPassword')}"></span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Confirm new password</span>
+                    <input class="field__input" type="password" th:field="*{confirmPassword}" autocomplete="new-password"
+                           maxlength="72"
+                           th:classappend="${#fields.hasErrors('confirmPassword')} ? 'field__input--invalid'">
+                    <span class="field__error" th:errors="*{confirmPassword}" th:if="${#fields.hasErrors('confirmPassword')}"></span>
+                </label>
+            </div>
+        </section>
+
+        <section class="card account-form__confirm">
+            <h2>Confirm it's you</h2>
+            <div class="form-grid">
+                <label class="field">
+                    <span class="field__label">Current password</span>
+                    <input class="field__input" type="password" th:field="*{currentPassword}"
+                           autocomplete="current-password" required
+                           th:classappend="${#fields.hasErrors('currentPassword')} ? 'field__input--invalid'">
+                    <span class="field__hint">Needed for any change on this page.</span>
+                    <span class="field__error" th:errors="*{currentPassword}" th:if="${#fields.hasErrors('currentPassword')}"></span>
+                </label>
+            </div>
+            <div class="form-actions">
+                <button class="button" type="submit">Save changes</button>
+                <a class="button button--quiet" th:href="@{/account}">Cancel</a>
+            </div>
+        </section>
+    </form>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

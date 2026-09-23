@@ -53,6 +53,8 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasAnyRole("SUPERUSER", "ADMIN")
                         // Reveals are reads with a server-generated audit entry, never record edits.
                         .requestMatchers(HttpMethod.POST, "/providers/{id}/ssn", "/owners/{id}/ssn").authenticated()
+                        // Your own account, whatever your role; it asks for your current password.
+                        .requestMatchers(HttpMethod.POST, "/account").authenticated()
                         .requestMatchers(WRITE_REQUEST).hasAnyRole(EDIT_ROLES)
                         .requestMatchers(EDIT_PAGE).hasAnyRole(EDIT_ROLES)
                         .anyRequest().authenticated())

@@ -32,7 +32,9 @@
 
     <div class="topbar__right">
         <span class="badge badge--inactive" th:unless="${canEdit}">Read only</span>
-        <span class="topbar__user" th:text="${user.email}" th:title="${user.email}">user@example.com</span>
+        <a class="topbar__user" th:classappend="${section == 'account'} ? 'topbar__user--active'"
+           th:href="@{/account}" th:text="${user.email}"
+           th:title="'My account: ' + ${user.email}">user@example.com</a>
         <form method="post" th:action="@{/logout}">
             <button class="button button--quiet" type="submit">Sign out</button>
         </form>

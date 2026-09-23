@@ -1507,3 +1507,37 @@ input.field__input[type="date"] {
     gap: 10px;
     margin-top: 16px;
 }
+
+/* ============ my account ============ */
+
+.page--narrow {
+    max-width: 720px;
+}
+
+a.topbar__user {
+    text-decoration: none;
+    border-radius: 6px;
+    padding: 4px 6px;
+}
+
+a.topbar__user:hover,
+.topbar__user--active {
+    color: var(--teal-700);
+    background: var(--teal-50);
+}
+
+.account-form .card h2 {
+    margin: 0 0 12px;
+    font-size: 1.05rem;
+}
+
+.account-form__note {
+    margin: -4px 0 14px;
+    color: var(--slate-500);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.account-form__confirm {
+    border-left: 4px solid var(--teal-600);
+}

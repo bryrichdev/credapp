@@ -31,7 +31,9 @@ public class GroupViewFilter extends OncePerRequestFilter {
     private static final Pattern ALLOWED_POSTS = Pattern.compile(
             "^/(logout|admin/user-groups/view/exit|admin/user-groups/\\d+/view|providers/\\d+/ssn|owners/\\d+/ssn"
                     // A superuser onboarding a practice imports into the group they're viewing.
-                    + "|admin/import/(preview|confirm|cancel))$");
+                    + "|admin/import/(preview|confirm|cancel)"
+                    // Your own account isn't the viewed group's data.
+                    + "|account)$");
     private static final Pattern READABLE_PAGE = Pattern.compile("^(/admin)?/[a-z-]+(/\\d+)?$");
     private static final Pattern EDIT_SCREEN = Pattern.compile("^(.*?)/(new|edit)(/.*)?$");
 

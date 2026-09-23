@@ -172,7 +172,7 @@
                             </form>
                             <a class="button button--quiet button--small"
                                th:if="${approved and (manageable or self) and viewingGroupName == null}"
-                               th:href="@{/admin/users/{id}/edit(id=${account.id})}">Edit</a>
+                               th:href="${self} ? @{/account} : @{/admin/users/{id}/edit(id=${account.id})}">Edit</a>
 
                             <form th:if="${manageable and approved}"
                                   th:action="@{/admin/users/{id}/enabled(id=${account.id})}" method="post">
