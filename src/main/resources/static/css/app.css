@@ -167,6 +167,18 @@ a {
     margin-top: 1.25rem;
 }
 
+/* Preserve password characters while allowing long credentials to wrap on phones. */
+.secret-actions {
+    flex-wrap: wrap;
+}
+
+.secret-value {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    min-width: 0;
+    max-width: 100%;
+}
+
 /* ---------- sign-in screen ---------- */
 
 .signin {

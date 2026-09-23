@@ -44,7 +44,7 @@
         <p class="wipe-kept">
             Kept: the user group, its join code, its tracking settings and its
             <strong th:text="${contents.accounts() == 1} ? '1 account' : ${contents.accounts()} + ' accounts'">3 accounts</strong>,
-            so everyone can still sign in to an empty workspace. The SSN access log is kept too.
+            so everyone can still sign in to an empty workspace. SSN and CAQH password access logs are kept too.
         </p>
 
         <form method="post" th:action="@{/admin/user-groups/{id}/wipe(id=${wipeGroup.id})}" th:object="${form}"

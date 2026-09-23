@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
  * edit screens send them back to the page they came from.
  *
  * The few posts that don't change records stay open: leaving the view, switching to
- * another group, signing out, and SSN reveals (which are reads, logged against the
+ * another group, signing out, and SSN/CAQH password reveals (which are reads, logged against the
  * superuser in that group's audit trail). The one deliberate write is the spreadsheet
  * import, which is how a superuser onboards a practice on its behalf.
  */
@@ -30,6 +30,7 @@ public class GroupViewFilter extends OncePerRequestFilter {
     private static final Set<String> READS = Set.of("GET", "HEAD", "OPTIONS");
     private static final Pattern ALLOWED_POSTS = Pattern.compile(
             "^/(logout|admin/user-groups/view/exit|admin/user-groups/\\d+/view|providers/\\d+/ssn|owners/\\d+/ssn"
+                    + "|providers/\\d+/caqh-password"
                     // A superuser onboarding a practice imports into the group they're viewing.
                     + "|admin/import/(preview|confirm|cancel)"
                     // A wipe names its group in the URL and is confirmed with a password.

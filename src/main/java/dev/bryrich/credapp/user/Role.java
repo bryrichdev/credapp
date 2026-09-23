@@ -55,6 +55,11 @@ public enum Role {
         return true;
     }
 
+    /** CAQH passwords have the same audited-reveal permissions as SSNs. */
+    public boolean canRevealCaqhPassword() {
+        return canRevealSsn();
+    }
+
     public boolean canManageUsers() {
         return this == SUPERUSER || this == ADMIN;
     }

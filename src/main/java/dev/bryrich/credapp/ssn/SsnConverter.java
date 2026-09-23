@@ -16,7 +16,8 @@ import java.util.Arrays;
 import java.util.Base64;
 
 /**
- * Encrypts provider SSNs at rest with AES-256-GCM.
+ * Encrypts SSNs at rest with AES-256-GCM. CaqhPasswordService also uses this cipher
+ * explicitly, with the same key, to protect CAQH passwords without loading them on Provider.
  *
  * <p>The stored value is base64 of {@code IV || ciphertext || tag}. A fresh random IV is
  * generated per write, so the same SSN encrypts to a different value every time. That is

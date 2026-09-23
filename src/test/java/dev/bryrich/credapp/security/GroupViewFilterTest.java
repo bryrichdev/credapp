@@ -58,7 +58,7 @@ class GroupViewFilterTest {
     @Test
     void leavingSwitchingSigningOutAndSsnRevealsStillWork() throws Exception {
         for (String path : new String[]{"/admin/user-groups/view/exit", "/admin/user-groups/9/view",
-                "/logout", "/providers/5/ssn", "/owners/5/ssn"}) {
+                "/logout", "/providers/5/ssn", "/owners/5/ssn", "/providers/5/caqh-password"}) {
             assertThat(run(viewing("POST", path), Role.SUPERUSER).getStatus()).as(path).isEqualTo(200);
         }
     }

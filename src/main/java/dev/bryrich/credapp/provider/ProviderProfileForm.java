@@ -19,6 +19,8 @@ import dev.bryrich.credapp.provider.reference.ProviderReference;
 import dev.bryrich.credapp.provider.reference.ProviderReferenceForm;
 import dev.bryrich.credapp.taxonomy.ProviderTaxonomyForm;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.beans.BeanUtils;
 
 import java.util.ArrayList;
@@ -38,6 +40,13 @@ public class ProviderProfileForm {
 
     @Valid
     private ProviderForm details = new ProviderForm();
+
+    /** Write-only input: never populate this from the stored credential. */
+    @JsonIgnore
+    @Size(max = 1024, message = "CAQH password must be at most 1024 characters")
+    private String caqhPassword;
+
+    private boolean removeCaqhPassword;
 
     private List<@Valid ProviderGroupForm> groups = new ArrayList<>();
 
@@ -262,6 +271,11 @@ public class ProviderProfileForm {
     public ProviderForm getDetails() {
         return details;
     }
+
+    public String getCaqhPassword() { return caqhPassword; }
+    public void setCaqhPassword(String caqhPassword) { this.caqhPassword = caqhPassword; }
+    public boolean isRemoveCaqhPassword() { return removeCaqhPassword; }
+    public void setRemoveCaqhPassword(boolean removeCaqhPassword) { this.removeCaqhPassword = removeCaqhPassword; }
 
     public void setDetails(ProviderForm details) {
         this.details = details;

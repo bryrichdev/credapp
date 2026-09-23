@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.provider;
 
+import dev.bryrich.credapp.caqh.CaqhPasswordService;
+
 import dev.bryrich.credapp.payer.PayerService;
 import dev.bryrich.credapp.payer.enrollment.EnrollmentStatus;
 import dev.bryrich.credapp.payer.enrollment.PayerEnrollmentService;
@@ -30,6 +32,8 @@ import dev.bryrich.credapp.taxonomy.ProviderTaxonomyForm;
 import dev.bryrich.credapp.taxonomy.ProviderTaxonomyService;
 import dev.bryrich.credapp.taxonomy.TaxonomyService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ResponseEntity;
 import jakarta.validation.Valid;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -45,6 +49,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.beans.PropertyEditorSupport;
 
 @Controller
 @RequestMapping("/providers")
@@ -69,6 +74,7 @@ public class ProviderWebController {
     private final PayerService payerService;
     private final PayerEnrollmentService enrollmentService;
     private final TrackingService trackingService;
+    private final CaqhPasswordService caqhPasswords;
 
     public ProviderWebController(ProviderService providerService,
                                  ProviderProfileService profileService,
@@ -88,7 +94,8 @@ public class ProviderWebController {
                                  MalpracticeClaimService claimService,
                                  PayerService payerService,
                                  PayerEnrollmentService enrollmentService,
-                                 TrackingService trackingService) {
+                                 TrackingService trackingService,
+                                 CaqhPasswordService caqhPasswords) {
         this.providerService = providerService;
         this.profileService = profileService;
         this.licenseService = licenseService;
@@ -108,6 +115,7 @@ public class ProviderWebController {
         this.payerService = payerService;
         this.enrollmentService = enrollmentService;
         this.trackingService = trackingService;
+        this.caqhPasswords = caqhPasswords;
     }
 
     /**
@@ -133,10 +141,24 @@ public class ProviderWebController {
         return request.getRemoteAddr();
     }
 
+    @PostMapping("/{id}/caqh-password")
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> revealCaqhPassword(@PathVariable Long id,
+                                                                HttpServletRequest request) {
+        Map<String, String> body = new HashMap<>();
+        body.put("password", caqhPasswords.reveal(id, request.getRemoteAddr()));
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(body);
+    }
+
     /** Blank text inputs submit "" — store null instead. */
     @InitBinder
     public void initBinder(WebDataBinder binder) {
         binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
+        // Password whitespace is significant; do not use the general text trimmer.
+        binder.registerCustomEditor(String.class, "caqhPassword", new PropertyEditorSupport() {
+            @Override
+            public void setAsText(String text) { setValue(text); }
+        });
     }
 
     @GetMapping
@@ -158,6 +180,8 @@ public class ProviderWebController {
         Provider provider = providerService.findById(id);
         model.addAttribute("provider", provider);
         model.addAttribute("ssnOnFile", ssnAccessService.providerSsnOnFile(id));
+        model.addAttribute("caqhPasswordOnFile", caqhPasswords.onFile(id));
+        model.addAttribute("caqhPasswordAccess", caqhPasswords.recentAccess(id));
         model.addAttribute("licenses", licenseService.findByProviderId(id));
         model.addAttribute("groups", groupProviderService.findGroups(id));
         model.addAttribute("taxonomies", providerTaxonomyService.findByProviderId(id));
@@ -239,6 +263,7 @@ public class ProviderWebController {
 
     /** Pick-lists for every section, plus a blank row of each kind for the "Add" buttons. */
     private void addFormOptions(Long providerId, Model model) {
+        model.addAttribute("caqhPasswordOnFile", providerId != null && caqhPasswords.onFile(providerId));
         if (providerId != null) {
             model.addAttribute("provider", providerService.findById(providerId));
         }

@@ -27,6 +27,7 @@
 
     <nav class="section-nav" aria-label="Form sections">
         <a class="section-nav__link" href="#details">Details</a>
+        <a class="section-nav__link" href="#caqh">CAQH</a>
         <a class="section-nav__link" href="#groups">Groups</a>
         <a class="section-nav__link" href="#payers">Payers</a>
         <a class="section-nav__link" href="#locations">Practice locations</a>
@@ -189,7 +190,7 @@
                            placeholder="Comma separated">
                 </label>
 
-                <label class="field">
+                <label class="field form-section" id="caqh">
                     <span class="field__label">CAQH ID</span>
                     <input class="field__input" type="text" th:field="*{details.caqhId}">
                 </label>
@@ -197,7 +198,23 @@
                 <label class="field">
                     <span class="field__label">CAQH username</span>
                     <input class="field__input" type="text" th:field="*{details.caqhUsername}">
-                    <span class="field__hint">The password is held outside this app and is never entered here</span>
+                </label>
+
+                <label class="field field--wide">
+                    <span class="field__label">CAQH password</span>
+                    <!-- Never bind a value back into this field, even on a validation error. -->
+                    <input class="field__input" type="password" id="caqhPassword" name="caqhPassword"
+                           autocomplete="new-password" maxlength="1024"
+                           th:classappend="${#fields.hasErrors('caqhPassword')} ? 'field__input--invalid'">
+                    <span class="field__hint" th:text="${caqhPasswordOnFile}
+                        ? 'A password is on file, encrypted. Leave blank to keep it, or enter a replacement.'
+                        : 'Stored encrypted. Viewing the saved password is recorded in its access history.'"></span>
+                    <span class="field__hint" th:if="${#fields.hasAnyErrors()}">Re-enter a new password before saving again.</span>
+                    <span class="field__error" th:if="${#fields.hasErrors('caqhPassword')}" th:errors="*{caqhPassword}"></span>
+                </label>
+
+                <label class="check field--wide" th:if="${caqhPasswordOnFile}">
+                    <input type="checkbox" th:field="*{removeCaqhPassword}"> Remove the saved CAQH password
                 </label>
 
                 <label class="field">

@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.provider;
 
+import dev.bryrich.credapp.caqh.CaqhPasswordService;
+
 import dev.bryrich.credapp.group.location.GroupLocation;
 import dev.bryrich.credapp.group.location.GroupLocationRepository;
 import dev.bryrich.credapp.group.membership.GroupProviderService;
@@ -73,6 +75,7 @@ public class ProviderProfileService {
     private final ProviderReferenceService referenceService;
     private final CriminalChargeService chargeService;
     private final PayerEnrollmentService enrollmentService;
+    private final CaqhPasswordService caqhPasswords;
 
     public ProviderProfileService(ProviderRepository providerRepository,
                                   ProviderService providerService,
@@ -90,7 +93,8 @@ public class ProviderProfileService {
                                   MalpracticeClaimService claimService,
                                   ProviderReferenceService referenceService,
                                   CriminalChargeService chargeService,
-                                  PayerEnrollmentService enrollmentService) {
+                                  PayerEnrollmentService enrollmentService,
+                                  CaqhPasswordService caqhPasswords) {
         this.providerRepository = providerRepository;
         this.providerService = providerService;
         this.groupProviderService = groupProviderService;
@@ -108,6 +112,7 @@ public class ProviderProfileService {
         this.referenceService = referenceService;
         this.chargeService = chargeService;
         this.enrollmentService = enrollmentService;
+        this.caqhPasswords = caqhPasswords;
     }
 
     // ============ load ============
@@ -160,6 +165,9 @@ public class ProviderProfileService {
      */
     @Transactional(readOnly = true)
     public void validate(Long providerId, ProviderProfileForm form, Errors errors) {
+        if (form.isRemoveCaqhPassword() && form.getCaqhPassword() != null && !form.getCaqhPassword().isEmpty()) {
+            errors.rejectValue("caqhPassword", "conflict", "Enter a replacement password or choose removal, not both");
+        }
         Set<Long> groupIds = checkGroups(form, errors);
         checkLocations(form, groupIds, errors);
         checkTaxonomies(form, errors);
@@ -357,6 +365,7 @@ public class ProviderProfileService {
         enrollmentService.syncProvider(provider, form.getPayers());
 
         providerRepository.flush();
+        caqhPasswords.save(id, form.getCaqhPassword(), form.isRemoveCaqhPassword());
         return provider;
     }
 

@@ -97,6 +97,19 @@
             <dt>CAQH username</dt>
             <dd th:text="${#strings.isEmpty(provider.caqhUsername)} ? '—' : ${provider.caqhUsername}"></dd>
 
+            <dt>CAQH password</dt>
+            <dd>
+                <div class="row-actions row-actions--start secret-actions">
+                    <span class="badge secret-value" id="caqhPasswordBadge"
+                          th:classappend="${caqhPasswordOnFile} ? 'badge--active' : 'badge--inactive'"
+                          th:text="${caqhPasswordOnFile} ? 'On file, encrypted' : 'Not on file'"></span>
+                    <button class="button button--quiet button--small" type="button" id="revealCaqhPassword"
+                            th:if="${caqhPasswordOnFile and user.role.canRevealCaqhPassword()}"
+                            th:attr="data-url=@{/providers/{id}/caqh-password(id=${provider.id})}">Show password</button>
+                </div>
+                <span class="field__error" id="caqhPasswordError" role="alert" hidden></span>
+            </dd>
+
             <dt>CAQH last attested</dt>
             <dd th:text="${provider.caqhAttestedDate} ?: '—'"></dd>
 
@@ -551,6 +564,25 @@
         </div>
     </section>
 
+    <section class="card card--flush" th:if="${!caqhPasswordAccess.isEmpty()}">
+        <div class="card__header">
+            <h2>CAQH password access</h2>
+            <span class="count-pill" th:text="${caqhPasswordAccess.size()}"></span>
+        </div>
+        <div class="table-scroll" role="region" tabindex="0" aria-label="CAQH password access">
+            <table class="table">
+                <thead><tr><th>When</th><th>Who</th><th>From</th></tr></thead>
+                <tbody>
+                <tr th:each="entry : ${caqhPasswordAccess}">
+                    <td th:text="${entry.accessedAt()}"></td>
+                    <td th:text="${entry.userEmail()}"></td>
+                    <td th:text="${entry.ipAddress()} ?: '—'"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
     <section class="card danger-zone" th:if="${canEdit}">
         <div>
             <h2>Delete provider</h2>
@@ -570,5 +602,6 @@
 <div th:replace="~{fragments/layout :: footer}"></div>
 
 <script th:src="@{/js/ssn-reveal.js}"></script>
+<script th:src="@{/js/caqh-password-reveal.js}"></script>
 </body>
 </html>

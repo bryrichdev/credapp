@@ -18,6 +18,7 @@ import dev.bryrich.credapp.provider.location.ProviderLocationService;
 import dev.bryrich.credapp.provider.privilege.HospitalPrivilegeService;
 import dev.bryrich.credapp.provider.reference.ProviderReferenceService;
 import dev.bryrich.credapp.ssn.SsnAccessService;
+import dev.bryrich.credapp.caqh.CaqhPasswordService;
 import dev.bryrich.credapp.taxonomy.ProviderTaxonomyForm;
 import dev.bryrich.credapp.taxonomy.ProviderTaxonomyService;
 import dev.bryrich.credapp.taxonomy.TaxonomyService;
@@ -65,6 +66,7 @@ class ProviderWebControllerTest {
     @MockitoBean private GroupLocationRepository groupLocationRepository;
     @MockitoBean private TaxonomyService taxonomyService;
     @MockitoBean private SsnAccessService ssnAccessService;
+    @MockitoBean private CaqhPasswordService caqhPasswords;
     @MockitoBean private ProviderTaxonomyService providerTaxonomyService;
     @MockitoBean private ProviderLocationService providerLocationService;
     @MockitoBean private CertificationService certificationService;
