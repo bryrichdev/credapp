@@ -69,9 +69,9 @@ class ProviderLocationConstraintsTest {
 
     @Test
     void aProviderOutsideTheGroupCannotBePlacedAtItsLocation() {
-        providerLocationRepository.save(new ProviderLocation(location, outsider, PcpScp.SCP));
+        ProviderLocation placement = new ProviderLocation(location, outsider, PcpScp.SCP);
 
-        assertThatThrownBy(() -> entityManager.flush())
+        assertThatThrownBy(() -> providerLocationRepository.saveAndFlush(placement))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 

@@ -39,7 +39,7 @@ class ProviderDeleteBehaviourTest {
     private CriminalChargeRepository chargeRepository;
 
     private Provider newProvider() {
-        return entityManager.persistAndFlush(new Provider("Ada", "Byron"));
+        return providerRepository.saveAndFlush(new Provider("Ada", "Byron"));
     }
 
     @Test
@@ -47,14 +47,20 @@ class ProviderDeleteBehaviourTest {
         Provider provider = newProvider();
         Certification certification = new Certification("ABFM", LocalDate.of(2020, 1, 1));
         certification.setProvider(provider);
-        certificationRepository.save(certification);
-        entityManager.flush();
+        certificationRepository.saveAndFlush(certification);
+        Long providerId = provider.getId();
         Long certificationId = certification.getId();
 
-        providerRepository.delete(provider);
-        entityManager.flush();
+        // Start deletion with no managed children referencing the provider. Otherwise
+        // Hibernate rejects the in-memory relationship before Postgres sees the delete.
+        entityManager.clear();
+        providerRepository.deleteById(providerId);
+        providerRepository.flush();
+        // The cascade happens in Postgres, not in Hibernate, so the row has to be
+        // re-read rather than trusted from the first-level cache.
         entityManager.clear();
 
+        assertThat(providerRepository.findById(providerId)).isEmpty();
         assertThat(certificationRepository.findById(certificationId)).isEmpty();
     }
 
@@ -64,12 +70,16 @@ class ProviderDeleteBehaviourTest {
         CriminalCharge charge = new CriminalCharge(
                 ChargeClassification.MISDEMEANOR, ChargeStatus.CONVICTED);
         charge.setProvider(provider);
-        chargeRepository.save(charge);
-        entityManager.flush();
+        chargeRepository.saveAndFlush(charge);
+        Long providerId = provider.getId();
 
-        providerRepository.delete(provider);
+        // Let the database foreign key, rather than a managed child, block deletion.
+        entityManager.clear();
 
-        assertThatThrownBy(() -> entityManager.flush())
+        assertThatThrownBy(() -> {
+            providerRepository.deleteById(providerId);
+            providerRepository.flush();
+        })
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 }

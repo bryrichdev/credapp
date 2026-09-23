@@ -73,14 +73,16 @@ class TaxonomyConstraintsTest {
     @Test
     void aSecondPrimarySpecialtyForTheSameProviderIsRejected() {
         Provider provider = newProvider("Grace", "Hopper");
-        providerTaxonomyRepository.save(
+        providerTaxonomyRepository.saveAndFlush(
                 new ProviderTaxonomy(provider, code("207Q00000X", "Family Medicine"), true));
-        entityManager.flush();
 
-        providerTaxonomyRepository.save(
-                new ProviderTaxonomy(provider, code("207R00000X", "Internal Medicine"), true));
+        ProviderTaxonomy second =
+                new ProviderTaxonomy(provider, code("207R00000X", "Internal Medicine"), true);
 
-        assertThatThrownBy(() -> entityManager.flush())
+        // saveAndFlush, not entityManager.flush(): the write has to happen inside the
+        // assertion, and going through the repository is what translates the driver error
+        // into Spring's DataIntegrityViolationException.
+        assertThatThrownBy(() -> providerTaxonomyRepository.saveAndFlush(second))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 

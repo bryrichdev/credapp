@@ -45,8 +45,7 @@ class MalpracticePolicyConstraintsTest {
 
     @Test
     void aPolicyOwnedByOneProviderSaves() {
-        policyRepository.save(forProvider("P-1"));
-        entityManager.flush();
+        policyRepository.saveAndFlush(forProvider("P-1"));
 
         assertThat(policyRepository.findByProviderIdOrderByEffectiveDateDesc(provider.getId()))
                 .hasSize(1);
@@ -54,9 +53,8 @@ class MalpracticePolicyConstraintsTest {
 
     @Test
     void aPolicyOwnedByOneGroupSaves() {
-        policyRepository.save(MalpracticePolicy.forGroup(group, "P-2", "Acme Mutual",
+        policyRepository.saveAndFlush(MalpracticePolicy.forGroup(group, "P-2", "Acme Mutual",
                 "Occurrence", LocalDate.of(2026, 1, 1), CoverageScope.SHARED));
-        entityManager.flush();
 
         assertThat(policyRepository.findByGroupIdOrderByEffectiveDateDesc(group.getId()))
                 .hasSize(1);
@@ -66,9 +64,8 @@ class MalpracticePolicyConstraintsTest {
     void aPolicyNamingBothAProviderAndAGroupIsRejected() {
         MalpracticePolicy policy = forProvider("P-3");
         ReflectionTestUtils.setField(policy, "group", group);
-        policyRepository.save(policy);
 
-        assertThatThrownBy(() -> entityManager.flush())
+        assertThatThrownBy(() -> policyRepository.saveAndFlush(policy))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -76,9 +73,8 @@ class MalpracticePolicyConstraintsTest {
     void aPolicyNamingNeitherIsRejected() {
         MalpracticePolicy policy = forProvider("P-4");
         ReflectionTestUtils.setField(policy, "provider", null);
-        policyRepository.save(policy);
 
-        assertThatThrownBy(() -> entityManager.flush())
+        assertThatThrownBy(() -> policyRepository.saveAndFlush(policy))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -86,31 +82,27 @@ class MalpracticePolicyConstraintsTest {
     void anExpirationBeforeTheEffectiveDateIsRejected() {
         MalpracticePolicy policy = forProvider("P-5");
         policy.setExpirationDate(LocalDate.of(2025, 1, 1));
-        policyRepository.save(policy);
 
-        assertThatThrownBy(() -> entityManager.flush())
+        assertThatThrownBy(() -> policyRepository.saveAndFlush(policy))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     void theSameCarrierCannotIssueTheSamePolicyNumberTwice() {
-        policyRepository.save(forProvider("P-6"));
-        entityManager.flush();
+        policyRepository.saveAndFlush(forProvider("P-6"));
 
-        policyRepository.save(forProvider("P-6"));
+        MalpracticePolicy duplicate = forProvider("P-6");
 
-        assertThatThrownBy(() -> entityManager.flush())
+        assertThatThrownBy(() -> policyRepository.saveAndFlush(duplicate))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
     void twoCarriersMayUseTheSamePolicyNumber() {
-        policyRepository.save(forProvider("SHARED-NUMBER"));
-        policyRepository.save(MalpracticePolicy.forProvider(provider, "SHARED-NUMBER",
+        policyRepository.saveAndFlush(forProvider("SHARED-NUMBER"));
+        policyRepository.saveAndFlush(MalpracticePolicy.forProvider(provider, "SHARED-NUMBER",
                 "Second Carrier", "Occurrence", LocalDate.of(2026, 1, 1),
                 CoverageScope.INDIVIDUAL));
-
-        entityManager.flush();
 
         assertThat(policyRepository.findByProviderIdOrderByEffectiveDateDesc(provider.getId()))
                 .hasSize(2);
