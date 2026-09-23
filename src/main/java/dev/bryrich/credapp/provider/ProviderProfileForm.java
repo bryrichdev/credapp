@@ -39,38 +39,27 @@ public class ProviderProfileForm {
     @Valid
     private ProviderForm details = new ProviderForm();
 
-    @Valid
-    private List<ProviderGroupForm> groups = new ArrayList<>();
+    private List<@Valid ProviderGroupForm> groups = new ArrayList<>();
 
-    @Valid
-    private List<ProviderLocationForm> locations = new ArrayList<>();
+    private List<@Valid ProviderLocationForm> locations = new ArrayList<>();
 
-    @Valid
-    private List<ProviderTaxonomyForm> taxonomies = new ArrayList<>();
+    private List<@Valid ProviderTaxonomyForm> taxonomies = new ArrayList<>();
 
-    @Valid
-    private List<LicenseRow> licenses = new ArrayList<>();
+    private List<@Valid LicenseRow> licenses = new ArrayList<>();
 
-    @Valid
-    private List<CertificationRow> certifications = new ArrayList<>();
+    private List<@Valid CertificationRow> certifications = new ArrayList<>();
 
-    @Valid
-    private List<PrivilegeRow> privileges = new ArrayList<>();
+    private List<@Valid PrivilegeRow> privileges = new ArrayList<>();
 
-    @Valid
-    private List<PolicyRow> policies = new ArrayList<>();
+    private List<@Valid PolicyRow> policies = new ArrayList<>();
 
-    @Valid
-    private List<ClaimRow> claims = new ArrayList<>();
+    private List<@Valid ClaimRow> claims = new ArrayList<>();
 
-    @Valid
-    private List<ReferenceRow> references = new ArrayList<>();
+    private List<@Valid ReferenceRow> references = new ArrayList<>();
 
-    @Valid
-    private List<ChargeRow> charges = new ArrayList<>();
+    private List<@Valid ChargeRow> charges = new ArrayList<>();
 
-    @Valid
-    private List<ProviderPayerForm> payers = new ArrayList<>();
+    private List<@Valid ProviderPayerForm> payers = new ArrayList<>();
 
     public ProviderProfileForm() {
     }

@@ -39,26 +39,19 @@ public class GroupProfileForm {
     @Valid
     private GroupForm details = new GroupForm();
 
-    @Valid
-    private List<LocationRow> locations = new ArrayList<>();
+    private List<@Valid LocationRow> locations = new ArrayList<>();
 
-    @Valid
-    private List<OwnerRow> owners = new ArrayList<>();
+    private List<@Valid OwnerRow> owners = new ArrayList<>();
 
-    @Valid
-    private List<RelationRow> relations = new ArrayList<>();
+    private List<@Valid RelationRow> relations = new ArrayList<>();
 
-    @Valid
-    private List<GroupProviderForm> providers = new ArrayList<>();
+    private List<@Valid GroupProviderForm> providers = new ArrayList<>();
 
-    @Valid
-    private List<GroupTaxonomyForm> taxonomies = new ArrayList<>();
+    private List<@Valid GroupTaxonomyForm> taxonomies = new ArrayList<>();
 
-    @Valid
-    private List<PolicyRow> policies = new ArrayList<>();
+    private List<@Valid PolicyRow> policies = new ArrayList<>();
 
-    @Valid
-    private List<GroupPayerForm> payers = new ArrayList<>();
+    private List<@Valid GroupPayerForm> payers = new ArrayList<>();
 
     public GroupProfileForm() {
     }

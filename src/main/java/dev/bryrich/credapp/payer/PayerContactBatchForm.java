@@ -12,8 +12,7 @@ import java.util.List;
  */
 public class PayerContactBatchForm {
 
-    @Valid
-    private List<PayerContactForm> contacts =
+    private List<@Valid PayerContactForm> contacts =
             new AutoPopulatingList<>(PayerContactForm.class);
 
     public PayerContactBatchForm() {
