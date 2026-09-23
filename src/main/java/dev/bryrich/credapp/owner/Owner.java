@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.owner;
 
+import dev.bryrich.credapp.usergroup.GroupScopedEntity;
+
 import dev.bryrich.credapp.ssn.SsnConverter;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -14,7 +16,7 @@ import java.util.stream.Stream;
 
 @Entity
 @Table(name = "owners")
-public class Owner {
+public class Owner extends GroupScopedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

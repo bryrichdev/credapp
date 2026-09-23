@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.group.location;
 
+import dev.bryrich.credapp.usergroup.GroupScopedEntity;
+
 import dev.bryrich.credapp.group.Group;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -13,7 +15,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "group_locations")
-public class GroupLocation {
+public class GroupLocation extends GroupScopedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

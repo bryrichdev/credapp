@@ -1295,3 +1295,36 @@ input.field__input[type="date"] {
         text-align: center;
     }
 }
+
+/* Account onboarding */
+.signin__card--register { max-width: 540px; }
+.signin__footer { margin-top: 1.5rem; text-align: center; }
+.group-code { display: inline-block; max-width: 100%; overflow-wrap: anywhere; user-select: all; }
+
+
+/* ---------- superuser viewing another user group ---------- */
+
+.viewing-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+    padding: 0.6rem 1.5rem;
+    background-color: var(--amber-50);
+    border-bottom: 1px solid rgba(146, 98, 10, 0.25);
+    color: var(--amber-700);
+    font-size: 0.9rem;
+}
+
+.viewing-banner strong {
+    color: var(--slate-900);
+}
+
+.viewing-banner__note {
+    font-weight: 600;
+}
+
+.viewing-banner form {
+    margin: 0;
+}

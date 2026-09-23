@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.taxonomy;
 
+import dev.bryrich.credapp.common.UserGroupTestSupport;
+
 import dev.bryrich.credapp.TestcontainersConfiguration;
 import dev.bryrich.credapp.provider.Provider;
 import org.junit.jupiter.api.Test;
@@ -18,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 @DataJpaTest
 @Import(TestcontainersConfiguration.class)
-class TaxonomyConstraintsTest {
+class TaxonomyConstraintsTest extends UserGroupTestSupport {
 
     @Autowired
     private TestEntityManager entityManager;

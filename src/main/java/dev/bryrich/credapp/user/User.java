@@ -34,6 +34,24 @@ public class User implements Serializable {
     @Column(name = "is_enabled", nullable = false)
     private boolean enabled = true;
 
+    @Column(name = "user_group_id", nullable = false)
+    private Long userGroupId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MembershipStatus membershipStatus = MembershipStatus.APPROVED;
+
+    public Long getUserGroupId() { return userGroupId; }
+    public void setUserGroupId(Long value) {
+        if (value == null || value <= 0) {
+            throw new IllegalArgumentException("A user group is required");
+        }
+        userGroupId = value;
+    }
+    public MembershipStatus getMembershipStatus() { return membershipStatus; }
+    public void setMembershipStatus(MembershipStatus value) { membershipStatus = value; }
+    public boolean isPendingApproval() { return membershipStatus == MembershipStatus.PENDING; }
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
@@ -43,9 +61,10 @@ public class User implements Serializable {
 
     protected User() {}
 
-    public User(String email, String passwordHash) {
+    public User(String email, String passwordHash, Long userGroupId) {
         setEmail(email);
         this.passwordHash = passwordHash;
+        setUserGroupId(userGroupId);
     }
 
     public Long getId() {
@@ -89,7 +108,8 @@ public class User implements Serializable {
     }
 
     public boolean isEnabled() {
-        return enabled;
+        return enabled && membershipStatus == MembershipStatus.APPROVED
+                && userGroupId != null && userGroupId > 0;
     }
 
     public void setEnabled(boolean enabled) {

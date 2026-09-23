@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Create account · CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="signin">
+<main class="signin__card signin__card--register">
+    <div class="signin__brand"><span class="topbar__mark">CA</span><span class="topbar__brand">CredApp</span></div>
+    <h1 class="signin__title">Create account</h1>
+    <p class="signin__hint">Start a user group or request to join your team.</p>
+
+    <form th:action="@{/register}" th:object="${form}" method="post">
+        <div class="alert alert--error" th:if="${#fields.hasGlobalErrors()}">
+            <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+        </div>
+        <label class="field">
+            <span class="field__label">Account type</span>
+            <select class="field__input" th:field="*{role}" id="accountRole" aria-describedby="roleHint" required>
+                <option value="ADMIN">Admin — create a new user group</option>
+                <option value="COORDINATOR">Coordinator — request to join a user group</option>
+            </select>
+            <span class="field__error" th:errors="*{role}"></span>
+        </label>
+        <p class="signin__hint" id="roleHint">Admins manage their group's accounts. Coordinators need admin approval before signing in.</p>
+        <div id="adminFields">
+            <label class="field">
+                <span class="field__label">New user group name</span>
+                <input class="field__input" th:field="*{groupName}" maxlength="200" autocomplete="organization">
+                <span class="field__error" th:errors="*{groupName}"></span>
+            </label>
+        </div>
+        <div id="coordinatorFields">
+            <label class="field">
+                <span class="field__label">Group code</span>
+                <input class="field__input" th:field="*{joinCode}" maxlength="36" autocomplete="off" aria-describedby="codeHint">
+                <span class="field__error" th:errors="*{joinCode}"></span>
+            </label>
+            <p class="signin__hint" id="codeHint">Ask your admin for the code shown on their Users page. They will review your join request.</p>
+        </div>
+        <label class="field">
+            <span class="field__label">Full name</span>
+            <input class="field__input" th:field="*{fullName}" autocomplete="name" maxlength="200" required>
+            <span class="field__error" th:errors="*{fullName}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Email</span>
+            <input class="field__input" type="email" th:field="*{email}" autocomplete="username" maxlength="254" required>
+            <span class="field__error" th:errors="*{email}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Password</span>
+            <input class="field__input" type="password" name="password" autocomplete="new-password" minlength="12" maxlength="72" required>
+            <span class="signin__hint">At least 12 characters.</span>
+            <span class="field__error" th:errors="*{password}"></span>
+        </label>
+        <label class="field">
+            <span class="field__label">Confirm password</span>
+            <input class="field__input" type="password" name="confirmPassword" autocomplete="new-password" minlength="12" maxlength="72" required>
+            <span class="field__error" th:errors="*{confirmPassword}"></span>
+        </label>
+        <button class="button button--block" id="registerButton" type="submit">Create account</button>
+    </form>
+    <p class="signin__hint signin__footer">Already have an account? <a th:href="@{/login}">Sign in</a></p>
+</main>
+<script th:src="@{/js/register.js}"></script>
+</body>
+</html>

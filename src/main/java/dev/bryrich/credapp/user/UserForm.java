@@ -26,6 +26,9 @@ public class UserForm {
 
     private boolean enabled = true;
 
+    /** Create only, and only read for a superuser: which user group the account joins. */
+    private Long userGroupId;
+
     /** Empty form, for the create screen. */
     public UserForm() {
     }
@@ -82,5 +85,13 @@ public class UserForm {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public Long getUserGroupId() {
+        return userGroupId;
+    }
+
+    public void setUserGroupId(Long userGroupId) {
+        this.userGroupId = userGroupId;
     }
 }

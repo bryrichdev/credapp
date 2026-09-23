@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.provider;
 
+import dev.bryrich.credapp.common.UserGroupTestSupport;
+
 import dev.bryrich.credapp.TestcontainersConfiguration;
 import dev.bryrich.credapp.group.Group;
 import dev.bryrich.credapp.group.location.GroupLocation;
@@ -16,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /** The TEXT[] columns are mapped with @JdbcTypeCode(ARRAY); this is the round-trip proof. */
 @DataJpaTest
 @Import(TestcontainersConfiguration.class)
-class ProviderArrayColumnsTest {
+class ProviderArrayColumnsTest extends UserGroupTestSupport {
 
     @Autowired
     private TestEntityManager entityManager;

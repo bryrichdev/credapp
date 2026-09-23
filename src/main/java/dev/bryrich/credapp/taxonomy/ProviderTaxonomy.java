@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.taxonomy;
 
+import dev.bryrich.credapp.usergroup.GroupScopedEntity;
+
 import dev.bryrich.credapp.provider.Provider;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -13,7 +15,7 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "provider_taxonomies")
-public class ProviderTaxonomy {
+public class ProviderTaxonomy extends GroupScopedEntity {
 
     @EmbeddedId
     private ProviderTaxonomyId id = new ProviderTaxonomyId();

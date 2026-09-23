@@ -1,5 +1,6 @@
 package dev.bryrich.credapp.user;
 
+import dev.bryrich.credapp.usergroup.UserGroupRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -21,12 +22,15 @@ class UserServiceTest {
     private UserRepository userRepository;
     private PasswordEncoder passwordEncoder;
     private UserService userService;
+    private UserGroupRepository userGroups;
 
     @BeforeEach
     void setUp() {
         userRepository = mock(UserRepository.class);
         passwordEncoder = mock(PasswordEncoder.class);
-        userService = new UserService(userRepository, passwordEncoder);
+        userGroups = mock(UserGroupRepository.class);
+        when(userGroups.existsById(42L)).thenReturn(true);
+        userService = new UserService(userRepository, passwordEncoder, userGroups);
     }
 
     @Test
@@ -35,7 +39,7 @@ class UserServiceTest {
         when(passwordEncoder.encode("averylongpassword")).thenReturn("hashed-value");
         when(userRepository.save(any(User.class))).thenAnswer(call -> call.getArgument(0));
 
-        userService.create("  Bryson@Example.COM  ", "averylongpassword", "Bryson R", Role.ADMIN);
+        userService.createInGroup("  Bryson@Example.COM  ", "averylongpassword", "Bryson R", Role.ADMIN, 42L);
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(captor.capture());
@@ -46,6 +50,7 @@ class UserServiceTest {
         assertThat(saved.getPasswordHash()).isNotEqualTo("averylongpassword");
         assertThat(saved.getFullName()).isEqualTo("Bryson R");
         assertThat(saved.getRole()).isEqualTo(Role.ADMIN);
+        assertThat(saved.getUserGroupId()).isEqualTo(42L);
     }
 
     @Test
@@ -54,7 +59,7 @@ class UserServiceTest {
         when(passwordEncoder.encode("averylongpassword")).thenReturn("hashed-value");
         when(userRepository.save(any(User.class))).thenAnswer(call -> call.getArgument(0));
 
-        userService.create("new@example.com", "averylongpassword", "New Person", null);
+        userService.createInGroup("new@example.com", "averylongpassword", "New Person", null, 42L);
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(captor.capture());
@@ -66,8 +71,8 @@ class UserServiceTest {
     void createRejectsAnEmailThatIsAlreadyTaken() {
         when(userRepository.existsByEmail("taken@example.com")).thenReturn(true);
 
-        assertThatThrownBy(() -> userService.create(
-                "Taken@Example.com", "averylongpassword", "Someone", Role.COORDINATOR))
+        assertThatThrownBy(() -> userService.createInGroup(
+                "Taken@Example.com", "averylongpassword", "Someone", Role.COORDINATOR, 42L))
                 .isInstanceOf(EmailAlreadyExistsException.class);
 
         verify(userRepository, never()).save(any(User.class));
@@ -76,7 +81,7 @@ class UserServiceTest {
 
     @Test
     void findByEmailNormalizesBeforeQuerying() {
-        User user = new User("bryson@example.com", "hashed-value");
+        User user = new User("bryson@example.com", "hashed-value", 42L);
         when(userRepository.findByEmail("bryson@example.com")).thenReturn(Optional.of(user));
 
         Optional<User> found = userService.findByEmail("  BRYSON@Example.com ");
@@ -91,5 +96,27 @@ class UserServiceTest {
 
         assertThatThrownBy(() -> userService.findById(99L))
                 .isInstanceOf(UserNotFoundException.class);
+    }
+
+    @Test
+    void creatingAnAccountRequiresAnExplicitExistingGroup() {
+        for (Long groupId : java.util.Arrays.asList(null, 0L, -1L, 999L)) {
+            assertThatThrownBy(() -> userService.createInGroup(
+                    "new@example.com", "averylongpassword", "New Person", Role.COORDINATOR, groupId))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("An existing user group is required");
+        }
+        verifyNoInteractions(userRepository, passwordEncoder);
+    }
+
+    @Test
+    void userCannotBeConstructedOrAssignedWithoutAGroup() {
+        for (Long groupId : java.util.Arrays.asList(null, 0L, -1L)) {
+            assertThatThrownBy(() -> new User("new@example.com", "hash", groupId))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+        User user = new User("new@example.com", "hash", 42L);
+        assertThatThrownBy(() -> user.setUserGroupId(null)).isInstanceOf(IllegalArgumentException.class);
+        assertThat(user.getUserGroupId()).isEqualTo(42L);
     }
 }

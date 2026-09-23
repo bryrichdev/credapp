@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.provider.reference;
 
+import dev.bryrich.credapp.usergroup.GroupScopedEntity;
+
 import dev.bryrich.credapp.provider.Provider;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -10,7 +12,7 @@ import java.time.Instant;
 /** A peer reference a provider lists on a credentialing application. */
 @Entity
 @Table(name = "provider_references")
-public class ProviderReference {
+public class ProviderReference extends GroupScopedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -18,8 +18,9 @@
     <p class="signin__hint">Credentialing workspace</p>
 
     <div class="alert alert--error" th:if="${param.error}">
-        Invalid email or password.
+        Unable to sign in. Check your email and password. New coordinators must be approved by their group's admin.
     </div>
+    <div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
     <div class="alert alert--info" th:if="${param.logout}">
         You have been signed out.
     </div>
@@ -37,6 +38,7 @@
 
         <button class="button button--block" type="submit">Sign in</button>
     </form>
+    <p class="signin__hint signin__footer">New to CredApp? <a th:href="@{/register}">Create account</a></p>
 </main>
 
 </body>

@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.malpractice;
 
+import dev.bryrich.credapp.usergroup.GroupScopedEntity;
+
 import dev.bryrich.credapp.group.Group;
 import dev.bryrich.credapp.provider.Provider;
 import jakarta.persistence.*;
@@ -17,7 +19,7 @@ import java.time.LocalDate;
  */
 @Entity
 @Table(name = "malpractice_policies")
-public class MalpracticePolicy {
+public class MalpracticePolicy extends GroupScopedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

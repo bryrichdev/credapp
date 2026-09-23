@@ -22,7 +22,7 @@
                   th:text="${page.totalElements} + ' result(s) for &quot;' + ${lbn} + '&quot;'">0 results</span>
         </p>
         </div>
-        <a class="button" th:href="@{/groups/new}">Add group</a>
+        <a class="button" th:href="@{/groups/new}" th:if="${canEdit}">Add group</a>
     </div>
 
     <form class="toolbar" th:action="@{/groups}" method="get">
@@ -46,7 +46,7 @@
                     <th>DBA</th>
                     <th>NPI</th>
                     <th>Tax ID</th>
-                    <th class="table__actions"></th>
+                    <th class="table__actions" th:if="${canEdit}"></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -67,10 +67,10 @@
                         <a class="rowlink" th:href="@{/groups/{id}(id=${group.id})}"
                            th:text="${group.taxId}"></a>
                     </td>
-                    <td class="table__actions">
-                        <div class="row-actions">
+                    <td class="table__actions" th:if="${canEdit}">
+                        <div class="row-actions" th:if="${canEdit}">
                             <a class="button button--quiet button--small"
-                               th:href="@{/groups/{id}/edit(id=${group.id})}">Edit</a>
+                               th:href="@{/groups/{id}/edit(id=${group.id})}" th:if="${canEdit}">Edit</a>
                             <form th:action="@{/groups/{id}/delete(id=${group.id})}" method="post"
                                   onsubmit="return confirm('Delete this group, its locations and its ownership records?');">
                                 <button class="button button--danger button--small" type="submit">Delete</button>

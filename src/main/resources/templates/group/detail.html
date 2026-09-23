@@ -24,7 +24,7 @@
                 NPI <span th:text="${#strings.isEmpty(group.npi)} ? 'not on file' : ${group.npi}"></span>
             </p>
         </div>
-        <a class="button" th:href="@{/groups/{id}/edit(id=${group.id})}">Edit group</a>
+        <a class="button" th:href="@{/groups/{id}/edit(id=${group.id})}" th:if="${canEdit}">Edit group</a>
     </div>
 
     <!-- ============ read view ============ -->
@@ -281,7 +281,7 @@
         </div>
     </section>
 
-    <section class="card danger-zone" >
+    <section class="card danger-zone"  th:if="${canEdit}">
         <div>
             <h2>Delete group</h2>
             <p class="empty__hint">

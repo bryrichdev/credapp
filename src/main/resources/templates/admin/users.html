@@ -25,15 +25,70 @@
                   th:text="${page.totalElements} + ' result(s) for &quot;' + ${q} + '&quot;'">0 results</span>
         </p>
         </div>
-        <a class="button" th:href="@{/admin/users/new}">Add user</a>
+        <a class="button" th:if="${viewingGroupName == null}"
+           th:href="${groupFilter != null} ? @{/admin/users/new(group=${groupFilter})} : @{/admin/users/new}">Add user</a>
     </div>
+
+    <section class="card" th:if="${userGroup != null}">
+        <h2 th:text="${userGroup.name}">Your user group</h2>
+        <p th:if="${viewingGroupName == null}">Share this group code with coordinators. They can request to join; you approve access here.</p>
+        <p th:unless="${viewingGroupName == null}">This group's code, as its admin sees it. Coordinators use it to request to join.</p>
+        <code class="group-code" th:text="${userGroup.joinCode}"></code>
+    </section>
+
+    <!-- ============ superuser: every user group ============ -->
+    <section class="card card--flush" th:if="${userGroupSummaries != null}">
+        <div class="card__header">
+            <h2>User groups</h2>
+            <span class="count-pill" th:text="${userGroupSummaries.size()}">0</span>
+        </div>
+        <div class="table-scroll" role="region" tabindex="0" aria-label="User groups">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Group</th>
+                    <th>Accounts</th>
+                    <th>Waiting for approval</th>
+                    <th>Join code</th>
+                    <th class="table__actions"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="group : ${userGroupSummaries}" th:with="own=${group.id == user.userGroupId}">
+                    <td>
+                        <strong th:text="${group.name}">Group</strong>
+                        <span class="badge badge--inactive" th:if="${own}">Yours</span>
+                    </td>
+                    <td th:text="${group.accounts}">0</td>
+                    <td>
+                        <span class="badge badge--pending" th:if="${group.pendingApproval > 0}"
+                              th:text="${group.pendingApproval}">0</span>
+                        <span th:unless="${group.pendingApproval > 0}">—</span>
+                    </td>
+                    <td><code class="group-code" th:text="${group.joinCode}"></code></td>
+                    <td class="table__actions">
+                        <div class="row-actions">
+                            <a class="button button--quiet button--small"
+                               th:href="@{/admin/users(group=${group.id})}">Accounts</a>
+                            <form th:unless="${own}" method="post"
+                                  th:action="@{/admin/user-groups/{id}/view(id=${group.id})}">
+                                <button class="button button--small" type="submit">View as admin</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
 
     <p class="context-line">
         Signed in as
         <strong th:text="${user.email}"></strong>
         &middot;
         <span class="badge badge--active" th:text="${user.role.label}">Admin</span>
-        <span th:if="${isSuperuser}"> &middot; you can manage every account, including admins.</span>
+        <span th:if="${isSuperuser and viewingGroupName == null}"> &middot; you can manage every account in every user group, including admins.</span>
+        <span th:if="${viewingGroupName != null}"> &middot; read-only while viewing another group.</span>
         <span th:unless="${isSuperuser}"> &middot; you can manage coordinator and read-only accounts.</span>
     </p>
 
@@ -43,9 +98,15 @@
                name="q"
                th:value="${q}"
                placeholder="Search by name or email">
+        <select class="field__input toolbar__input" name="group" th:if="${userGroupSummaries != null}"
+                aria-label="User group">
+            <option value="">All user groups</option>
+            <option th:each="group : ${userGroupSummaries}" th:value="${group.id}" th:text="${group.name}"
+                    th:selected="${group.id == groupFilter}"></option>
+        </select>
         <button class="button" type="submit">Search</button>
         <a class="button button--quiet"
-           th:if="${q != null and !q.isBlank()}"
+           th:if="${(q != null and !q.isBlank()) or groupFilter != null}"
            th:href="@{/admin/users}">Clear</a>
     </form>
 
@@ -56,6 +117,7 @@
                 <tr>
                     <th>Name</th>
                     <th>Email</th>
+                    <th th:if="${userGroupNames != null}">User group</th>
                     <th>Role</th>
                     <th>Status</th>
                     <th class="table__actions"></th>
@@ -64,15 +126,17 @@
                 <tbody>
                 <tr th:each="account : ${page.content}"
                     th:with="self=${account.id == user.id},
-                             manageable=${account.id != user.id and user.role.canManage(account.role)}">
+                             manageable=${viewingGroupName == null and account.id != user.id and user.role.canManage(account.role) and (isSuperuser or account.userGroupId == user.userGroupId)},
+                             approved=${account.membershipStatus.name() == 'APPROVED'}">
                     <td th:text="${account.fullName} ?: '—'"></td>
                     <td>
                         <span th:text="${account.email}"></span>
                         <span class="badge badge--inactive" th:if="${self}">You</span>
                     </td>
+                    <td th:if="${userGroupNames != null}" th:text="${userGroupNames[account.userGroupId]}"></td>
                     <td>
                         <!-- Promote or demote in place. Only the roles this account may hand out are listed. -->
-                        <form class="row-actions row-actions--start" th:if="${manageable}"
+                        <form class="row-actions row-actions--start" th:if="${manageable and approved}"
                               th:action="@{/admin/users/{id}/role(id=${account.id})}" method="post">
                             <select class="field__input field__input--small" name="role" onchange="this.form.submit()">
                                 <option th:each="option : ${user.role.assignableRoles()}"
@@ -82,7 +146,7 @@
                             </select>
                             <noscript><button class="button button--quiet button--small" type="submit">Apply</button></noscript>
                         </form>
-                        <span class="badge" th:unless="${manageable}"
+                        <span class="badge" th:unless="${manageable and approved}"
                               th:classappend="${account.role.name() == 'SUPERUSER'} ? 'badge--alert'
                                   : (${account.role.name() == 'ADMIN'} ? 'badge--pending' : 'badge--inactive')"
                               th:text="${account.role.label}">Role</span>
@@ -90,15 +154,20 @@
                     <td>
                         <span class="badge"
                               th:classappend="${account.enabled} ? 'badge--active' : 'badge--alert'"
-                              th:text="${account.enabled} ? 'Enabled' : 'Disabled'">Enabled</span>
+                              th:text="${account.pendingApproval} ? 'Pending approval' : (${account.membershipStatus.name() == 'REJECTED'} ? 'Rejected' : (${account.enabled} ? 'Enabled' : 'Disabled'))">Enabled</span>
                     </td>
                     <td class="table__actions">
                         <div class="row-actions">
+                            <form th:if="${manageable and account.pendingApproval}"
+                                  th:action="@{/admin/users/{id}/approval(id=${account.id})}" method="post">
+                                <button class="button button--small" name="approve" value="true" type="submit">Approve</button>
+                                <button class="button button--danger button--small" name="approve" value="false" type="submit">Reject</button>
+                            </form>
                             <a class="button button--quiet button--small"
-                               th:if="${manageable or self}"
+                               th:if="${approved and (manageable or self) and viewingGroupName == null}"
                                th:href="@{/admin/users/{id}/edit(id=${account.id})}">Edit</a>
 
-                            <form th:if="${manageable}"
+                            <form th:if="${manageable and approved}"
                                   th:action="@{/admin/users/{id}/enabled(id=${account.id})}" method="post">
                                 <input type="hidden" name="enabled" th:value="${!account.enabled}">
                                 <button class="button button--quiet button--small" type="submit"
@@ -126,7 +195,7 @@
     <nav class="pagination" th:if="${page.totalPages > 1}">
         <a class="button button--quiet"
            th:if="${page.hasPrevious()}"
-           th:href="@{/admin/users(page=${page.number - 1}, size=${page.size}, q=${q})}">Previous</a>
+           th:href="@{/admin/users(page=${page.number - 1}, size=${page.size}, q=${q}, group=${groupFilter})}">Previous</a>
         <span th:unless="${page.hasPrevious()}"></span>
 
         <span class="pagination__status"
@@ -134,7 +203,7 @@
 
         <a class="button button--quiet"
            th:if="${page.hasNext()}"
-           th:href="@{/admin/users(page=${page.number + 1}, size=${page.size}, q=${q})}">Next</a>
+           th:href="@{/admin/users(page=${page.number + 1}, size=${page.size}, q=${q}, group=${groupFilter})}">Next</a>
         <span th:unless="${page.hasNext()}"></span>
     </nav>
 

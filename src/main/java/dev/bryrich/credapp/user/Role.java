@@ -49,15 +49,18 @@ public enum Role {
     }
 
     /**
-     * Whether this role may decrypt a stored SSN. Coordinators need them to fill payer
-     * forms; read-only accounts never do.
+     * All account roles may view SSNs through the audited reveal endpoint.
      */
     public boolean canRevealSsn() {
-        return this == SUPERUSER || this == ADMIN || this == COORDINATOR;
+        return true;
     }
 
     public boolean canManageUsers() {
         return this == SUPERUSER || this == ADMIN;
+    }
+
+    public boolean canEdit() {
+        return this == SUPERUSER || this == ADMIN || this == COORDINATOR;
     }
 
     public static Role fromValue(String value) {

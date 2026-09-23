@@ -21,7 +21,7 @@
             <h1 th:text="${payer.name}"></h1>
             <p class="page__subtitle" th:text="${contacts.size()} + ' contact(s) on file'">0 contacts</p>
         </div>
-        <a class="button button--quiet" th:unless="${editing}"
+        <a class="button button--quiet" th:if="${canEdit and !editing}"
            th:href="@{/payers/{id}(id=${payer.id}, edit=1)}">Edit payer</a>
     </div>
 
@@ -41,7 +41,7 @@
     </section>
 
     <!-- ============ edit view ============ -->
-    <form th:if="${editing}"
+    <form th:if="${canEdit and editing}"
           id="payerEditForm"
           th:action="@{/payers/{id}/edit(id=${payer.id})}"
           th:object="${form}"
@@ -80,7 +80,7 @@
             <h2>Contacts</h2>
             <span class="count-pill" th:text="${contacts.size()}">0</span>
             <a class="button toolbar__end"
-               th:href="@{/payers/{id}/contacts/new(id=${payer.id})}">Add contact</a>
+               th:href="@{/payers/{id}/contacts/new(id=${payer.id})}" th:if="${canEdit}">Add contact</a>
         </div>
 
         <div class="table-scroll" role="region" tabindex="0" aria-label="Contacts" th:unless="${contacts.isEmpty()}">
@@ -92,7 +92,7 @@
                     <th>Phone</th>
                     <th>Email</th>
                     <th>Fax</th>
-                    <th class="table__actions"></th>
+                    <th class="table__actions" th:if="${canEdit}"></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -111,10 +111,10 @@
                     <td th:text="${contact.phoneNumber} ?: '—'"></td>
                     <td th:text="${contact.emailAddress} ?: '—'"></td>
                     <td th:text="${contact.faxNumber} ?: '—'"></td>
-                    <td class="table__actions">
-                        <div class="row-actions">
+                    <td class="table__actions" th:if="${canEdit}">
+                        <div class="row-actions" th:if="${canEdit}">
                             <a class="button button--quiet button--small"
-                               th:href="@{/payers/{pid}/contacts/{cid}/edit(pid=${payer.id}, cid=${contact.id})}">Edit</a>
+                               th:href="@{/payers/{pid}/contacts/{cid}/edit(pid=${payer.id}, cid=${contact.id})}" th:if="${canEdit}">Edit</a>
                             <form th:action="@{/payers/{pid}/contacts/{cid}/delete(pid=${payer.id}, cid=${contact.id})}"
                                   method="post"
                                   onsubmit="return confirm('Delete this contact?');">
@@ -135,7 +135,7 @@
         </div>
     </section>
 
-    <section class="card danger-zone" th:unless="${editing}">
+    <section class="card danger-zone" th:if="${canEdit and !editing}">
         <div>
             <h2>Delete payer</h2>
             <p class="empty__hint">This removes the payer and every contact recorded for it.</p>

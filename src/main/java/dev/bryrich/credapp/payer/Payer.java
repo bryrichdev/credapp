@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.payer;
 
+import dev.bryrich.credapp.usergroup.GroupScopedEntity;
+
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -10,13 +12,13 @@ import java.util.List;
 
 @Entity
 @Table(name = "payers")
-public class Payer {
+public class Payer extends GroupScopedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String name;
 
     private String note;

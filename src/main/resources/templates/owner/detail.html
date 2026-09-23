@@ -24,7 +24,7 @@
             <h1 th:text="${owner.firstName} + ' ' + ${owner.lastName}"></h1>
             <p class="page__subtitle" th:text="${stakes.size()} + ' group(s) owned'">0 groups owned</p>
         </div>
-        <a class="button button--quiet" th:unless="${editing}"
+        <a class="button button--quiet" th:if="${canEdit and !editing}"
            th:href="@{/owners/{id}(id=${owner.id}, edit=1)}">Edit owner</a>
     </div>
 
@@ -63,7 +63,7 @@
     </section>
 
     <!-- ============ edit view ============ -->
-    <form th:if="${editing}"
+    <form th:if="${canEdit and editing}"
           id="ownerEditForm"
           th:action="@{/owners/{id}/edit(id=${owner.id})}"
           th:object="${form}"
@@ -152,7 +152,7 @@
             <h2>Groups owned</h2>
             <span class="count-pill" th:text="${stakes.size()}">0</span>
             <a class="button toolbar__end"
-               th:href="@{/owners/{id}/groups/new(id=${owner.id})}">Add group</a>
+               th:href="@{/owners/{id}/groups/new(id=${owner.id})}" th:if="${canEdit}">Add group</a>
         </div>
 
         <div class="table-scroll" role="region" tabindex="0" aria-label="Groups owned" th:unless="${stakes.isEmpty()}">
@@ -162,7 +162,7 @@
                     <th>Group</th>
                     <th>Percent owned</th>
                     <th>Effective</th>
-                    <th class="table__actions"></th>
+                    <th class="table__actions" th:if="${canEdit}"></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -173,10 +173,10 @@
                     </td>
                     <td th:text="${stake.percentOwned != null} ? ${stake.percentOwned} + '%' : '—'"></td>
                     <td th:text="${stake.effectiveDate} ?: '—'"></td>
-                    <td class="table__actions">
-                        <div class="row-actions">
+                    <td class="table__actions" th:if="${canEdit}">
+                        <div class="row-actions" th:if="${canEdit}">
                             <a class="button button--quiet button--small"
-                               th:href="@{/groups/{gid}/edit(gid=${stake.group.id})} + '#owners'">Edit</a>
+                               th:href="@{/groups/{gid}/edit(gid=${stake.group.id})} + '#owners'" th:if="${canEdit}">Edit</a>
                             <form th:action="@{/owners/{oid}/groups/{gid}/delete(oid=${owner.id}, gid=${stake.group.id})}"
                                   method="post"
                                   onsubmit="return confirm('Remove this owner from the group? Their relationships there go too.');">
@@ -222,7 +222,7 @@
         </div>
     </section>
 
-    <section class="card danger-zone" th:unless="${editing}">
+    <section class="card danger-zone" th:if="${canEdit and !editing}">
         <div>
             <h2>Delete owner</h2>
             <p class="empty__hint">
@@ -274,77 +274,7 @@
     })();
 </script>
 
-<script>
-    (function () {
-        const button = document.getElementById('revealSsn');
-        const badge = document.getElementById('ssnBadge');
-        const error = document.getElementById('ssnError');
-        if (!button || !badge) {
-            return;
-        }
-
-        const HIDE_AFTER_MS = 30000;
-        const originalText = badge.textContent;
-        const originalClass = badge.className;
-        let hideTimer = null;
-
-        function conceal() {
-            badge.textContent = originalText;
-            badge.className = originalClass;
-            button.textContent = 'Show SSN';
-            button.disabled = false;
-            hideTimer = null;
-        }
-
-        button.addEventListener('click', async function () {
-            // A second click while the number is up puts it away early.
-            if (hideTimer) {
-                clearTimeout(hideTimer);
-                conceal();
-                return;
-            }
-
-            error.hidden = true;
-            button.disabled = true;
-            button.textContent = 'Checking…';
-
-            const csrfToken = document.querySelector('meta[name="_csrf"]');
-            const csrfHeader = document.querySelector('meta[name="_csrf_header"]');
-            const headers = { 'Accept': 'application/json' };
-            if (csrfToken && csrfHeader && csrfHeader.content) {
-                headers[csrfHeader.content] = csrfToken.content;
-            }
-
-            try {
-                const response = await fetch(button.dataset.url, {
-                    method: 'POST',
-                    headers: headers,
-                    credentials: 'same-origin'
-                });
-                if (!response.ok) {
-                    throw new Error(response.status === 403
-                        ? 'You are not allowed to view stored SSNs.'
-                        : 'Could not retrieve the SSN.');
-                }
-                const body = await response.json();
-                if (!body.ssn) {
-                    throw new Error('No SSN is stored for this owner.');
-                }
-
-                badge.textContent = body.ssn;
-                badge.className = 'badge badge--alert';
-                button.textContent = 'Hide';
-                button.disabled = false;
-                // Put it away on its own, so it can't be left on screen.
-                hideTimer = setTimeout(conceal, HIDE_AFTER_MS);
-            } catch (failure) {
-                error.textContent = failure.message;
-                error.hidden = false;
-                conceal();
-            }
-        });
-    })();
-</script>
+<script th:src="@{/js/ssn-reveal.js}"></script>
 
 <div th:replace="~{fragments/layout :: footer}"></div>
 

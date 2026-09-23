@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.taxonomy;
 
+import dev.bryrich.credapp.usergroup.GroupScopedEntity;
+
 import dev.bryrich.credapp.group.Group;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -10,7 +12,7 @@ import java.time.Instant;
 /** A group's specialty, replacing the free-text groups.specialty column dropped in V5. */
 @Entity
 @Table(name = "group_taxonomies")
-public class GroupTaxonomy {
+public class GroupTaxonomy extends GroupScopedEntity {
 
     @EmbeddedId
     private GroupTaxonomyId id = new GroupTaxonomyId();

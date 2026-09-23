@@ -22,7 +22,7 @@
                   th:text="${page.totalElements} + ' result(s) for &quot;' + ${lastName} + '&quot;'">0 results</span>
         </p>
         </div>
-        <a class="button" th:href="@{/providers/new}">Add provider</a>
+        <a class="button" th:href="@{/providers/new}" th:if="${canEdit}">Add provider</a>
     </div>
 
     <form class="toolbar" th:action="@{/providers}" method="get">
@@ -46,7 +46,7 @@
                     <th>NPI</th>
                     <th>Date of birth</th>
                     <th>Phone</th>
-                    <th class="table__actions"></th>
+                    <th class="table__actions" th:if="${canEdit}"></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -67,10 +67,10 @@
                         <a class="rowlink" th:href="@{/providers/{id}(id=${provider.id})}"
                            th:text="${provider.phoneNumber} ?: '—'"></a>
                     </td>
-                    <td class="table__actions">
-                        <div class="row-actions">
+                    <td class="table__actions" th:if="${canEdit}">
+                        <div class="row-actions" th:if="${canEdit}">
                             <a class="button button--quiet button--small"
-                               th:href="@{/providers/{id}/edit(id=${provider.id})}">Edit</a>
+                               th:href="@{/providers/{id}/edit(id=${provider.id})}" th:if="${canEdit}">Edit</a>
                             <form th:action="@{/providers/{id}/delete(id=${provider.id})}" method="post"
                                   onsubmit="return confirm('Delete this provider and all of their licenses?');">
                                 <button class="button button--danger button--small" type="submit">Delete</button>

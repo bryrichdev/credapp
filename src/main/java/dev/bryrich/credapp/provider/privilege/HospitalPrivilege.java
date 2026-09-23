@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.provider.privilege;
 
+import dev.bryrich.credapp.usergroup.GroupScopedEntity;
+
 import dev.bryrich.credapp.provider.Provider;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -14,7 +16,7 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "hospital_privileges")
-public class HospitalPrivilege {
+public class HospitalPrivilege extends GroupScopedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

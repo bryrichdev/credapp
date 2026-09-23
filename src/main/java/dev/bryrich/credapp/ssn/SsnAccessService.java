@@ -85,7 +85,7 @@ public class SsnAccessService {
     }
 
     private void requireAllowed(User actor) {
-        if (actor == null || !actor.getRole().canRevealSsn()) {
+        if (actor == null || !actor.isEnabled() || !actor.getRole().canRevealSsn()) {
             throw new SsnAccessDeniedException("You are not allowed to view stored SSNs");
         }
     }

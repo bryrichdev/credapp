@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.provider;
 
+import dev.bryrich.credapp.common.UserGroupTestSupport;
+
 import dev.bryrich.credapp.TestcontainersConfiguration;
 import dev.bryrich.credapp.provider.certification.Certification;
 import dev.bryrich.credapp.provider.certification.CertificationRepository;
@@ -25,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 @DataJpaTest
 @Import(TestcontainersConfiguration.class)
-class ProviderDeleteBehaviourTest {
+class ProviderDeleteBehaviourTest extends UserGroupTestSupport {
 
     @Autowired
     private TestEntityManager entityManager;

@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.group;
 
+import dev.bryrich.credapp.common.UserGroupTestSupport;
+
 import dev.bryrich.credapp.TestcontainersConfiguration;
 import dev.bryrich.credapp.group.GroupProfileForm.LocationRow;
 import dev.bryrich.credapp.group.GroupProfileForm.OwnerRow;
@@ -33,10 +35,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Runs the single group form's save against Postgres: new owners created inline, stakes,
  * and relationships whose composite keys depend on both stakes existing first.
  */
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Import(TestcontainersConfiguration.class)
 @Transactional
-class GroupProfileServiceTest {
+class GroupProfileServiceTest extends UserGroupTestSupport {
 
     @Autowired
     private GroupProfileService profileService;

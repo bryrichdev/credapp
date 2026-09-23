@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.user;
 
+import dev.bryrich.credapp.security.CredAppUserDetails;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,13 +18,14 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public UserResponse getById(@PathVariable Long id) {
-        return UserResponse.from(userService.findById(id));
+    public UserResponse getById(@AuthenticationPrincipal CredAppUserDetails principal, @PathVariable Long id) {
+        return UserResponse.from(userService.findByIdAs(principal.getUser(), id));
     }
 
     @PostMapping
-    public ResponseEntity<UserResponse> create(@Valid @RequestBody CreateUserRequest request) {
-        User saved = userService.create(
+    public ResponseEntity<UserResponse> create(@AuthenticationPrincipal CredAppUserDetails principal,
+                                             @Valid @RequestBody CreateUserRequest request) {
+        User saved = userService.createAs(principal.getUser(),
                 request.email(),
                 request.password(),
                 request.fullName(),

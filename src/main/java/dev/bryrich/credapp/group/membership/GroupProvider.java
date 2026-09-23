@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.group.membership;
 
+import dev.bryrich.credapp.usergroup.GroupScopedEntity;
+
 import dev.bryrich.credapp.group.Group;
 import dev.bryrich.credapp.provider.Provider;
 import jakarta.persistence.*;
@@ -11,7 +13,7 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "group_providers")
-public class GroupProvider {
+public class GroupProvider extends GroupScopedEntity {
 
     @EmbeddedId
     private GroupProviderId id = new GroupProviderId();

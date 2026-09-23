@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.provider;
 
+import dev.bryrich.credapp.common.UserGroupTestSupport;
+
 import dev.bryrich.credapp.TestcontainersConfiguration;
 import dev.bryrich.credapp.group.Group;
 import dev.bryrich.credapp.group.location.GroupLocation;
@@ -38,10 +40,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * of writes: the partial unique index on primary specialties, the composite keys on
  * practice locations, and claims pointing at policies saved in the same request.
  */
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Import(TestcontainersConfiguration.class)
 @Transactional
-class ProviderProfileServiceTest {
+class ProviderProfileServiceTest extends UserGroupTestSupport {
 
     private static final String ADDICTION = "207QA0401X";
     private static final String ANESTHESIOLOGY = "207L00000X";

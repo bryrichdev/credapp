@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.malpractice;
 
+import dev.bryrich.credapp.common.UserGroupTestSupport;
+
 import dev.bryrich.credapp.TestcontainersConfiguration;
 import dev.bryrich.credapp.group.Group;
 import dev.bryrich.credapp.provider.Provider;
@@ -19,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 @Import(TestcontainersConfiguration.class)
-class MalpracticePolicyConstraintsTest {
+class MalpracticePolicyConstraintsTest extends UserGroupTestSupport {
 
     @Autowired
     private TestEntityManager entityManager;

@@ -22,7 +22,7 @@
                   th:text="${page.totalElements} + ' result(s) for &quot;' + ${lastName} + '&quot;'">0 results</span>
         </p>
         </div>
-        <a class="button" th:href="@{/owners/new}">Add owner</a>
+        <a class="button" th:href="@{/owners/new}" th:if="${canEdit}">Add owner</a>
     </div>
 
     <form class="toolbar" th:action="@{/owners}" method="get">
@@ -45,7 +45,7 @@
                     <th>Name</th>
                     <th>Date of birth</th>
                     <th>Home address</th>
-                    <th class="table__actions"></th>
+                    <th class="table__actions" th:if="${canEdit}"></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -62,10 +62,10 @@
                         <a class="rowlink" th:href="@{/owners/{id}(id=${owner.id})}"
                            th:text="${#strings.isEmpty(owner.formattedAddress)} ? '—' : ${owner.formattedAddress}"></a>
                     </td>
-                    <td class="table__actions">
-                        <div class="row-actions">
+                    <td class="table__actions" th:if="${canEdit}">
+                        <div class="row-actions" th:if="${canEdit}">
                             <a class="button button--quiet button--small"
-                               th:href="@{/owners/{id}(id=${owner.id}, edit=1)}">Edit</a>
+                               th:href="@{/owners/{id}(id=${owner.id}, edit=1)}" th:if="${canEdit}">Edit</a>
                             <form th:action="@{/owners/{id}/delete(id=${owner.id})}" method="post"
                                   onsubmit="return confirm('Delete this owner and remove them from every group?');">
                                 <button class="button button--danger button--small" type="submit">Delete</button>

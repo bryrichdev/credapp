@@ -20,7 +20,7 @@ public final class WebTestSupport {
     }
 
     public static RequestPostProcessor coordinator() {
-        User user = new User("coordinator@credapp.local", "hashed-value");
+        User user = new User("coordinator@credapp.local", "hashed-value", 42L);
         user.setFullName("Casey Coordinator");
         user.setRole(Role.COORDINATOR);
         ReflectionTestUtils.setField(user, "id", 1L);

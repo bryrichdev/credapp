@@ -1,12 +1,16 @@
 package dev.bryrich.credapp.user;
 
+import dev.bryrich.credapp.usergroup.UserGroupRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -18,10 +22,12 @@ public class UserService {
     private final UserRepository userRepository;
 
     private final PasswordEncoder passwordEncoder;
+    private final UserGroupRepository userGroups;
 
-    public UserService(UserRepository userRepository,  PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, UserGroupRepository userGroups) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.userGroups = userGroups;
     }
 
     @Transactional(readOnly = true)
@@ -46,17 +52,23 @@ public class UserService {
     }
 
     @Transactional
-    public User create(String email, String password, String fullName, Role role) {
+    public User createInGroup(String email, String password, String fullName, Role role, Long groupId) {
+        if (groupId == null || groupId <= 0 || !userGroups.existsById(groupId)) {
+            throw new IllegalArgumentException("An existing user group is required");
+        }
         String normalized = User.normalizeEmail(email);
         if (userRepository.existsByEmail(normalized)) {
             throw new EmailAlreadyExistsException(normalized);
         }
 
-        if (password == null || password.length() < 10) {
+        if (password == null || password.length() < MIN_PASSWORD_LENGTH) {
             throw new IllegalArgumentException("password must be at least 12 characters");
         }
+        if (password.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+            throw new IllegalArgumentException("Password must be at most 72 bytes (use fewer characters)");
+        }
 
-        User user = new User(normalized, passwordEncoder.encode(password));
+        User user = new User(normalized, passwordEncoder.encode(password), groupId);
         user.setFullName(fullName);
         if (role != null) {
             user.setRole(role);
@@ -86,25 +98,81 @@ public class UserService {
         return userRepository.countByRole(role);
     }
 
+    @Transactional(readOnly = true)
+    public Page<User> searchAs(User actor, String term, Pageable pageable) {
+        return searchAs(actor, term, null, pageable);
+    }
+
+    /**
+     * Accounts the actor may see. A superuser sees every user group's, optionally narrowed
+     * to one; an admin only ever sees their own group's, whatever groupId says.
+     */
+    @Transactional(readOnly = true)
+    public Page<User> searchAs(User actor, String term, Long groupId, Pageable pageable) {
+        requireUserAdmin(actor);
+        Long scope = actor.getRole() == Role.SUPERUSER ? groupId : actor.getUserGroupId();
+        return userRepository.searchInGroup(scope, term == null ? "" : term.trim(), pageable);
+    }
+
+    /** Every user group with its account counts, for the superuser's overview. */
+    @Transactional(readOnly = true)
+    public List<UserGroupSummary> userGroupSummariesAs(User actor) {
+        requireSuperuser(actor);
+        Map<Long, long[]> counts = new HashMap<>();
+        for (Object[] row : userRepository.countByUserGroup()) {
+            counts.put((Long) row[0], new long[]{((Number) row[1]).longValue(), ((Number) row[2]).longValue()});
+        }
+        return userGroups.findAll(Sort.by("name")).stream()
+                .map(group -> {
+                    long[] c = counts.getOrDefault(group.getId(), new long[]{0, 0});
+                    return new UserGroupSummary(group.getId(), group.getName(), group.getJoinCode(), c[0], c[1]);
+                })
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public User findByIdAs(User actor, Long id) {
+        requireUserAdmin(actor);
+        User target = findById(id);
+        requireSameGroup(actor, target);
+        return target;
+    }
+
     /** Whether `actor` may act on `target` at all, for hiding buttons the click would reject. */
     @Transactional(readOnly = true)
     public boolean canManage(User actor, User target) {
         return actor != null && target != null
                 && !target.getId().equals(actor.getId())
+                && (actor.getRole() == Role.SUPERUSER || actor.getUserGroupId().equals(target.getUserGroupId()))
                 && actor.getRole().canManage(target.getRole());
     }
 
     @Transactional
     public User createAs(User actor, String email, String password, String fullName, Role role) {
+        return createAs(actor, email, password, fullName, role, null);
+    }
+
+    /**
+     * Creates an account. An admin's always joins their own user group. A superuser can put
+     * it in any group; with no group named it goes in theirs.
+     */
+    @Transactional
+    public User createAs(User actor, String email, String password, String fullName, Role role, Long groupId) {
         requireUserAdmin(actor);
         requireAssignable(actor, role);
-        return create(email, password, fullName, role);
+        Long target = actor.getUserGroupId();
+        if (groupId != null && !groupId.equals(target)) {
+            requireSuperuser(actor);
+            target = groupId;
+        }
+        return createInGroup(email, password, fullName, role, target);
     }
 
     @Transactional
     public User updateAs(User actor, Long targetId, String email, String fullName,
                          Role role, boolean enabled) {
         User target = loadTarget(actor, targetId);
+        requireApproved(target);
         boolean self = target.getId().equals(actor.getId());
 
         if (role != null && role != target.getRole()) {
@@ -139,6 +207,7 @@ public class UserService {
     @Transactional
     public User changeRoleAs(User actor, Long targetId, Role role) {
         User target = loadTarget(actor, targetId);
+        requireApproved(target);
         if (target.getId().equals(actor.getId())) {
             throw new UserManagementDeniedException("You cannot change your own role");
         }
@@ -151,6 +220,7 @@ public class UserService {
     @Transactional
     public User setEnabledAs(User actor, Long targetId, boolean enabled) {
         User target = loadTarget(actor, targetId);
+        requireApproved(target);
         if (target.getId().equals(actor.getId())) {
             throw new UserManagementDeniedException("You cannot disable your own account");
         }
@@ -161,11 +231,22 @@ public class UserService {
     @Transactional
     public void changePasswordAs(User actor, Long targetId, String password) {
         User target = loadTarget(actor, targetId);
+        requireApproved(target);
         if (password == null || password.length() < MIN_PASSWORD_LENGTH) {
             throw new IllegalArgumentException(
                     "password must be at least " + MIN_PASSWORD_LENGTH + " characters");
         }
         target.setPasswordHash(passwordEncoder.encode(password));
+    }
+
+    @Transactional
+    public void decideJoinRequestAs(User actor, Long targetId, boolean approve) {
+        User target = loadTarget(actor, targetId);
+        if (!target.isPendingApproval()) {
+            throw new UserManagementDeniedException("This account has no pending join request");
+        }
+        target.setMembershipStatus(approve ? MembershipStatus.APPROVED : MembershipStatus.REJECTED);
+        target.setEnabled(approve);
     }
 
     @Transactional
@@ -205,12 +286,31 @@ public class UserService {
     private User loadTarget(User actor, Long targetId) {
         requireUserAdmin(actor);
         User target = findById(targetId);
+        requireSameGroup(actor, target);
         boolean self = target.getId().equals(actor.getId());
         if (!self && !actor.getRole().canManage(target.getRole())) {
             throw new UserManagementDeniedException(
                     "You are not allowed to manage " + target.getRole().getLabel() + " accounts");
         }
         return target;
+    }
+
+    private void requireSuperuser(User actor) {
+        if (actor == null || actor.getRole() != Role.SUPERUSER) {
+            throw new UserManagementDeniedException("Only a superuser can work across user groups");
+        }
+    }
+
+    private void requireSameGroup(User actor, User target) {
+        if (actor.getRole() != Role.SUPERUSER && !actor.getUserGroupId().equals(target.getUserGroupId())) {
+            throw new UserManagementDeniedException("You can only manage accounts in your own user group");
+        }
+    }
+
+    private void requireApproved(User target) {
+        if (target.getMembershipStatus() != MembershipStatus.APPROVED) {
+            throw new UserManagementDeniedException("Review the join request before changing this account");
+        }
     }
 
     private void requireAssignable(User actor, Role role) {

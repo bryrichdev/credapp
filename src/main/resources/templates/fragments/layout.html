@@ -2,7 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 
-<header class="topbar" th:fragment="topbar(user, section)">
+<th:block th:fragment="topbar(user, section)">
+<header class="topbar">
     <div class="topbar__left">
         <a class="topbar__brand" th:href="@{/}">
             <span class="topbar__mark">CA</span>
@@ -27,12 +28,25 @@
     </div>
 
     <div class="topbar__right">
+        <span class="badge badge--inactive" th:unless="${canEdit}">Read only</span>
         <span class="topbar__user" th:text="${user.email}" th:title="${user.email}">user@example.com</span>
         <form method="post" th:action="@{/logout}">
             <button class="button button--quiet" type="submit">Sign out</button>
         </form>
     </div>
 </header>
+
+<!-- A superuser looking at another user group: say whose it is and that it's read-only. -->
+<div class="viewing-banner" role="status" th:if="${viewingGroupName != null}">
+    <span>
+        Viewing <strong th:text="${viewingGroupName}">Group</strong> as its admin sees it
+        <span class="viewing-banner__note">&middot; read-only</span>
+    </span>
+    <form method="post" th:action="@{/admin/user-groups/view/exit}">
+        <button class="button button--small" type="submit">Back to my group</button>
+    </form>
+</div>
+</th:block>
 
 <footer class="sitefoot" th:fragment="footer">
     <div class="sitefoot__inner">

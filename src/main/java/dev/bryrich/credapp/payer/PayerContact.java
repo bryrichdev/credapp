@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.payer;
 
+import dev.bryrich.credapp.usergroup.GroupScopedEntity;
+
 import dev.bryrich.credapp.group.Group;
 import dev.bryrich.credapp.provider.Provider;
 import jakarta.persistence.*;
@@ -15,7 +17,7 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "payer_contacts")
-public class PayerContact {
+public class PayerContact extends GroupScopedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

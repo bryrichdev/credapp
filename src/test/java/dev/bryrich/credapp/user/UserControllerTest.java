@@ -1,6 +1,10 @@
 package dev.bryrich.credapp.user;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import dev.bryrich.credapp.security.CredAppUserDetails;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -30,8 +34,15 @@ class UserControllerTest {
     @MockitoBean
     private UserService userService;
 
+    @BeforeEach
+    void authenticateWithApplicationPrincipal() {
+        CredAppUserDetails principal = new CredAppUserDetails(savedUser());
+        SecurityContextHolder.getContext().setAuthentication(
+                UsernamePasswordAuthenticationToken.authenticated(principal, null, principal.getAuthorities()));
+    }
+
     private User savedUser() {
-        User user = new User("dev@credapp.local", "hashed-value");
+        User user = new User("dev@credapp.local", "hashed-value", 42L);
         user.setFullName("Dev Admin");
         user.setRole(Role.ADMIN);
         ReflectionTestUtils.setField(user, "id", 1L);
@@ -40,7 +51,7 @@ class UserControllerTest {
 
     @Test
     void getByIdReturnsTheUserWithoutThePasswordHash() throws Exception {
-        when(userService.findById(1L)).thenReturn(savedUser());
+        when(userService.findByIdAs(any(), eq(1L))).thenReturn(savedUser());
 
         mockMvc.perform(get("/api/users/1"))
                 .andExpect(status().isOk())
@@ -55,7 +66,7 @@ class UserControllerTest {
 
     @Test
     void getByIdReturnsProblemDetailWhenTheUserIsMissing() throws Exception {
-        when(userService.findById(99L)).thenThrow(new UserNotFoundException(99L));
+        when(userService.findByIdAs(any(), eq(99L))).thenThrow(new UserNotFoundException(99L));
 
         mockMvc.perform(get("/api/users/99"))
                 .andExpect(status().isNotFound())
@@ -67,7 +78,7 @@ class UserControllerTest {
 
     @Test
     void createReturns201WithALocationHeader() throws Exception {
-        when(userService.create(any(), any(), any(), any())).thenReturn(savedUser());
+        when(userService.createAs(any(), any(), any(), any(), any())).thenReturn(savedUser());
 
         mockMvc.perform(post("/api/users")
                         .with(csrf())
@@ -85,7 +96,7 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.passwordHash").doesNotExist());
 
-        verify(userService).create(
+        verify(userService).createAs(any(User.class),
                 eq("dev@credapp.local"), eq("averylongpassword"), eq("Dev Admin"), eq(Role.ADMIN));
     }
 
@@ -125,7 +136,7 @@ class UserControllerTest {
 
     @Test
     void createReturns409WhenTheEmailIsTaken() throws Exception {
-        when(userService.create(any(), any(), any(), any()))
+        when(userService.createAs(any(), any(), any(), any(), any()))
                 .thenThrow(new EmailAlreadyExistsException("dev@credapp.local"));
 
         mockMvc.perform(post("/api/users")

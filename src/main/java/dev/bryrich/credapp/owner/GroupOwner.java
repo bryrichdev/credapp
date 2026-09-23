@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.owner;
 
+import dev.bryrich.credapp.usergroup.GroupScopedEntity;
+
 import dev.bryrich.credapp.group.Group;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -11,7 +13,7 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "group_owners")
-public class GroupOwner {
+public class GroupOwner extends GroupScopedEntity {
 
     @EmbeddedId
     private GroupOwnerId id = new GroupOwnerId();

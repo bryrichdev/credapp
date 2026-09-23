@@ -22,7 +22,7 @@
                   th:text="${page.totalElements} + ' result(s) for &quot;' + ${name} + '&quot;'">0 results</span>
         </p>
         </div>
-        <a class="button" th:href="@{/payers/new}">Add payer</a>
+        <a class="button" th:href="@{/payers/new}" th:if="${canEdit}">Add payer</a>
     </div>
 
     <form class="toolbar" th:action="@{/payers}" method="get">
@@ -45,7 +45,7 @@
                     <th>Name</th>
                     <th>Note</th>
                     <th>Added</th>
-                    <th class="table__actions"></th>
+                    <th class="table__actions" th:if="${canEdit}"></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -62,10 +62,10 @@
                         <a class="rowlink" th:href="@{/payers/{id}(id=${payer.id})}"
                            th:text="${payer.createdAt}"></a>
                     </td>
-                    <td class="table__actions">
-                        <div class="row-actions">
+                    <td class="table__actions" th:if="${canEdit}">
+                        <div class="row-actions" th:if="${canEdit}">
                             <a class="button button--quiet button--small"
-                               th:href="@{/payers/{id}(id=${payer.id}, edit=1)}">Edit</a>
+                               th:href="@{/payers/{id}(id=${payer.id}, edit=1)}" th:if="${canEdit}">Edit</a>
                             <form th:action="@{/payers/{id}/delete(id=${payer.id})}" method="post"
                                   onsubmit="return confirm('Delete this payer and all of its contacts?');">
                                 <button class="button button--danger button--small" type="submit">Delete</button>

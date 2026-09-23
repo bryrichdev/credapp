@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.provider.location;
 
+import dev.bryrich.credapp.usergroup.GroupScopedEntity;
+
 import dev.bryrich.credapp.group.location.GroupLocation;
 import dev.bryrich.credapp.provider.Provider;
 import jakarta.persistence.*;
@@ -19,7 +21,7 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "provider_locations")
-public class ProviderLocation {
+public class ProviderLocation extends GroupScopedEntity {
 
     @EmbeddedId
     private ProviderLocationId id = new ProviderLocationId();

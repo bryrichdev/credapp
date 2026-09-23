@@ -24,7 +24,7 @@
                   th:text="${page.totalElements} + ' license(s) for providers matching &quot;' + ${providerName} + '&quot;'">0 results</span>
         </p>
         </div>
-        <a class="button" th:href="@{/licenses/new}">Add license</a>
+        <a class="button" th:href="@{/licenses/new}" th:if="${canEdit}">Add license</a>
     </div>
 
     <form class="toolbar" th:action="@{/licenses}" method="get">
@@ -51,7 +51,7 @@
                     <th>Issued</th>
                     <th>Expires</th>
                     <th>Status</th>
-                    <th class="table__actions"></th>
+                    <th class="table__actions" th:if="${canEdit}"></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -88,10 +88,10 @@
                                   : 'badge--inactive'))}"
                               th:text="${license.status.value}"></span>
                     </td>
-                    <td class="table__actions">
-                        <div class="row-actions">
+                    <td class="table__actions" th:if="${canEdit}">
+                        <div class="row-actions" th:if="${canEdit}">
                             <a class="button button--quiet button--small"
-                               th:href="@{/licenses/{lid}/edit(lid=${license.id})}">Edit</a>
+                               th:href="@{/licenses/{lid}/edit(lid=${license.id})}" th:if="${canEdit}">Edit</a>
                             <form th:action="@{/licenses/{lid}/delete(lid=${license.id})}"
                                   method="post"
                                   onsubmit="return confirm('Delete this license?');">

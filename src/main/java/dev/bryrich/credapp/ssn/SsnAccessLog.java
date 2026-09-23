@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.ssn;
 
+import dev.bryrich.credapp.usergroup.GroupScopedEntity;
+
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -12,7 +14,7 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "ssn_access_log")
-public class SsnAccessLog {
+public class SsnAccessLog extends GroupScopedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

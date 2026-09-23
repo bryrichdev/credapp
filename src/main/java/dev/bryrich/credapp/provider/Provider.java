@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.provider;
 
+import dev.bryrich.credapp.usergroup.GroupScopedEntity;
+
 import dev.bryrich.credapp.license.License;
 import dev.bryrich.credapp.ssn.SsnConverter;
 import jakarta.persistence.*;
@@ -17,7 +19,7 @@ import java.util.stream.Stream;
 
 @Entity
 @Table(name = "providers")
-public class Provider {
+public class Provider extends GroupScopedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

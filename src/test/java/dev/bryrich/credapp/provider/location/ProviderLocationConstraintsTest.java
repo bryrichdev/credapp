@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.provider.location;
 
+import dev.bryrich.credapp.common.UserGroupTestSupport;
+
 import dev.bryrich.credapp.TestcontainersConfiguration;
 import dev.bryrich.credapp.group.Group;
 import dev.bryrich.credapp.group.location.GroupLocation;
@@ -23,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 @DataJpaTest
 @Import(TestcontainersConfiguration.class)
-class ProviderLocationConstraintsTest {
+class ProviderLocationConstraintsTest extends UserGroupTestSupport {
 
     @Autowired
     private TestEntityManager entityManager;

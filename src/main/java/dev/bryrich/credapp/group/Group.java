@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.group;
 
+import dev.bryrich.credapp.usergroup.GroupScopedEntity;
+
 import dev.bryrich.credapp.group.location.GroupLocation;
 import dev.bryrich.credapp.group.membership.GroupProvider;
 import dev.bryrich.credapp.owner.GroupOwner;
@@ -13,7 +15,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "groups")
-public class Group {
+public class Group extends GroupScopedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

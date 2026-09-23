@@ -142,6 +142,7 @@ public class ProviderWebController {
     public String detail(@PathVariable Long id, Model model) {
         Provider provider = providerService.findById(id);
         model.addAttribute("provider", provider);
+        model.addAttribute("ssnOnFile", ssnAccessService.providerSsnOnFile(id));
         model.addAttribute("licenses", licenseService.findByProviderId(id));
         model.addAttribute("groups", groupProviderService.findGroups(id));
         model.addAttribute("taxonomies", providerTaxonomyService.findByProviderId(id));

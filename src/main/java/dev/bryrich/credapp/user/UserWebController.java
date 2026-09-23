@@ -1,10 +1,13 @@
 package dev.bryrich.credapp.user;
 
 import dev.bryrich.credapp.security.CredAppUserDetails;
+import dev.bryrich.credapp.usergroup.UserGroupRepository;
+import dev.bryrich.credapp.usergroup.ViewedGroup;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -13,6 +16,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Account administration. Who may do what lives in UserService, which checks the signed-in
@@ -24,9 +30,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class UserWebController {
 
     private final UserService userService;
+    private final UserGroupRepository userGroups;
 
-    public UserWebController(UserService userService) {
+    public UserWebController(UserService userService, UserGroupRepository userGroups) {
         this.userService = userService;
+        this.userGroups = userGroups;
     }
 
     /** Blank text inputs submit "" — store null instead. Also lets a blank password mean "unchanged". */
@@ -35,24 +43,54 @@ public class UserWebController {
         binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
     }
 
+    /**
+     * An admin sees their own user group's accounts. A superuser sees every group's, can
+     * narrow the list to one, and gets the list of groups to open read-only; while they're
+     * viewing one, the page shows just that group, the way its admin would see it.
+     */
     @GetMapping
     public String list(@RequestParam(required = false) String q,
+                       @RequestParam(name = "group", required = false) Long groupFilter,
+                       @AuthenticationPrincipal CredAppUserDetails principal,
                        @PageableDefault(sort = "email") Pageable pageable,
+                       HttpServletRequest request,
                        Model model) {
-        Page<User> page = (q == null || q.isBlank())
-                ? userService.findAll(pageable)
-                : userService.search(q, pageable);
+        User actor = principal.getUser();
+        boolean superuser = actor.getRole() == Role.SUPERUSER;
+        Long viewed = superuser ? ViewedGroup.id(request) : null;
+        Long scope = viewed != null ? viewed : groupFilter;
 
-        model.addAttribute("page", page);
+        model.addAttribute("page", userService.searchAs(actor, q, scope, pageable));
         model.addAttribute("q", q);
+        if (superuser && viewed == null) {
+            List<UserGroupSummary> summaries = userService.userGroupSummariesAs(actor);
+            model.addAttribute("userGroupSummaries", summaries);
+            model.addAttribute("userGroupNames", summaries.stream()
+                    .collect(Collectors.toMap(UserGroupSummary::id, UserGroupSummary::name)));
+            model.addAttribute("groupFilter", groupFilter);
+        } else {
+            model.addAttribute("userGroup",
+                    userGroups.findById(viewed != null ? viewed : actor.getUserGroupId()).orElseThrow());
+        }
         return "admin/users";
     }
 
     @GetMapping("/new")
-    public String newUser(@AuthenticationPrincipal CredAppUserDetails principal, Model model) {
-        model.addAttribute("form", new UserForm());
-        model.addAttribute("roles", principal.getUser().getRole().assignableRoles());
+    public String newUser(@AuthenticationPrincipal CredAppUserDetails principal,
+                          @RequestParam(name = "group", required = false) Long groupId,
+                          Model model) {
+        UserForm form = new UserForm();
+        form.setUserGroupId(groupId != null ? groupId : principal.getUser().getUserGroupId());
+        model.addAttribute("form", form);
+        addFormOptions(principal.getUser(), model);
         return "admin/user-form";
+    }
+
+    private void addFormOptions(User actor, Model model) {
+        model.addAttribute("roles", actor.getRole().assignableRoles());
+        if (actor.getRole() == Role.SUPERUSER) {
+            model.addAttribute("userGroupChoices", userGroups.findAll(Sort.by("name")));
+        }
     }
 
     @PostMapping
@@ -66,15 +104,16 @@ public class UserWebController {
             binding.rejectValue("password", "password.required", "Password is required");
         }
         if (binding.hasErrors()) {
-            model.addAttribute("roles", actor.getRole().assignableRoles());
+            addFormOptions(actor, model);
             return "admin/user-form";
         }
         try {
             userService.createAs(actor, form.getEmail(), form.getPassword(),
-                    form.getFullName(), form.getRole());
+                    form.getFullName(), form.getRole(),
+                    actor.getRole() == Role.SUPERUSER ? form.getUserGroupId() : null);
         } catch (EmailAlreadyExistsException ex) {
             binding.rejectValue("email", "email.exists", "That email is already in use");
-            model.addAttribute("roles", actor.getRole().assignableRoles());
+            addFormOptions(actor, model);
             return "admin/user-form";
         } catch (UserManagementDeniedException | IllegalArgumentException ex) {
             return refused(ex, redirectAttributes);
@@ -89,7 +128,7 @@ public class UserWebController {
                            Model model,
                            RedirectAttributes redirectAttributes) {
         User actor = principal.getUser();
-        User target = userService.findById(id);
+        User target = userService.findByIdAs(actor, id);
         if (!target.getId().equals(actor.getId()) && !actor.getRole().canManage(target.getRole())) {
             redirectAttributes.addFlashAttribute("errorMessage",
                     "You are not allowed to manage " + target.getRole().getLabel() + " accounts.");
@@ -109,9 +148,10 @@ public class UserWebController {
                              Model model,
                              RedirectAttributes redirectAttributes) {
         User actor = principal.getUser();
+        userService.findByIdAs(actor, id);
         if (binding.hasErrors()) {
             model.addAttribute("roles", actor.getRole().assignableRoles());
-            model.addAttribute("target", userService.findById(id));
+            model.addAttribute("target", userService.findByIdAs(actor, id));
             return "admin/user-form";
         }
         try {
@@ -123,7 +163,7 @@ public class UserWebController {
         } catch (EmailAlreadyExistsException ex) {
             binding.rejectValue("email", "email.exists", "That email is already in use");
             model.addAttribute("roles", actor.getRole().assignableRoles());
-            model.addAttribute("target", userService.findById(id));
+            model.addAttribute("target", userService.findByIdAs(actor, id));
             return "admin/user-form";
         } catch (UserManagementDeniedException | IllegalArgumentException ex) {
             return refused(ex, redirectAttributes);
@@ -171,6 +211,20 @@ public class UserWebController {
             return refused(ex, redirectAttributes);
         }
         redirectAttributes.addFlashAttribute("message", "Account deleted.");
+        return "redirect:/admin/users";
+    }
+
+    @PostMapping("/{id}/approval")
+    public String decideJoinRequest(@AuthenticationPrincipal CredAppUserDetails principal,
+                                    @PathVariable Long id, @RequestParam boolean approve,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            userService.decideJoinRequestAs(principal.getUser(), id, approve);
+        } catch (UserManagementDeniedException ex) {
+            return refused(ex, redirectAttributes);
+        }
+        redirectAttributes.addFlashAttribute("message", approve ? "Join request approved. The coordinator can now sign in."
+                : "Join request rejected. The account has no access.");
         return "redirect:/admin/users";
     }
 

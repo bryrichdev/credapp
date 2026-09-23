@@ -42,7 +42,7 @@ class SsnAccessServiceTest {
     }
 
     private User actor(Role role) {
-        User user = new User("someone@credapp.local", "hashed-value");
+        User user = new User("someone@credapp.local", "hashed-value", 42L);
         user.setRole(role);
         ReflectionTestUtils.setField(user, "id", 3L);
         return user;
@@ -55,12 +55,10 @@ class SsnAccessServiceTest {
     }
 
     @Test
-    void aReadOnlyAccountCannotRevealAnSsn() {
-        assertThatThrownBy(() -> service.revealOwnerSsn(actor(Role.READONLY), 2L, "10.0.0.1"))
-                .isInstanceOf(SsnAccessDeniedException.class);
-
-        verify(logRepository, never()).save(any());
-        verify(ownerRepository, never()).findById(any());
+    void aReadOnlyAccountCanRevealAnSsnAndTheAccessIsLogged() {
+        when(ownerRepository.findById(2L)).thenReturn(Optional.of(ownerWithSsn("123456789")));
+        assertThat(service.revealOwnerSsn(actor(Role.READONLY), 2L, "10.0.0.1")).isEqualTo("123456789");
+        verify(logRepository).save(any(SsnAccessLog.class));
     }
 
     @Test

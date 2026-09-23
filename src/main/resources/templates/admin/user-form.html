@@ -66,6 +66,15 @@
                     <span class="field__error" th:errors="*{role}" th:if="${#fields.hasErrors('role')}"></span>
                 </label>
 
+                <label class="field field--wide" th:if="${target == null and userGroupChoices != null}">
+                    <span class="field__label">User group</span>
+                    <select class="field__input" th:field="*{userGroupId}">
+                        <option th:each="option : ${userGroupChoices}" th:value="${option.id}"
+                                th:text="${option.id == user.userGroupId} ? ${option.name} + ' (yours)' : ${option.name}"></option>
+                    </select>
+                    <span class="field__hint">The account can only see this group's records.</span>
+                </label>
+
                 <label class="field field--wide" th:if="${target != null and target.id != user.id}">
                     <span class="field__label">Status</span>
                     <select class="field__input" th:field="*{enabled}">

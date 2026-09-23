@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${provider.firstName} + ' ' + ${provider.lastName} + ' · CredApp'">Provider &middot; CredApp</title>
+    <meta name="_csrf" th:content="${_csrf?.token}">
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}">
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
@@ -23,7 +25,7 @@
                 NPI <span th:text="${#strings.isEmpty(provider.npi)} ? 'not on file' : ${provider.npi}"></span>
             </p>
         </div>
-        <a class="button" th:href="@{/providers/{id}/edit(id=${provider.id})}">Edit provider</a>
+        <a class="button" th:href="@{/providers/{id}/edit(id=${provider.id})}" th:if="${canEdit}">Edit provider</a>
     </div>
 
     <!-- ============ read view ============ -->
@@ -95,6 +97,19 @@
 
             <dt>TB test</dt>
             <dd th:text="${provider.tbTestDate} ?: '—'"></dd>
+
+            <dt>SSN</dt>
+            <dd>
+                <span class="row-actions row-actions--start">
+                    <span class="badge" id="ssnBadge"
+                          th:classappend="${ssnOnFile} ? 'badge--active' : 'badge--inactive'"
+                          th:text="${ssnOnFile} ? 'On file, encrypted' : 'Not on file'"></span>
+                    <button class="button button--quiet button--small" type="button" id="revealSsn"
+                            th:if="${ssnOnFile and user.role.canRevealSsn()}"
+                            th:attr="data-url=@{/providers/{id}/ssn(id=${provider.id})}">Show SSN</button>
+                </span>
+                <span class="field__error" id="ssnError" hidden></span>
+            </dd>
 
             <dt>Added</dt>
             <dd th:text="${provider.createdAt}"></dd>
@@ -473,7 +488,7 @@
         </div>
     </section>
 
-    <section class="card danger-zone">
+    <section class="card danger-zone" th:if="${canEdit}">
         <div>
             <h2>Delete provider</h2>
             <p class="empty__hint">
@@ -491,5 +506,6 @@
 
 <div th:replace="~{fragments/layout :: footer}"></div>
 
+<script th:src="@{/js/ssn-reveal.js}"></script>
 </body>
 </html>

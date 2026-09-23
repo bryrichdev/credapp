@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.provider.certification;
 
+import dev.bryrich.credapp.usergroup.GroupScopedEntity;
+
 import dev.bryrich.credapp.provider.Provider;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -14,7 +16,7 @@ import java.time.LocalDate;
  */
 @Entity
 @Table(name = "certifications")
-public class Certification {
+public class Certification extends GroupScopedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

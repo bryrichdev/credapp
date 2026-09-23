@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.provider;
 
+import dev.bryrich.credapp.common.UserGroupTestSupport;
+
 import dev.bryrich.credapp.TestcontainersConfiguration;
 import dev.bryrich.credapp.license.License;
 import dev.bryrich.credapp.license.LicenseRepository;
@@ -17,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @Import(TestcontainersConfiguration.class)
-class ProviderRepositoryTest {
+class ProviderRepositoryTest extends UserGroupTestSupport {
 
     @Autowired
     private TestEntityManager entityManager;
