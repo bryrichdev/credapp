@@ -821,6 +821,18 @@ input.field__input[type="date"] {
     border-color: var(--red-700);
 }
 
+/* The one irreversible action: solid red from the start, not only on hover. */
+.button--destructive {
+    color: #ffffff;
+    background-color: var(--red-700);
+    border-color: var(--red-700);
+}
+
+.button--destructive:hover {
+    background-color: #7f2222;
+    border-color: #7f2222;
+}
+
 .button--small {
     min-height: 2rem;
     padding: 0.3rem 0.65rem;
@@ -874,6 +886,20 @@ input.field__input[type="date"] {
     align-items: center;
     gap: 0.35rem;
     justify-content: flex-end;
+}
+
+/* Four buttons in a row squeeze the other columns; two rows of two sit better. */
+.row-actions--wrap {
+    flex-wrap: wrap;
+    width: 14.5rem;
+    margin-left: auto;
+}
+
+@media (max-width: 640px) {
+    .row-actions--wrap {
+        width: auto;
+        margin-left: 0;
+    }
 }
 
 .row-actions > * {
@@ -1896,4 +1922,26 @@ a.topbar__user:hover,
     display: block;
     color: var(--slate-500);
     font-size: 0.8rem;
+}
+
+/* ============ wipe a user group ============ */
+
+.wipe-kept {
+    margin: 0 0 16px;
+    padding: 10px 12px;
+    background: var(--green-50);
+    border-radius: var(--radius);
+    color: var(--slate-700);
+    line-height: 1.5;
+}
+
+.wipe-form {
+    border-top: 1px solid var(--slate-200);
+    padding-top: 16px;
+}
+
+.wipe-form .form-actions {
+    margin-top: 16px;
+    padding-top: 0;
+    border-top: 0;
 }

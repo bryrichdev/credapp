@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Wipe data &middot; CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'users')}"></div>
+
+<main class="page page--narrow">
+
+    <div class="page__header">
+        <h1>Wipe data</h1>
+        <p class="page__subtitle">
+            <strong th:text="${wipeGroup.name}">Lakeside Clinic</strong>
+            <span class="badge badge--inactive" th:if="${own}">Yours</span>
+        </p>
+    </div>
+
+    <section class="card import-result import-result--problems" th:unless="${contents.isEmpty()}">
+        <div class="import-result__head">
+            <h2 th:text="${own} ? 'This deletes all of your own group’s data' : 'This deletes all of this group’s data'">
+                This deletes all of this group’s data
+            </h2>
+            <p>
+                Every provider, group, owner and payer in <strong th:text="${wipeGroup.name}">Lakeside Clinic</strong>,
+                and everything attached to them, is deleted for good. There's no undo.
+            </p>
+        </div>
+
+        <dl class="import-stats">
+            <div th:each="count : ${contents.records()}">
+                <dt th:text="${count.label()}">Providers</dt>
+                <dd th:text="${count.rows()}">0</dd>
+            </div>
+        </dl>
+
+        <p class="wipe-kept">
+            Kept: the user group, its join code and its
+            <strong th:text="${contents.accounts() == 1} ? '1 account' : ${contents.accounts()} + ' accounts'">3 accounts</strong>,
+            so everyone can still sign in to an empty workspace. The SSN access log is kept too.
+        </p>
+
+        <form method="post" th:action="@{/admin/user-groups/{id}/wipe(id=${wipeGroup.id})}" th:object="${form}"
+              class="wipe-form" autocomplete="off">
+            <div class="form-grid">
+                <label class="field">
+                    <span class="field__label">Type <strong th:text="${wipeGroup.name}">Lakeside Clinic</strong> to confirm</span>
+                    <input class="field__input" type="text" th:field="*{confirmName}" required spellcheck="false"
+                           th:classappend="${#fields.hasErrors('confirmName')} ? 'field__input--invalid'">
+                    <span class="field__error" th:errors="*{confirmName}" th:if="${#fields.hasErrors('confirmName')}"></span>
+                </label>
+                <label class="field">
+                    <span class="field__label">Your current password</span>
+                    <input class="field__input" type="password" th:field="*{currentPassword}" required
+                           autocomplete="current-password"
+                           th:classappend="${#fields.hasErrors('currentPassword')} ? 'field__input--invalid'">
+                    <span class="field__error" th:errors="*{currentPassword}" th:if="${#fields.hasErrors('currentPassword')}"></span>
+                </label>
+            </div>
+            <div class="form-actions">
+                <button class="button button--destructive" type="submit"
+                        th:text="'Wipe ' + ${contents.total()} + (${contents.total() == 1} ? ' record' : ' records')">Wipe records</button>
+                <a class="button button--quiet" th:href="@{/admin/users}">Cancel</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="card" th:if="${contents.isEmpty()}">
+        <h2>Nothing to wipe</h2>
+        <p>
+            <span th:text="${wipeGroup.name}">Lakeside Clinic</span> has no providers, groups, owners or payers,
+            only its <span th:text="${contents.accounts() == 1} ? 'account' : ${contents.accounts()} + ' accounts'">accounts</span>.
+        </p>
+        <div class="form-actions">
+            <a class="button button--quiet" th:href="@{/admin/users}">Back to users</a>
+        </div>
+    </section>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

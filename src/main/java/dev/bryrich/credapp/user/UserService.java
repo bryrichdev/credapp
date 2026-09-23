@@ -36,6 +36,13 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException(id));
     }
 
+    /** Checks a password against the account as saved now, not a copy held in the session. */
+    @Transactional(readOnly = true)
+    public boolean passwordMatches(Long userId, String rawPassword) {
+        return rawPassword != null && !rawPassword.isEmpty()
+                && passwordEncoder.matches(rawPassword, findById(userId).getPasswordHash());
+    }
+
     @Transactional(readOnly = true)
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(User.normalizeEmail(email));

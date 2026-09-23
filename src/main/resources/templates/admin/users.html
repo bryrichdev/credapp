@@ -67,7 +67,7 @@
                     </td>
                     <td><code class="group-code" th:text="${group.joinCode}"></code></td>
                     <td class="table__actions">
-                        <div class="row-actions">
+                        <div class="row-actions row-actions--wrap">
                             <a class="button button--quiet button--small"
                                th:href="@{/admin/users(group=${group.id})}">Accounts</a>
                             <a th:if="${own}" class="button button--quiet button--small"
@@ -81,6 +81,8 @@
                                   th:action="@{/admin/user-groups/{id}/view(id=${group.id})}">
                                 <button class="button button--small" type="submit">View as admin</button>
                             </form>
+                            <a class="button button--danger button--small"
+                               th:href="@{/admin/user-groups/{id}/wipe(id=${group.id})}">Wipe data</a>
                         </div>
                     </td>
                 </tr>
