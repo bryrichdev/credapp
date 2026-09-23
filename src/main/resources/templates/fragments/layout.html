@@ -9,7 +9,7 @@
             <span>CredApp</span>
         </a>
 
-        <nav class="topnav">
+        <nav class="topnav" aria-label="Main navigation">
             <a class="topnav__link" th:classappend="${section == 'providers'} ? 'topnav__link--active'"
                th:href="@{/providers}">Providers</a>
             <a class="topnav__link" th:classappend="${section == 'licenses'} ? 'topnav__link--active'"
@@ -27,7 +27,7 @@
     </div>
 
     <div class="topbar__right">
-        <span class="topbar__user" th:text="${user.email}">user@example.com</span>
+        <span class="topbar__user" th:text="${user.email}" th:title="${user.email}">user@example.com</span>
         <form method="post" th:action="@{/logout}">
             <button class="button button--quiet" type="submit">Sign out</button>
         </form>

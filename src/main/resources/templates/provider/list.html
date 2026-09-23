@@ -38,47 +38,49 @@
     </form>
 
     <section class="card card--flush">
-        <table class="table" th:unless="${page.isEmpty()}">
-            <thead>
-            <tr>
-                <th>Name</th>
-                <th>NPI</th>
-                <th>Date of birth</th>
-                <th>Phone</th>
-                <th class="table__actions"></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="provider : ${page.content}">
-                <td>
-                    <a class="rowlink rowlink--strong" th:href="@{/providers/{id}(id=${provider.id})}"
-                       th:text="${provider.lastName} + ', ' + ${provider.firstName}"></a>
-                </td>
-                <td>
-                    <a class="rowlink" th:href="@{/providers/{id}(id=${provider.id})}"
-                       th:text="${provider.npi} ?: '—'"></a>
-                </td>
-                <td>
-                    <a class="rowlink" th:href="@{/providers/{id}(id=${provider.id})}"
-                       th:text="${provider.dob} ?: '—'"></a>
-                </td>
-                <td>
-                    <a class="rowlink" th:href="@{/providers/{id}(id=${provider.id})}"
-                       th:text="${provider.phoneNumber} ?: '—'"></a>
-                </td>
-                <td class="table__actions">
-                    <div class="row-actions">
-                        <a class="button button--quiet button--small"
-                           th:href="@{/providers/{id}/edit(id=${provider.id})}">Edit</a>
-                        <form th:action="@{/providers/{id}/delete(id=${provider.id})}" method="post"
-                              onsubmit="return confirm('Delete this provider and all of their licenses?');">
-                            <button class="button button--danger button--small" type="submit">Delete</button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+        <div class="table-scroll" role="region" tabindex="0" aria-label="Provider" th:unless="${page.isEmpty()}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>NPI</th>
+                    <th>Date of birth</th>
+                    <th>Phone</th>
+                    <th class="table__actions"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="provider : ${page.content}">
+                    <td>
+                        <a class="rowlink rowlink--strong" th:href="@{/providers/{id}(id=${provider.id})}"
+                           th:text="${provider.lastName} + ', ' + ${provider.firstName}"></a>
+                    </td>
+                    <td>
+                        <a class="rowlink" th:href="@{/providers/{id}(id=${provider.id})}"
+                           th:text="${provider.npi} ?: '—'"></a>
+                    </td>
+                    <td>
+                        <a class="rowlink" th:href="@{/providers/{id}(id=${provider.id})}"
+                           th:text="${provider.dob} ?: '—'"></a>
+                    </td>
+                    <td>
+                        <a class="rowlink" th:href="@{/providers/{id}(id=${provider.id})}"
+                           th:text="${provider.phoneNumber} ?: '—'"></a>
+                    </td>
+                    <td class="table__actions">
+                        <div class="row-actions">
+                            <a class="button button--quiet button--small"
+                               th:href="@{/providers/{id}/edit(id=${provider.id})}">Edit</a>
+                            <form th:action="@{/providers/{id}/delete(id=${provider.id})}" method="post"
+                                  onsubmit="return confirm('Delete this provider and all of their licenses?');">
+                                <button class="button button--danger button--small" type="submit">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
 
         <div class="empty" th:if="${page.isEmpty()}">
             <p class="empty__title">No providers found</p>

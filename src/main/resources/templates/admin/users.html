@@ -50,70 +50,72 @@
     </form>
 
     <section class="card card--flush">
-        <table class="table" th:unless="${page.isEmpty()}">
-            <thead>
-            <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th class="table__actions"></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="account : ${page.content}"
-                th:with="self=${account.id == user.id},
-                         manageable=${account.id != user.id and user.role.canManage(account.role)}">
-                <td th:text="${account.fullName} ?: '—'"></td>
-                <td>
-                    <span th:text="${account.email}"></span>
-                    <span class="badge badge--inactive" th:if="${self}">You</span>
-                </td>
-                <td>
-                    <!-- Promote or demote in place. Only the roles this account may hand out are listed. -->
-                    <form class="row-actions row-actions--start" th:if="${manageable}"
-                          th:action="@{/admin/users/{id}/role(id=${account.id})}" method="post">
-                        <select class="field__input field__input--small" name="role" onchange="this.form.submit()">
-                            <option th:each="option : ${user.role.assignableRoles()}"
-                                    th:value="${option}"
-                                    th:text="${option.label}"
-                                    th:selected="${option == account.role}"></option>
-                        </select>
-                        <noscript><button class="button button--quiet button--small" type="submit">Apply</button></noscript>
-                    </form>
-                    <span class="badge" th:unless="${manageable}"
-                          th:classappend="${account.role.name() == 'SUPERUSER'} ? 'badge--alert'
-                              : (${account.role.name() == 'ADMIN'} ? 'badge--pending' : 'badge--inactive')"
-                          th:text="${account.role.label}">Role</span>
-                </td>
-                <td>
-                    <span class="badge"
-                          th:classappend="${account.enabled} ? 'badge--active' : 'badge--alert'"
-                          th:text="${account.enabled} ? 'Enabled' : 'Disabled'">Enabled</span>
-                </td>
-                <td class="table__actions">
-                    <div class="row-actions">
-                        <a class="button button--quiet button--small"
-                           th:if="${manageable or self}"
-                           th:href="@{/admin/users/{id}/edit(id=${account.id})}">Edit</a>
-
-                        <form th:if="${manageable}"
-                              th:action="@{/admin/users/{id}/enabled(id=${account.id})}" method="post">
-                            <input type="hidden" name="enabled" th:value="${!account.enabled}">
-                            <button class="button button--quiet button--small" type="submit"
-                                    th:text="${account.enabled} ? 'Disable' : 'Enable'">Disable</button>
+        <div class="table-scroll" role="region" tabindex="0" aria-label="Admin" th:unless="${page.isEmpty()}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th class="table__actions"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="account : ${page.content}"
+                    th:with="self=${account.id == user.id},
+                             manageable=${account.id != user.id and user.role.canManage(account.role)}">
+                    <td th:text="${account.fullName} ?: '—'"></td>
+                    <td>
+                        <span th:text="${account.email}"></span>
+                        <span class="badge badge--inactive" th:if="${self}">You</span>
+                    </td>
+                    <td>
+                        <!-- Promote or demote in place. Only the roles this account may hand out are listed. -->
+                        <form class="row-actions row-actions--start" th:if="${manageable}"
+                              th:action="@{/admin/users/{id}/role(id=${account.id})}" method="post">
+                            <select class="field__input field__input--small" name="role" onchange="this.form.submit()">
+                                <option th:each="option : ${user.role.assignableRoles()}"
+                                        th:value="${option}"
+                                        th:text="${option.label}"
+                                        th:selected="${option == account.role}"></option>
+                            </select>
+                            <noscript><button class="button button--quiet button--small" type="submit">Apply</button></noscript>
                         </form>
+                        <span class="badge" th:unless="${manageable}"
+                              th:classappend="${account.role.name() == 'SUPERUSER'} ? 'badge--alert'
+                                  : (${account.role.name() == 'ADMIN'} ? 'badge--pending' : 'badge--inactive')"
+                              th:text="${account.role.label}">Role</span>
+                    </td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${account.enabled} ? 'badge--active' : 'badge--alert'"
+                              th:text="${account.enabled} ? 'Enabled' : 'Disabled'">Enabled</span>
+                    </td>
+                    <td class="table__actions">
+                        <div class="row-actions">
+                            <a class="button button--quiet button--small"
+                               th:if="${manageable or self}"
+                               th:href="@{/admin/users/{id}/edit(id=${account.id})}">Edit</a>
 
-                        <form th:if="${manageable}"
-                              th:action="@{/admin/users/{id}/delete(id=${account.id})}" method="post"
-                              onsubmit="return confirm('Delete this account? They will lose access immediately.');">
-                            <button class="button button--danger button--small" type="submit">Delete</button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+                            <form th:if="${manageable}"
+                                  th:action="@{/admin/users/{id}/enabled(id=${account.id})}" method="post">
+                                <input type="hidden" name="enabled" th:value="${!account.enabled}">
+                                <button class="button button--quiet button--small" type="submit"
+                                        th:text="${account.enabled} ? 'Disable' : 'Enable'">Disable</button>
+                            </form>
+
+                            <form th:if="${manageable}"
+                                  th:action="@{/admin/users/{id}/delete(id=${account.id})}" method="post"
+                                  onsubmit="return confirm('Delete this account? They will lose access immediately.');">
+                                <button class="button button--danger button--small" type="submit">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
 
         <div class="empty" th:if="${page.isEmpty()}">
             <p class="empty__title">No accounts found</p>

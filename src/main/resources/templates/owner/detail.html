@@ -155,37 +155,39 @@
                th:href="@{/owners/{id}/groups/new(id=${owner.id})}">Add group</a>
         </div>
 
-        <table class="table" th:unless="${stakes.isEmpty()}">
-            <thead>
-            <tr>
-                <th>Group</th>
-                <th>Percent owned</th>
-                <th>Effective</th>
-                <th class="table__actions"></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="stake : ${stakes}">
-                <td>
-                    <a class="rowlink rowlink--strong" th:href="@{/groups/{id}(id=${stake.group.id})}"
-                       th:text="${stake.group.lbn}"></a>
-                </td>
-                <td th:text="${stake.percentOwned != null} ? ${stake.percentOwned} + '%' : '—'"></td>
-                <td th:text="${stake.effectiveDate} ?: '—'"></td>
-                <td class="table__actions">
-                    <div class="row-actions">
-                        <a class="button button--quiet button--small"
-                           th:href="@{/groups/{gid}/edit(gid=${stake.group.id})} + '#owners'">Edit</a>
-                        <form th:action="@{/owners/{oid}/groups/{gid}/delete(oid=${owner.id}, gid=${stake.group.id})}"
-                              method="post"
-                              onsubmit="return confirm('Remove this owner from the group? Their relationships there go too.');">
-                            <button class="button button--danger button--small" type="submit">Remove</button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+        <div class="table-scroll" role="region" tabindex="0" aria-label="Groups owned" th:unless="${stakes.isEmpty()}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Group</th>
+                    <th>Percent owned</th>
+                    <th>Effective</th>
+                    <th class="table__actions"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="stake : ${stakes}">
+                    <td>
+                        <a class="rowlink rowlink--strong" th:href="@{/groups/{id}(id=${stake.group.id})}"
+                           th:text="${stake.group.lbn}"></a>
+                    </td>
+                    <td th:text="${stake.percentOwned != null} ? ${stake.percentOwned} + '%' : '—'"></td>
+                    <td th:text="${stake.effectiveDate} ?: '—'"></td>
+                    <td class="table__actions">
+                        <div class="row-actions">
+                            <a class="button button--quiet button--small"
+                               th:href="@{/groups/{gid}/edit(gid=${stake.group.id})} + '#owners'">Edit</a>
+                            <form th:action="@{/owners/{oid}/groups/{gid}/delete(oid=${owner.id}, gid=${stake.group.id})}"
+                                  method="post"
+                                  onsubmit="return confirm('Remove this owner from the group? Their relationships there go too.');">
+                                <button class="button button--danger button--small" type="submit">Remove</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
 
         <div class="empty" th:if="${stakes.isEmpty()}">
             <p class="empty__title">Not an owner of any group</p>
@@ -200,22 +202,24 @@
             <span class="count-pill" th:text="${ssnAccess.size()}">0</span>
         </div>
 
-        <table class="table">
-            <thead>
-            <tr>
-                <th>When</th>
-                <th>Who</th>
-                <th>From</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="entry : ${ssnAccess}">
-                <td th:text="${entry.accessedAt}"></td>
-                <td th:text="${entry.userEmail}"></td>
-                <td th:text="${entry.ipAddress} ?: '—'"></td>
-            </tr>
-            </tbody>
-        </table>
+        <div class="table-scroll" role="region" tabindex="0" aria-label="SSN access">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>When</th>
+                    <th>Who</th>
+                    <th>From</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="entry : ${ssnAccess}">
+                    <td th:text="${entry.accessedAt}"></td>
+                    <td th:text="${entry.userEmail}"></td>
+                    <td th:text="${entry.ipAddress} ?: '—'"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
     </section>
 
     <section class="card danger-zone" th:unless="${editing}">

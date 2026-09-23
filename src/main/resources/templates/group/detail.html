@@ -57,26 +57,28 @@
             <span class="count-pill" th:text="${locations.size()}">0</span>
         </div>
 
-        <table class="table" th:unless="${locations.isEmpty()}">
-            <thead>
-            <tr>
-                <th>Name</th>
-                <th>Address</th>
-                <th>Phone</th>
-                <th>Fax</th>
-                <th>Languages</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="location : ${locations}">
-                <td th:text="${location.locationName}"></td>
-                <td th:text="${location.address}"></td>
-                <td th:text="${location.phoneNumber} ?: '—'"></td>
-                <td th:text="${location.faxNumber} ?: '—'"></td>
-                <td th:text="${#lists.isEmpty(location.languages)} ? '—' : ${#strings.listJoin(location.languages, ', ')}"></td>
-            </tr>
-            </tbody>
-        </table>
+        <div class="table-scroll" role="region" tabindex="0" aria-label="Locations" th:unless="${locations.isEmpty()}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Address</th>
+                    <th>Phone</th>
+                    <th>Fax</th>
+                    <th>Languages</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="location : ${locations}">
+                    <td th:text="${location.locationName}"></td>
+                    <td th:text="${location.address}"></td>
+                    <td th:text="${location.phoneNumber} ?: '—'"></td>
+                    <td th:text="${location.faxNumber} ?: '—'"></td>
+                    <td th:text="${#lists.isEmpty(location.languages)} ? '—' : ${#strings.listJoin(location.languages, ', ')}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
 
         <div class="empty" th:if="${locations.isEmpty()}">
             <p class="empty__title">No locations on file</p>
@@ -91,38 +93,40 @@
             <span class="count-pill" th:text="${owners.size()}">0</span>
         </div>
 
-        <table class="table" th:unless="${owners.isEmpty()}">
-            <thead>
-            <tr>
-                <th>Owner</th>
-                <th>Percent owned</th>
-                <th>Effective</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="stake : ${owners}">
-                <td>
-                    <a class="rowlink rowlink--strong" th:href="@{/owners/{id}(id=${stake.owner.id})}"
-                       th:text="${stake.owner.lastName} + ', ' + ${stake.owner.firstName}"></a>
-                </td>
-                <td th:text="${stake.percentOwned != null} ? ${stake.percentOwned} + '%' : '—'"></td>
-                <td th:text="${stake.effectiveDate} ?: '—'"></td>
-            </tr>
-            </tbody>
-            <tfoot>
-            <tr>
-                <td>Total</td>
-                <td th:text="${totalPercent} + '%'">0%</td>
-                <td>
-                    <span class="badge"
-                          th:classappend="${remainingPercent.signum() == 0} ? 'badge--active' : 'badge--pending'"
-                          th:text="${remainingPercent.signum() == 0}
-                              ? 'Fully accounted for'
-                              : (${remainingPercent} + '% unassigned')"></span>
-                </td>
-            </tr>
-            </tfoot>
-        </table>
+        <div class="table-scroll" role="region" tabindex="0" aria-label="Owners" th:unless="${owners.isEmpty()}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Owner</th>
+                    <th>Percent owned</th>
+                    <th>Effective</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="stake : ${owners}">
+                    <td>
+                        <a class="rowlink rowlink--strong" th:href="@{/owners/{id}(id=${stake.owner.id})}"
+                           th:text="${stake.owner.lastName} + ', ' + ${stake.owner.firstName}"></a>
+                    </td>
+                    <td th:text="${stake.percentOwned != null} ? ${stake.percentOwned} + '%' : '—'"></td>
+                    <td th:text="${stake.effectiveDate} ?: '—'"></td>
+                </tr>
+                </tbody>
+                <tfoot>
+                <tr>
+                    <td>Total</td>
+                    <td th:text="${totalPercent} + '%'">0%</td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${remainingPercent.signum() == 0} ? 'badge--active' : 'badge--pending'"
+                              th:text="${remainingPercent.signum() == 0}
+                                  ? 'Fully accounted for'
+                                  : (${remainingPercent} + '% unassigned')"></span>
+                    </td>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
 
         <div class="empty" th:if="${owners.isEmpty()}">
             <p class="empty__title">No owners on file</p>
@@ -137,24 +141,26 @@
             <span class="count-pill" th:text="${relations.size()}">0</span>
         </div>
 
-        <table class="table" th:unless="${relations.isEmpty()}">
-            <thead>
-            <tr>
-                <th>Owner</th>
-                <th>Is the</th>
-                <th>Of</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="relation : ${relations}">
-                <td th:text="${relation.owner.owner.firstName} + ' ' + ${relation.owner.owner.lastName}"></td>
-                <td>
-                    <span class="badge badge--inactive" th:text="${relation.relationship.dbValue()}"></span>
-                </td>
-                <td th:text="${relation.relatedOwner.owner.firstName} + ' ' + ${relation.relatedOwner.owner.lastName}"></td>
-            </tr>
-            </tbody>
-        </table>
+        <div class="table-scroll" role="region" tabindex="0" aria-label="Owner relationships" th:unless="${relations.isEmpty()}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Owner</th>
+                    <th>Is the</th>
+                    <th>Of</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="relation : ${relations}">
+                    <td th:text="${relation.owner.owner.firstName} + ' ' + ${relation.owner.owner.lastName}"></td>
+                    <td>
+                        <span class="badge badge--inactive" th:text="${relation.relationship.dbValue()}"></span>
+                    </td>
+                    <td th:text="${relation.relatedOwner.owner.firstName} + ' ' + ${relation.relatedOwner.owner.lastName}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
 
         <div class="empty" th:if="${relations.isEmpty()}">
             <p class="empty__title">No relationships recorded</p>
@@ -174,25 +180,27 @@
             <span class="count-pill" th:text="${providers.size()}">0</span>
         </div>
 
-        <table class="table" th:unless="${providers.isEmpty()}">
-            <thead>
-            <tr>
-                <th>Provider</th>
-                <th>NPI</th>
-                <th>Effective</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="link : ${providers}">
-                <td>
-                    <a class="rowlink rowlink--strong" th:href="@{/providers/{id}(id=${link.provider.id})}"
-                       th:text="${link.provider.lastName} + ', ' + ${link.provider.firstName}"></a>
-                </td>
-                <td th:text="${link.provider.npi} ?: '—'"></td>
-                <td th:text="${link.effectiveDate} ?: '—'"></td>
-            </tr>
-            </tbody>
-        </table>
+        <div class="table-scroll" role="region" tabindex="0" aria-label="Providers" th:unless="${providers.isEmpty()}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Provider</th>
+                    <th>NPI</th>
+                    <th>Effective</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="link : ${providers}">
+                    <td>
+                        <a class="rowlink rowlink--strong" th:href="@{/providers/{id}(id=${link.provider.id})}"
+                           th:text="${link.provider.lastName} + ', ' + ${link.provider.firstName}"></a>
+                    </td>
+                    <td th:text="${link.provider.npi} ?: '—'"></td>
+                    <td th:text="${link.effectiveDate} ?: '—'"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
 
         <div class="empty" th:if="${providers.isEmpty()}">
             <p class="empty__title">No providers assigned</p>
@@ -208,25 +216,27 @@
             <span class="count-pill" th:text="${taxonomies.size()}">0</span>
         </div>
 
-        <table class="table" th:unless="${taxonomies.isEmpty()}">
-            <thead>
-            <tr>
-                <th>Specialty</th>
-                <th>Taxonomy code</th>
-                <th>Primary</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="tax : ${taxonomies}">
-                <td th:text="${tax.taxonomy.specialty}"></td>
-                <td th:text="${tax.taxonomy.code}"></td>
-                <td>
-                    <span class="badge badge--active" th:if="${tax.primary}">Primary</span>
-                    <span th:unless="${tax.primary}">&mdash;</span>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+        <div class="table-scroll" role="region" tabindex="0" aria-label="Specialties" th:unless="${taxonomies.isEmpty()}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Specialty</th>
+                    <th>Taxonomy code</th>
+                    <th>Primary</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="tax : ${taxonomies}">
+                    <td th:text="${tax.taxonomy.specialty}"></td>
+                    <td th:text="${tax.taxonomy.code}"></td>
+                    <td>
+                        <span class="badge badge--active" th:if="${tax.primary}">Primary</span>
+                        <span th:unless="${tax.primary}">&mdash;</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
 
         <div class="empty" th:if="${taxonomies.isEmpty()}">
             <p class="empty__title">No specialties on file</p>
@@ -241,27 +251,29 @@
             <span class="count-pill" th:text="${policies.size()}">0</span>
         </div>
 
-        <table class="table" th:unless="${policies.isEmpty()}">
-            <thead>
-            <tr>
-                <th>Carrier</th>
-                <th>Policy number</th>
-                <th>Coverage</th>
-                <th>Effective</th>
-                <th>Expires</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="policy : ${policies}">
-                <td th:text="${policy.carrierName}"></td>
-                <td th:text="${policy.policyNumber}"></td>
-                <td th:text="${policy.amountOfCoveragePerOccurrence != null}
-                        ? ${#numbers.formatCurrency(policy.amountOfCoveragePerOccurrence)} : '&mdash;'"></td>
-                <td th:text="${policy.effectiveDate}"></td>
-                <td th:text="${policy.expirationDate} ?: '&mdash;'"></td>
-            </tr>
-            </tbody>
-        </table>
+        <div class="table-scroll" role="region" tabindex="0" aria-label="Malpractice policies" th:unless="${policies.isEmpty()}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Carrier</th>
+                    <th>Policy number</th>
+                    <th>Coverage</th>
+                    <th>Effective</th>
+                    <th>Expires</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="policy : ${policies}">
+                    <td th:text="${policy.carrierName}"></td>
+                    <td th:text="${policy.policyNumber}"></td>
+                    <td th:text="${policy.amountOfCoveragePerOccurrence != null}
+                            ? ${#numbers.formatCurrency(policy.amountOfCoveragePerOccurrence)} : '&mdash;'"></td>
+                    <td th:text="${policy.effectiveDate}"></td>
+                    <td th:text="${policy.expirationDate} ?: '&mdash;'"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
 
         <div class="empty" th:if="${policies.isEmpty()}">
             <p class="empty__title">No malpractice policies on file</p>

@@ -38,42 +38,44 @@
     </form>
 
     <section class="card card--flush">
-        <table class="table" th:unless="${page.isEmpty()}">
-            <thead>
-            <tr>
-                <th>Name</th>
-                <th>Date of birth</th>
-                <th>Home address</th>
-                <th class="table__actions"></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="owner : ${page.content}">
-                <td>
-                    <a class="rowlink rowlink--strong" th:href="@{/owners/{id}(id=${owner.id})}"
-                       th:text="${owner.lastName} + ', ' + ${owner.firstName}"></a>
-                </td>
-                <td>
-                    <a class="rowlink" th:href="@{/owners/{id}(id=${owner.id})}"
-                       th:text="${owner.dob} ?: '—'"></a>
-                </td>
-                <td>
-                    <a class="rowlink" th:href="@{/owners/{id}(id=${owner.id})}"
-                       th:text="${#strings.isEmpty(owner.formattedAddress)} ? '—' : ${owner.formattedAddress}"></a>
-                </td>
-                <td class="table__actions">
-                    <div class="row-actions">
-                        <a class="button button--quiet button--small"
-                           th:href="@{/owners/{id}(id=${owner.id}, edit=1)}">Edit</a>
-                        <form th:action="@{/owners/{id}/delete(id=${owner.id})}" method="post"
-                              onsubmit="return confirm('Delete this owner and remove them from every group?');">
-                            <button class="button button--danger button--small" type="submit">Delete</button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+        <div class="table-scroll" role="region" tabindex="0" aria-label="Owner" th:unless="${page.isEmpty()}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Date of birth</th>
+                    <th>Home address</th>
+                    <th class="table__actions"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="owner : ${page.content}">
+                    <td>
+                        <a class="rowlink rowlink--strong" th:href="@{/owners/{id}(id=${owner.id})}"
+                           th:text="${owner.lastName} + ', ' + ${owner.firstName}"></a>
+                    </td>
+                    <td>
+                        <a class="rowlink" th:href="@{/owners/{id}(id=${owner.id})}"
+                           th:text="${owner.dob} ?: '—'"></a>
+                    </td>
+                    <td>
+                        <a class="rowlink" th:href="@{/owners/{id}(id=${owner.id})}"
+                           th:text="${#strings.isEmpty(owner.formattedAddress)} ? '—' : ${owner.formattedAddress}"></a>
+                    </td>
+                    <td class="table__actions">
+                        <div class="row-actions">
+                            <a class="button button--quiet button--small"
+                               th:href="@{/owners/{id}(id=${owner.id}, edit=1)}">Edit</a>
+                            <form th:action="@{/owners/{id}/delete(id=${owner.id})}" method="post"
+                                  onsubmit="return confirm('Delete this owner and remove them from every group?');">
+                                <button class="button button--danger button--small" type="submit">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
 
         <div class="empty" th:if="${page.isEmpty()}">
             <p class="empty__title">No owners found</p>

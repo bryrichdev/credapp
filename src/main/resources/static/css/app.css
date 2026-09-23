@@ -37,6 +37,8 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    min-height: 100dvh;
+    min-width: 0;
     background-color: var(--slate-50);
     color: var(--slate-900);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -97,11 +99,16 @@ a {
     display: flex;
     align-items: center;
     gap: 1rem;
+    min-width: 0;
 }
 
 .topbar__user {
     font-size: 0.875rem;
     color: var(--slate-700);
+    max-width: 16rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* ---------- layout ---------- */
@@ -111,6 +118,7 @@ a {
     /* width:100% is required — `margin: 0 auto` on a flex item cancels the
        cross-axis stretch, which would shrink the page to its content width */
     width: 100%;
+    min-width: 0;
     max-width: 920px;
     margin: 0 auto;
     padding: 2rem 1.5rem 4rem;
@@ -126,6 +134,7 @@ a {
 }
 
 .card {
+    min-width: 0;
     background-color: #ffffff;
     border: 1px solid var(--slate-200);
     border-radius: var(--radius);
@@ -180,6 +189,7 @@ a {
 
 .field {
     display: block;
+    min-width: 0;
     margin-bottom: 1rem;
 }
 
@@ -193,14 +203,69 @@ a {
 
 .field__input {
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 2.75rem;
     padding: 0.6rem 0.7rem;
-    font-size: 0.95rem;
+    font-size: 1rem;
     font-family: inherit;
+    line-height: 1.25;
     color: var(--slate-900);
     background-color: #ffffff;
     border: 1px solid var(--slate-300);
     border-radius: var(--radius);
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Keep the native picker, with the same text and icon inset as date inputs. */
+select.field__input:not([multiple]) {
+    -webkit-appearance: none;
+    appearance: none;
+    padding-right: 2.4rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%233d4a59' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    background-size: 1rem;
+    text-overflow: ellipsis;
+}
+
+/* Safari's native date control can retain an intrinsic width inside narrow grids. */
+input.field__input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-inline-size: 0;
+    text-align: left;
+}
+
+.field__input::-webkit-date-and-time-value {
+    min-height: 1.25em;
+    text-align: left;
+}
+
+.field__input::-webkit-datetime-edit {
+    min-width: 0;
+    padding: 0;
+}
+
+.field__input::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+}
+
+.field__input::-webkit-calendar-picker-indicator {
+    margin: 0;
+    padding: 0;
+}
+
+@media (forced-colors: active) {
+    select.field__input:not([multiple]) {
+        appearance: auto;
+        background-image: none;
+    }
 }
 
 .field__input:focus {
@@ -214,6 +279,7 @@ a {
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
+    min-height: 2.75rem;
     padding: 0.6rem 1.1rem;
     font-size: 0.95rem;
     font-family: inherit;
@@ -279,7 +345,7 @@ a {
 .detail-list {
     margin: 0;
     display: grid;
-    grid-template-columns: 160px 1fr;
+    grid-template-columns: 160px minmax(0, 1fr);
     gap: 0.6rem 1rem;
 }
 
@@ -294,6 +360,7 @@ a {
 .detail-list dd {
     margin: 0;
     color: var(--slate-900);
+    overflow-wrap: anywhere;
 }
 
 /* ---------- tables (for the provider list next) ---------- */
@@ -302,6 +369,19 @@ a {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.925rem;
+}
+
+/* Wide data stays in its own scroll region, rather than widening the page. */
+.table-scroll {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+}
+
+.table-scroll:focus-visible {
+    outline: 2px solid var(--teal-700);
+    outline-offset: -2px;
 }
 
 .table th {
@@ -359,13 +439,14 @@ a {
 
 .toolbar {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.5rem;
     align-items: center;
     margin-bottom: 1.25rem;
 }
 
 .toolbar__input {
-    flex: 1 1 auto;
+    flex: 1 1 14rem;
     max-width: 340px;
 }
 
@@ -382,6 +463,7 @@ a {
 
 .card__header {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.6rem;
     padding: 1.1rem 1.25rem;
@@ -467,6 +549,7 @@ a {
 
 .pagination {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
@@ -495,6 +578,7 @@ a {
     display: flex;
     align-items: center;
     gap: 1.75rem;
+    min-width: 0;
 }
 
 .topbar__brand {
@@ -504,9 +588,14 @@ a {
 .topnav {
     display: flex;
     gap: 0.35rem;
+    min-width: 0;
 }
 
 .topnav__link {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    min-height: 2.75rem;
     padding: 0.35rem 0.7rem;
     border-radius: var(--radius);
     color: var(--slate-700);
@@ -529,6 +618,7 @@ a {
 
 .filters {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.4rem;
     margin-bottom: 1.25rem;
@@ -544,6 +634,9 @@ a {
 }
 
 .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
     padding: 0.35rem 0.8rem;
     border: 1px solid var(--slate-300);
     border-radius: 999px;
@@ -636,6 +729,12 @@ a {
     align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.page__header--row > div {
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 /* ---------- forms ---------- */
@@ -644,6 +743,10 @@ a {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0 1.25rem;
+}
+
+.form-grid > * {
+    min-width: 0;
 }
 
 .form-grid .field--wide {
@@ -669,6 +772,7 @@ a {
 
 .form-actions {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.6rem;
     margin-top: 1.25rem;
@@ -681,13 +785,6 @@ a {
     color: var(--slate-500);
     font-size: 0.9rem;
 }
-
-@media (max-width: 640px) {
-    .form-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
 
 /* ---------- destructive actions ---------- */
 
@@ -704,6 +801,7 @@ a {
 }
 
 .button--small {
+    min-height: 2rem;
     padding: 0.3rem 0.65rem;
     font-size: 0.8rem;
 }
@@ -717,6 +815,7 @@ a {
 /* A select sitting in a row of --small buttons, sized to match them. */
 .field__input--small {
     width: auto;
+    min-height: 2rem;
     padding: 0.3rem 0.65rem;
     font-size: 0.8rem;
     line-height: 1.2;
@@ -735,6 +834,7 @@ a {
 
 .danger-zone {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 1.5rem;
@@ -753,6 +853,10 @@ a {
     align-items: center;
     gap: 0.35rem;
     justify-content: flex-end;
+}
+
+.row-actions > * {
+    flex-shrink: 0;
 }
 
 /* Same row, packed to the left — for controls that live in a normal data column. */
@@ -790,6 +894,7 @@ a {
 .savebar__actions {
     display: flex;
     gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
 .savebar .button {
@@ -875,19 +980,6 @@ a {
     flex: none;
 }
 
-@media (max-width: 640px) {
-    .sitefoot__inner {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-    }
-
-    .sitefoot__note {
-        white-space: normal;
-    }
-}
-
-
 /* ---------- single provider / group form ---------- */
 
 /* Jump links to each section of the long form. Sticks under the top of the viewport. */
@@ -904,6 +996,9 @@ a {
 }
 
 .section-nav__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
     padding: 0.25rem 0.65rem;
     border: 1px solid var(--slate-200);
     border-radius: 999px;
@@ -975,7 +1070,7 @@ a {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    min-height: 2.4rem;
+    min-height: 2.75rem;
     margin-right: 1rem;
     font-size: 0.95rem;
     color: var(--slate-900);
@@ -984,6 +1079,7 @@ a {
 .check input {
     width: 1rem;
     height: 1rem;
+    flex-shrink: 0;
     accent-color: var(--teal-700);
 }
 
@@ -999,9 +1095,203 @@ a {
     margin-top: 0.25rem;
 }
 
+/* ---------- tablet and mobile ---------- */
+
+@media (max-width: 1100px) {
+    .topbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.65rem 1rem;
+    }
+
+    .topbar__left {
+        display: contents;
+    }
+
+    .topbar__brand {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .topbar__right {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .topnav {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        padding: 0.2rem;
+        margin: -0.2rem;
+    }
+}
+
 @media (max-width: 640px) {
+    .topbar {
+        padding: 0.75rem 1rem;
+    }
+
+    .topbar__right {
+        gap: 0.5rem;
+    }
+
+    .topbar__user {
+        max-width: 7rem;
+        font-size: 0.75rem;
+    }
+
+    .page {
+        padding: 1.25rem 1rem calc(2rem + env(safe-area-inset-bottom));
+    }
+
+    .card,
+    .signin__card {
+        padding: 1rem;
+    }
+
+    .card--flush {
+        padding: 0;
+    }
+
+    .card__header {
+        padding: 0.85rem 1rem;
+    }
+
+    .form-section__body {
+        padding: 1rem 1rem 0.25rem;
+    }
+
+    .form-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .toolbar__input {
+        flex-basis: 100%;
+        max-width: none;
+    }
+
+    .toolbar > .button {
+        flex: 1;
+    }
+
+    .detail-list {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.15rem;
+    }
+
+    .detail-list dd:not(:last-child) {
+        margin-bottom: 0.75rem;
+    }
+
+    .table-scroll .table {
+        min-width: 36rem;
+    }
+
+    .table-scroll::before {
+        content: "Swipe to see all columns →";
+        display: block;
+        position: sticky;
+        left: 0;
+        width: fit-content;
+        max-width: 100%;
+        padding: 0.6rem 1rem;
+        color: var(--slate-500);
+        font-size: 0.8rem;
+    }
+
+    .button--small {
+        min-height: 2.75rem;
+        font-size: 0.875rem;
+    }
+
+    .field__input--small {
+        min-height: 2.75rem;
+        font-size: 1rem;
+    }
+
+    .form-actions > .button {
+        flex: 1 1 auto;
+    }
+
+    .section-nav {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+    }
+
+    .section-nav__link {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+
+    .row-card {
+        padding: 0.75rem 0.75rem 0.25rem;
+    }
+
+    .row-card__remove {
+        position: static;
+        display: flex;
+        width: fit-content;
+        margin: 0 0 0.75rem auto;
+    }
+
     .row-card > .form-grid {
-        padding-right: 0;
-        padding-top: 2rem;
+        padding: 0;
+    }
+
+    .savebar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.6rem;
+        bottom: calc(0.5rem + env(safe-area-inset-bottom));
+        padding: 0.85rem;
+    }
+
+    .savebar__actions > .button {
+        flex: 1;
+    }
+
+    .sitefoot__inner {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1rem;
+        gap: 0.5rem;
+    }
+
+    .sitefoot__left {
+        flex-wrap: wrap;
+    }
+
+    .sitefoot__note {
+        flex-basis: 100%;
+        white-space: normal;
+    }
+
+    .sitefoot__sep {
+        display: none;
+    }
+}
+
+@media (max-width: 400px) {
+    .topbar__right {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        max-width: 9rem;
+    }
+
+    .topbar__user {
+        max-width: 9rem;
+    }
+
+    .pagination {
+        gap: 0.5rem;
+    }
+
+    .pagination__status {
+        flex-basis: 100%;
+        order: -1;
+        text-align: center;
     }
 }

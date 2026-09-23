@@ -38,47 +38,49 @@
     </form>
 
     <section class="card card--flush">
-        <table class="table" th:unless="${page.isEmpty()}">
-            <thead>
-            <tr>
-                <th>Legal business name</th>
-                <th>DBA</th>
-                <th>NPI</th>
-                <th>Tax ID</th>
-                <th class="table__actions"></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="group : ${page.content}">
-                <td>
-                    <a class="rowlink rowlink--strong" th:href="@{/groups/{id}(id=${group.id})}"
-                       th:text="${group.lbn}"></a>
-                </td>
-                <td>
-                    <a class="rowlink" th:href="@{/groups/{id}(id=${group.id})}"
-                       th:text="${group.dba} ?: '—'"></a>
-                </td>
-                <td>
-                    <a class="rowlink" th:href="@{/groups/{id}(id=${group.id})}"
-                       th:text="${group.npi} ?: '—'"></a>
-                </td>
-                <td>
-                    <a class="rowlink" th:href="@{/groups/{id}(id=${group.id})}"
-                       th:text="${group.taxId}"></a>
-                </td>
-                <td class="table__actions">
-                    <div class="row-actions">
-                        <a class="button button--quiet button--small"
-                           th:href="@{/groups/{id}/edit(id=${group.id})}">Edit</a>
-                        <form th:action="@{/groups/{id}/delete(id=${group.id})}" method="post"
-                              onsubmit="return confirm('Delete this group, its locations and its ownership records?');">
-                            <button class="button button--danger button--small" type="submit">Delete</button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+        <div class="table-scroll" role="region" tabindex="0" aria-label="Group" th:unless="${page.isEmpty()}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Legal business name</th>
+                    <th>DBA</th>
+                    <th>NPI</th>
+                    <th>Tax ID</th>
+                    <th class="table__actions"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="group : ${page.content}">
+                    <td>
+                        <a class="rowlink rowlink--strong" th:href="@{/groups/{id}(id=${group.id})}"
+                           th:text="${group.lbn}"></a>
+                    </td>
+                    <td>
+                        <a class="rowlink" th:href="@{/groups/{id}(id=${group.id})}"
+                           th:text="${group.dba} ?: '—'"></a>
+                    </td>
+                    <td>
+                        <a class="rowlink" th:href="@{/groups/{id}(id=${group.id})}"
+                           th:text="${group.npi} ?: '—'"></a>
+                    </td>
+                    <td>
+                        <a class="rowlink" th:href="@{/groups/{id}(id=${group.id})}"
+                           th:text="${group.taxId}"></a>
+                    </td>
+                    <td class="table__actions">
+                        <div class="row-actions">
+                            <a class="button button--quiet button--small"
+                               th:href="@{/groups/{id}/edit(id=${group.id})}">Edit</a>
+                            <form th:action="@{/groups/{id}/delete(id=${group.id})}" method="post"
+                                  onsubmit="return confirm('Delete this group, its locations and its ownership records?');">
+                                <button class="button button--danger button--small" type="submit">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
 
         <div class="empty" th:if="${page.isEmpty()}">
             <p class="empty__title">No groups found</p>

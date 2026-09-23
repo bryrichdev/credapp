@@ -83,47 +83,49 @@
                th:href="@{/payers/{id}/contacts/new(id=${payer.id})}">Add contact</a>
         </div>
 
-        <table class="table" th:unless="${contacts.isEmpty()}">
-            <thead>
-            <tr>
-                <th>Role</th>
-                <th>Scope</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Fax</th>
-                <th class="table__actions"></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="contact : ${contacts}">
-                <td th:text="${contact.role}"></td>
-                <td>
-                    <span class="badge badge--inactive"
-                          th:if="${contact.group == null and contact.provider == null}">Payer-wide</span>
-                    <a class="rowlink" th:if="${contact.group != null}"
-                       th:href="@{/groups/{id}(id=${contact.group.id})}"
-                       th:text="${contact.group.lbn}"></a>
-                    <a class="rowlink" th:if="${contact.provider != null}"
-                       th:href="@{/providers/{id}(id=${contact.provider.id})}"
-                       th:text="${contact.provider.lastName} + ', ' + ${contact.provider.firstName}"></a>
-                </td>
-                <td th:text="${contact.phoneNumber} ?: '—'"></td>
-                <td th:text="${contact.emailAddress} ?: '—'"></td>
-                <td th:text="${contact.faxNumber} ?: '—'"></td>
-                <td class="table__actions">
-                    <div class="row-actions">
-                        <a class="button button--quiet button--small"
-                           th:href="@{/payers/{pid}/contacts/{cid}/edit(pid=${payer.id}, cid=${contact.id})}">Edit</a>
-                        <form th:action="@{/payers/{pid}/contacts/{cid}/delete(pid=${payer.id}, cid=${contact.id})}"
-                              method="post"
-                              onsubmit="return confirm('Delete this contact?');">
-                            <button class="button button--danger button--small" type="submit">Delete</button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+        <div class="table-scroll" role="region" tabindex="0" aria-label="Contacts" th:unless="${contacts.isEmpty()}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Role</th>
+                    <th>Scope</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Fax</th>
+                    <th class="table__actions"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="contact : ${contacts}">
+                    <td th:text="${contact.role}"></td>
+                    <td>
+                        <span class="badge badge--inactive"
+                              th:if="${contact.group == null and contact.provider == null}">Payer-wide</span>
+                        <a class="rowlink" th:if="${contact.group != null}"
+                           th:href="@{/groups/{id}(id=${contact.group.id})}"
+                           th:text="${contact.group.lbn}"></a>
+                        <a class="rowlink" th:if="${contact.provider != null}"
+                           th:href="@{/providers/{id}(id=${contact.provider.id})}"
+                           th:text="${contact.provider.lastName} + ', ' + ${contact.provider.firstName}"></a>
+                    </td>
+                    <td th:text="${contact.phoneNumber} ?: '—'"></td>
+                    <td th:text="${contact.emailAddress} ?: '—'"></td>
+                    <td th:text="${contact.faxNumber} ?: '—'"></td>
+                    <td class="table__actions">
+                        <div class="row-actions">
+                            <a class="button button--quiet button--small"
+                               th:href="@{/payers/{pid}/contacts/{cid}/edit(pid=${payer.id}, cid=${contact.id})}">Edit</a>
+                            <form th:action="@{/payers/{pid}/contacts/{cid}/delete(pid=${payer.id}, cid=${contact.id})}"
+                                  method="post"
+                                  onsubmit="return confirm('Delete this contact?');">
+                                <button class="button button--danger button--small" type="submit">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
 
         <div class="empty" th:if="${contacts.isEmpty()}">
             <p class="empty__title">No contacts on file</p>
