@@ -26,6 +26,9 @@
     </div>
 
     <!-- ============ read view ============ -->
+    <section th:replace="~{fragments/tracking :: attention(${attention}, true, '/tracking?category=PAYERS')}"
+             th:unless="${editing}"></section>
+
     <section class="card" th:unless="${editing}">
         <h2>Payer details</h2>
         <dl class="detail-list">

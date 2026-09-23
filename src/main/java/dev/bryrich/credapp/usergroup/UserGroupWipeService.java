@@ -77,10 +77,11 @@ public class UserGroupWipeService {
             "owners");
 
     /**
-     * Group-scoped tables a wipe leaves alone: the accounts, and the record of who looked at
-     * which SSN, which is an audit trail of what people did rather than the practice's data.
+     * Group-scoped tables a wipe leaves alone: the accounts; the record of who looked at
+     * which SSN, which is an audit trail of what people did rather than the practice's data;
+     * and the group's tracking settings, which are how the group works, not what it holds.
      */
-    static final Set<String> KEPT = Set.of("users", "ssn_access_log");
+    static final Set<String> KEPT = Set.of("users", "ssn_access_log", "tracking_settings");
 
     /** Rows in one table, labelled for the page. */
     public record Count(String label, long rows) {

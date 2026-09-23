@@ -211,7 +211,18 @@ a {
 .field {
     display: block;
     min-width: 0;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+/*
+ * Under every input sits room for one line of hint or error. A field without either keeps
+ * that room empty, so rows sit the same distance apart whether or not a field has a note,
+ * and an error appearing doesn't push the form down. Longer notes still grow the field.
+ */
+.field:not(:has(.field__hint, .field__error))::after {
+    content: "";
+    display: block;
+    height: calc(0.25rem + 0.8rem * 1.3);
 }
 
 .field__label {
@@ -774,17 +785,21 @@ input.field__input[type="date"] {
     grid-column: 1 / -1;
 }
 
+/* Sized to fill the note slot a field keeps under its input (see .field). */
+.field__error,
+.field__hint {
+    display: block;
+    margin: 0.25rem 0 0;
+    font-size: 0.8rem;
+    line-height: 1.3;
+}
+
 .field__error {
-    margin: 0.3rem 0 0;
     color: var(--red-700);
-    font-size: 0.825rem;
 }
 
 .field__hint {
-    display: block;
-    margin: 0.3rem 0 0;
     color: var(--slate-500);
-    font-size: 0.825rem;
 }
 
 .field__input--invalid {
@@ -1945,4 +1960,178 @@ a.topbar__user:hover,
     margin-top: 16px;
     padding-top: 0;
     border-top: 0;
+}
+
+/* ============ tracking ============ */
+
+/* The count beside the Tracking link: things needing doing now. */
+.topnav__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    margin-left: 0.4rem;
+    padding: 0 0.35rem;
+    border-radius: 999px;
+    background-color: var(--red-700);
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.tracking-tiles {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.tracking-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.85rem 1rem;
+    background-color: #ffffff;
+    border: 1px solid var(--slate-200);
+    border-top: 4px solid var(--slate-300);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    color: var(--slate-900);
+}
+
+.tracking-tile:hover {
+    border-color: var(--slate-300);
+}
+
+.tracking-tile--overdue { border-top-color: var(--red-700); }
+.tracking-tile--due_soon,
+.tracking-tile--stalled { border-top-color: var(--amber-700); }
+.tracking-tile--coming_up { border-top-color: var(--teal-600); }
+
+.tracking-tile--active {
+    background-color: var(--slate-100);
+    box-shadow: inset 0 0 0 2px var(--slate-700);
+}
+
+.tracking-tile__count {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+
+.tracking-tile--overdue .tracking-tile__count { color: var(--red-700); }
+
+.tracking-tile__label {
+    font-weight: 600;
+}
+
+.tracking-tile__hint {
+    font-size: 0.8rem;
+    color: var(--slate-500);
+}
+
+.tracking-when,
+.tracking-what {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.85rem;
+    color: var(--slate-500);
+}
+
+.tracking-date {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.tracking-rules {
+    margin-top: 1rem;
+    line-height: 1.5;
+}
+
+.settings-days {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--slate-700);
+}
+
+.settings-days .field__input {
+    width: 7rem;
+}
+
+/* ---------- "Needs attention" on a provider, group or payer page ---------- */
+
+.attention {
+    border-left: 4px solid var(--amber-700);
+}
+
+.attention__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.attention__more {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.attention__list {
+    margin: 0.25rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.attention__item {
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.55rem 0;
+    border-top: 1px solid var(--slate-200);
+}
+
+.attention__item:first-child {
+    border-top: 0;
+}
+
+.attention__item .badge {
+    justify-self: start;
+}
+
+.attention__when {
+    font-size: 0.85rem;
+    color: var(--slate-500);
+    white-space: nowrap;
+}
+
+@media (max-width: 860px) {
+    .tracking-tiles {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .attention__item {
+        grid-template-columns: auto minmax(0, 1fr);
+        row-gap: 0.35rem;
+    }
+
+    .attention__text {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .attention__when {
+        justify-self: end;
+    }
+
+    .attention__item .button {
+        grid-column: 1 / -1;
+        justify-self: start;
+    }
 }

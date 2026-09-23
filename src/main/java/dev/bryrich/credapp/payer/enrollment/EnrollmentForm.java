@@ -29,6 +29,12 @@ public class EnrollmentForm {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate effectiveDate;
 
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    private LocalDate recredentialDate;
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    private LocalDate followUpDate;
+
     @Size(max = 2000, message = "Notes can be at most 2000 characters")
     private String notes;
 
@@ -38,6 +44,8 @@ public class EnrollmentForm {
         payerAssignedId = enrollment.getPayerAssignedId();
         submittedDate = enrollment.getSubmittedDate();
         effectiveDate = enrollment.getEffectiveDate();
+        recredentialDate = enrollment.getRecredentialDate();
+        followUpDate = enrollment.getFollowUpDate();
         notes = enrollment.getNotes();
     }
 
@@ -46,6 +54,8 @@ public class EnrollmentForm {
         enrollment.setPayerAssignedId(blankToNull(payerAssignedId));
         enrollment.setSubmittedDate(submittedDate);
         enrollment.setEffectiveDate(effectiveDate);
+        enrollment.setRecredentialDate(recredentialDate);
+        enrollment.setFollowUpDate(followUpDate);
         enrollment.setNotes(blankToNull(notes));
     }
 
@@ -57,6 +67,22 @@ public class EnrollmentForm {
 
     private static String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    public LocalDate getRecredentialDate() {
+        return recredentialDate;
+    }
+
+    public void setRecredentialDate(LocalDate recredentialDate) {
+        this.recredentialDate = recredentialDate;
+    }
+
+    public LocalDate getFollowUpDate() {
+        return followUpDate;
+    }
+
+    public void setFollowUpDate(LocalDate followUpDate) {
+        this.followUpDate = followUpDate;
     }
 
     public Long getPayerId() {

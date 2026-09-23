@@ -191,6 +191,7 @@ public final class OnboardingTemplate {
             optional("graduationDate", "Graduation date", ValueType.DATE, 14, null),
             optional("caqhId", "CAQH ID", ValueType.TEXT, 12, null),
             optional("caqhUsername", "CAQH username", ValueType.TEXT, 16, null),
+            optional("caqhAttestedDate", "CAQH attested date", ValueType.DATE, 15, "When the CAQH profile was last attested"),
             optional("fluShotDate", "Flu shot date", ValueType.DATE, 13, null),
             optional("tbTestDate", "TB test date", ValueType.DATE, 13, null),
             optional("prevNames", "Former names", ValueType.LIST, 18, "Maiden or other former names"),
@@ -242,6 +243,7 @@ public final class OnboardingTemplate {
             link(PROVIDER, "Provider ID", true, "Providers"),
             required("name", "Hospital", ValueType.TEXT, 28, null),
             optional("status", "Status", ValueType.choice(PrivilegeStatus.class), 12, "Blank means Active"),
+            optional("reappointmentDate", "Reappointment date", ValueType.DATE, 16, "When the hospital next reappoints them"),
             link(ADMITTING_PROVIDER, "Admitting provider ID", false, "Providers")));
 
     public static final Sheet POLICIES = new Sheet("Malpractice Policies",
@@ -305,6 +307,9 @@ public final class OnboardingTemplate {
                         "The provider or group number the payer issued"),
                 optional("submittedDate", "Submitted date", ValueType.DATE, 14, null),
                 optional("effectiveDate", "Effective date", ValueType.DATE, 14, "Required when Active"),
+                optional("recredentialDate", "Recredential by", ValueType.DATE, 15,
+                        "When the payer recredentials or revalidates"),
+                optional("followUpDate", "Follow up on", ValueType.DATE, 13, "A date to chase the payer"),
                 optional("notes", "Notes", ValueType.TEXT, 30, null));
     }
 

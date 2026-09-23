@@ -1,6 +1,7 @@
 package dev.bryrich.credapp.payer;
 
 import dev.bryrich.credapp.payer.enrollment.PayerEnrollmentService;
+import dev.bryrich.credapp.tracking.TrackingService;
 import dev.bryrich.credapp.group.GroupService;
 import dev.bryrich.credapp.provider.ProviderService;
 import jakarta.validation.Valid;
@@ -25,19 +26,22 @@ public class PayerWebController {
     private final ProviderService providerService;
     private final SmartValidator validator;
     private final PayerEnrollmentService enrollmentService;
+    private final TrackingService trackingService;
 
     public PayerWebController(PayerService payerService,
                               PayerContactService contactService,
                               GroupService groupService,
                               ProviderService providerService,
                               SmartValidator validator,
-                              PayerEnrollmentService enrollmentService) {
+                              PayerEnrollmentService enrollmentService,
+                                 TrackingService trackingService) {
         this.payerService = payerService;
         this.contactService = contactService;
         this.groupService = groupService;
         this.providerService = providerService;
         this.validator = validator;
         this.enrollmentService = enrollmentService;
+        this.trackingService = trackingService;
     }
 
     /** Blank text inputs submit "" — store null instead. */
@@ -67,6 +71,7 @@ public class PayerWebController {
                          Model model) {
         Payer payer = payerService.findById(id);
         addDetailAttributes(id, payer, model);
+        model.addAttribute("attention", trackingService.forPayer(id));
         model.addAttribute("editing", edit);
         if (edit) {
             model.addAttribute("form", PayerForm.from(payer));

@@ -3,6 +3,7 @@ package dev.bryrich.credapp.group;
 import dev.bryrich.credapp.payer.PayerService;
 import dev.bryrich.credapp.payer.enrollment.EnrollmentStatus;
 import dev.bryrich.credapp.payer.enrollment.PayerEnrollmentService;
+import dev.bryrich.credapp.tracking.TrackingService;
 import dev.bryrich.credapp.payer.enrollment.GroupPayerForm;
 import dev.bryrich.credapp.group.location.GroupLocationService;
 import dev.bryrich.credapp.group.membership.GroupProviderForm;
@@ -47,6 +48,7 @@ public class GroupWebController {
     private final MalpracticePolicyService policyService;
     private final PayerService payerService;
     private final PayerEnrollmentService enrollmentService;
+    private final TrackingService trackingService;
 
     public GroupWebController(GroupService groupService,
                               GroupProfileService profileService,
@@ -59,7 +61,8 @@ public class GroupWebController {
                               TaxonomyService taxonomyService,
                               MalpracticePolicyService policyService,
                               PayerService payerService,
-                              PayerEnrollmentService enrollmentService) {
+                              PayerEnrollmentService enrollmentService,
+                                 TrackingService trackingService) {
         this.groupService = groupService;
         this.profileService = profileService;
         this.locationService = locationService;
@@ -72,6 +75,7 @@ public class GroupWebController {
         this.policyService = policyService;
         this.payerService = payerService;
         this.enrollmentService = enrollmentService;
+        this.trackingService = trackingService;
     }
 
     /** Blank text inputs submit "" — store null instead. */
@@ -95,6 +99,7 @@ public class GroupWebController {
 
     @GetMapping("/{id}")
     public String detail(@PathVariable Long id, Model model) {
+        model.addAttribute("attention", trackingService.forGroup(id));
         model.addAttribute("group", groupService.findById(id));
         model.addAttribute("locations", locationService.findByGroupId(id));
         model.addAttribute("owners", ownershipService.findOwners(id));

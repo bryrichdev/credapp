@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tracking settings &middot; CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'tracking')}"></div>
+
+<main class="page page--narrow">
+
+    <div class="page__header">
+        <h1>Tracking settings</h1>
+        <p class="page__subtitle">How far ahead your user group hears about what's coming due.</p>
+    </div>
+
+    <form method="post" th:action="@{/admin/tracking-settings}" th:object="${form}">
+        <section class="card">
+            <div class="form-grid">
+                <label class="field">
+                    <span class="field__label">Coming up</span>
+                    <span class="settings-days">
+                        <input class="field__input" type="number" min="1" max="365" required th:field="*{warningDays}"
+                               th:classappend="${#fields.hasErrors('warningDays')} ? 'field__input--invalid'">
+                        <span>days ahead</span>
+                    </span>
+                    <span class="field__hint">Anything expiring or due within this is listed.</span>
+                    <span class="field__error" th:errors="*{warningDays}" th:if="${#fields.hasErrors('warningDays')}"></span>
+                </label>
+                <label class="field">
+                    <span class="field__label">Due soon</span>
+                    <span class="settings-days">
+                        <input class="field__input" type="number" min="1" max="365" required th:field="*{urgentDays}"
+                               th:classappend="${#fields.hasErrors('urgentDays') or #fields.hasErrors('urgentWithinWarning')} ? 'field__input--invalid'">
+                        <span>days ahead</span>
+                    </span>
+                    <span class="field__hint">Within this it's flagged and counted on the Tracking tab. Follow-up dates show from here too.</span>
+                    <span class="field__error" th:errors="*{urgentDays}" th:if="${#fields.hasErrors('urgentDays')}"></span>
+                    <span class="field__error" th:errors="*{urgentWithinWarning}" th:if="${#fields.hasErrors('urgentWithinWarning')}"></span>
+                </label>
+                <label class="field">
+                    <span class="field__label">Stalled after</span>
+                    <span class="settings-days">
+                        <input class="field__input" type="number" min="7" max="365" required th:field="*{stalledDays}"
+                               th:classappend="${#fields.hasErrors('stalledDays')} ? 'field__input--invalid'">
+                        <span>days waiting</span>
+                    </span>
+                    <span class="field__hint">A payer application submitted or in progress this long, with no follow-up date set.</span>
+                    <span class="field__error" th:errors="*{stalledDays}" th:if="${#fields.hasErrors('stalledDays')}"></span>
+                </label>
+                <label class="field">
+                    <span class="field__label">CAQH attestation every</span>
+                    <span class="settings-days">
+                        <input class="field__input" type="number" min="30" max="365" required th:field="*{caqhDays}"
+                               th:classappend="${#fields.hasErrors('caqhDays')} ? 'field__input--invalid'">
+                        <span>days</span>
+                    </span>
+                    <span class="field__hint">CAQH's own cycle is 120 days.</span>
+                    <span class="field__error" th:errors="*{caqhDays}" th:if="${#fields.hasErrors('caqhDays')}"></span>
+                </label>
+            </div>
+            <div class="form-actions">
+                <button class="button" type="submit">Save settings</button>
+                <a class="button button--quiet" th:href="@{/tracking}">Cancel</a>
+            </div>
+        </section>
+    </form>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

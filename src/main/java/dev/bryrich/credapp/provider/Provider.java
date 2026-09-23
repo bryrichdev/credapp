@@ -83,6 +83,9 @@ public class Provider extends GroupScopedEntity {
     private LocalDate fluShotDate;
     private LocalDate tbTestDate;
 
+    /** When the provider last attested their CAQH profile. */
+    private LocalDate caqhAttestedDate;
+
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(nullable = false)
     private List<String> modalities = new ArrayList<>();
@@ -341,6 +344,14 @@ public class Provider extends GroupScopedEntity {
 
     public void setTbTestDate(LocalDate tbTestDate) {
         this.tbTestDate = tbTestDate;
+    }
+
+    public LocalDate getCaqhAttestedDate() {
+        return caqhAttestedDate;
+    }
+
+    public void setCaqhAttestedDate(LocalDate caqhAttestedDate) {
+        this.caqhAttestedDate = caqhAttestedDate;
     }
 
     public List<String> getModalities() {

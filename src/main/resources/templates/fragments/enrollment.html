@@ -48,6 +48,20 @@
         <span th:replace="~{fragments/rows :: err(${p + '.effectiveDate'}, ${live})}"></span>
         <span th:replace="~{fragments/rows :: err(${p + '.effectiveDateSetWhenActive'}, ${live})}"></span>
     </label>
+    <label class="field">
+        <span class="field__label">Recredential by</span>
+        <input class="field__input" type="date" th:name="${p + '.recredentialDate'}" th:value="${row.recredentialDate}"
+               th:classappend="${live and #fields.hasErrors(p + '.recredentialDate')} ? 'field__input--invalid'">
+        <span class="field__hint">When the payer recredentials or revalidates</span>
+        <span th:replace="~{fragments/rows :: err(${p + '.recredentialDate'}, ${live})}"></span>
+    </label>
+    <label class="field">
+        <span class="field__label">Follow up on</span>
+        <input class="field__input" type="date" th:name="${p + '.followUpDate'}" th:value="${row.followUpDate}"
+               th:classappend="${live and #fields.hasErrors(p + '.followUpDate')} ? 'field__input--invalid'">
+        <span class="field__hint">Shows on Tracking as the date comes up</span>
+        <span th:replace="~{fragments/rows :: err(${p + '.followUpDate'}, ${live})}"></span>
+    </label>
     <label class="field field--wide">
         <span class="field__label">Notes</span>
         <textarea class="field__input" rows="2" maxlength="2000" th:name="${p + '.notes'}" th:text="${row.notes}"

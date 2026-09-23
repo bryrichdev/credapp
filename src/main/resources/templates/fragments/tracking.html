@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<body>
+
+<!--
+  What needs attention for one provider, group or payer, at the top of its page.
+  showSubject: name whose it is (on a payer's page, where items span providers and groups).
+-->
+<section class="card attention" th:fragment="attention(items, showSubject, moreLink)" th:unless="${items == null or items.isEmpty()}">
+    <div class="attention__head">
+        <h2>Needs attention</h2>
+        <a class="attention__more" th:if="${moreLink != null}" th:href="@{${moreLink}}">All tracking</a>
+    </div>
+    <ul class="attention__list">
+        <li class="attention__item" th:each="item : ${items}">
+            <span class="badge" th:classappend="${item.state().badge}" th:text="${item.stateLabel()}">Expired</span>
+            <span class="attention__text">
+                <strong th:text="${item.kind().label}">License</strong>
+                <span th:text="${item.what()}">OH MD license</span>
+                <th:block th:if="${showSubject}">
+                    &middot; <a th:href="@{${item.subject().path()}}" th:text="${item.subject().name()}">Shah, Priya</a>
+                </th:block>
+            </span>
+            <span class="attention__when" th:text="${item.when()}">7 days ago</span>
+            <a class="button button--quiet button--small" th:if="${canEdit}"
+               th:href="@{${item.editPath()}}">Update</a>
+        </li>
+    </ul>
+</section>
+
+</body>
+</html>

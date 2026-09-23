@@ -62,6 +62,9 @@ public class ProviderForm {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate tbTestDate;
 
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    private LocalDate caqhAttestedDate;
+
     /** The four array columns are entered as comma-separated text and split on save. */
     private String prevNames;
     private String languages;
@@ -98,6 +101,7 @@ public class ProviderForm {
         form.caqhUsername = provider.getCaqhUsername();
         form.fluShotDate = provider.getFluShotDate();
         form.tbTestDate = provider.getTbTestDate();
+        form.caqhAttestedDate = provider.getCaqhAttestedDate();
         form.prevNames = joinList(provider.getPrevNames());
         form.languages = joinList(provider.getLanguages());
         form.modalities = joinList(provider.getModalities());
@@ -135,6 +139,7 @@ public class ProviderForm {
         provider.setCaqhUsername(blankToNull(caqhUsername));
         provider.setFluShotDate(fluShotDate);
         provider.setTbTestDate(tbTestDate);
+        provider.setCaqhAttestedDate(caqhAttestedDate);
         provider.setPrevNames(splitList(prevNames));
         provider.setLanguages(splitList(languages));
         provider.setModalities(splitList(modalities));
@@ -269,6 +274,8 @@ public class ProviderForm {
 
     public LocalDate getTbTestDate() { return tbTestDate; }
     public void setTbTestDate(LocalDate tbTestDate) { this.tbTestDate = tbTestDate; }
+    public LocalDate getCaqhAttestedDate() { return caqhAttestedDate; }
+    public void setCaqhAttestedDate(LocalDate caqhAttestedDate) { this.caqhAttestedDate = caqhAttestedDate; }
 
     public String getPrevNames() { return prevNames; }
     public void setPrevNames(String prevNames) { this.prevNames = prevNames; }

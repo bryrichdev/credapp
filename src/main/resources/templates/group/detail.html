@@ -28,6 +28,8 @@
     </div>
 
     <!-- ============ read view ============ -->
+    <section th:replace="~{fragments/tracking :: attention(${attention}, false, '/tracking?group=' + ${group.id})}"></section>
+
     <section class="card">
         <h2>Group details</h2>
         <dl class="detail-list">
@@ -226,6 +228,7 @@
                     <th>Payer ID</th>
                     <th>Submitted</th>
                     <th>Effective</th>
+                    <th>Recredential by</th>
                     <th>Account rep</th>
                 </tr>
                 </thead>
@@ -234,11 +237,14 @@
                     <td>
                         <a class="link-strong" th:href="@{/payers/{id}(id=${e.payer.id})}" th:text="${e.payer.name}"></a>
                         <span class="enrollment-note" th:if="${e.notes != null}" th:text="${e.notes}"></span>
+                        <span class="enrollment-note" th:if="${e.followUpDate != null}"
+                              th:text="'Follow up on ' + ${e.followUpDate}"></span>
                     </td>
                     <td><span th:replace="~{fragments/enrollment :: status(${e.status})}"></span></td>
                     <td th:text="${e.payerAssignedId} ?: '—'"></td>
                     <td th:text="${e.submittedDate} ?: '—'"></td>
                     <td th:text="${e.effectiveDate} ?: '—'"></td>
+                    <td th:text="${e.recredentialDate} ?: '—'"></td>
                     <td>
                         <span th:if="${e.accountRep == null}">—</span>
                         <div class="rep" th:if="${e.accountRep != null}">

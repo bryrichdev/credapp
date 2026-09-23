@@ -38,6 +38,12 @@ public abstract class Enrollment extends GroupScopedEntity {
 
     private LocalDate effectiveDate;
 
+    /** When the payer expects to recredential or revalidate this enrollment. */
+    private LocalDate recredentialDate;
+
+    /** A date someone set to chase the payer about this enrollment. */
+    private LocalDate followUpDate;
+
     private String notes;
 
     @CreationTimestamp
@@ -92,6 +98,22 @@ public abstract class Enrollment extends GroupScopedEntity {
 
     public void setEffectiveDate(LocalDate effectiveDate) {
         this.effectiveDate = effectiveDate;
+    }
+
+    public LocalDate getRecredentialDate() {
+        return recredentialDate;
+    }
+
+    public void setRecredentialDate(LocalDate recredentialDate) {
+        this.recredentialDate = recredentialDate;
+    }
+
+    public LocalDate getFollowUpDate() {
+        return followUpDate;
+    }
+
+    public void setFollowUpDate(LocalDate followUpDate) {
+        this.followUpDate = followUpDate;
     }
 
     public String getNotes() {

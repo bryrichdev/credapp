@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tracking &middot; CredApp</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'tracking')}"></div>
+
+<main class="page">
+
+    <div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
+
+    <div class="page__header page__header--row">
+        <div>
+            <h1>Tracking</h1>
+            <p class="page__subtitle">What's expired, coming due or waiting on a payer.</p>
+        </div>
+        <div class="row-actions">
+            <a class="button button--quiet" th:if="${isAdmin and viewingGroupName == null}"
+               th:href="@{/admin/tracking-settings}">Settings</a>
+            <a class="button" th:href="@{/tracking/export(state=${filter.state}, category=${filter.category}, group=${filter.group})}"
+               download>Export to Excel</a>
+        </div>
+    </div>
+
+    <!-- One tile per state; each toggles that filter, keeping the others. -->
+    <nav class="tracking-tiles" aria-label="Filter by status">
+        <a th:each="state : ${states}" class="tracking-tile"
+           th:classappend="|tracking-tile--${#strings.toLowerCase(state.name())}| + (${filter.state == state} ? ' tracking-tile--active' : '')"
+           th:href="@{/tracking(state=${filter.state == state ? null : state}, category=${filter.category}, group=${filter.group})}"
+           th:attr="aria-current=${filter.state == state} ? 'true'">
+            <span class="tracking-tile__count" th:text="${stateCounts.get(state)}">0</span>
+            <span class="tracking-tile__label" th:text="${state.label}">Overdue</span>
+            <span class="tracking-tile__hint" th:switch="${state.name()}">
+                <th:block th:case="'OVERDUE'">Expired or past due</th:block>
+                <th:block th:case="'DUE_SOON'" th:text="'Within ' + ${settings.urgentDays} + ' days'">Within 30 days</th:block>
+                <th:block th:case="'STALLED'" th:text="'Waiting ' + ${settings.stalledDays} + '+ days'">Waiting 60+ days</th:block>
+                <th:block th:case="*" th:text="'Within ' + ${settings.warningDays} + ' days'">Within 90 days</th:block>
+            </span>
+        </a>
+    </nav>
+
+    <form class="toolbar" th:action="@{/tracking}" method="get">
+        <input type="hidden" name="state" th:value="${filter.state}" th:if="${filter.state != null}">
+        <select class="field__input toolbar__input" name="category" aria-label="Category">
+            <option value="">Everything</option>
+            <option th:each="category : ${categories}" th:value="${category}" th:text="${category.label}"
+                    th:selected="${filter.category == category}">Licenses</option>
+        </select>
+        <select class="field__input toolbar__input" name="group" aria-label="Practice group"
+                th:unless="${groupOptions.isEmpty()}">
+            <option value="">All practice groups</option>
+            <option th:each="option : ${groupOptions}" th:value="${option.id}" th:text="${option.lbn}"
+                    th:selected="${filter.group == option.id}">Lakeside Clinic</option>
+        </select>
+        <button class="button" type="submit">Filter</button>
+        <a class="button button--quiet" th:unless="${filter.isEmpty()}" th:href="@{/tracking}">Clear</a>
+    </form>
+
+    <section class="card card--flush">
+        <div class="table-scroll" role="region" tabindex="0" aria-label="Tracked items" th:unless="${items.isEmpty()}">
+            <table class="table tracking-table">
+                <thead>
+                <tr>
+                    <th>Status</th>
+                    <th>Item</th>
+                    <th>For</th>
+                    <th>Date</th>
+                    <th class="table__actions"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${items}">
+                    <td>
+                        <span class="badge" th:classappend="${item.state().badge}" th:text="${item.stateLabel()}">Expired</span>
+                        <span class="tracking-when" th:text="${item.when()}">7 days ago</span>
+                    </td>
+                    <td>
+                        <strong th:text="${item.kind().label}">License</strong>
+                        <span class="tracking-what" th:text="${item.what()}">OH MD license 35.071234</span>
+                    </td>
+                    <td><a th:href="@{${item.subject().path()}}" th:text="${item.subject().name()}">Shah, Priya</a></td>
+                    <td class="tracking-date" th:text="${item.state().name() == 'STALLED'} ? 'Since ' + ${item.date()} : ${item.date()}">2026-05-25</td>
+                    <td class="table__actions">
+                        <a class="button button--quiet button--small" th:if="${canEdit}"
+                           th:href="@{${item.editPath()}}">Update</a>
+                        <a class="button button--quiet button--small" th:unless="${canEdit}"
+                           th:href="@{${item.subject().path()}}">Open</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="empty" th:if="${items.isEmpty()}">
+            <p class="empty__title" th:text="${total == 0} ? 'Nothing needs attention' : 'Nothing matches these filters'">Nothing needs attention</p>
+            <p class="empty__hint" th:if="${total == 0}"
+               th:text="'Nothing expires or comes due in the next ' + ${settings.warningDays} + ' days, and no application has been waiting ' + ${settings.stalledDays} + ' days.'">
+                Nothing expires or comes due in the next 90 days.
+            </p>
+            <p class="empty__hint" th:unless="${total == 0}">
+                <a th:href="@{/tracking}">Show everything</a>
+            </p>
+        </div>
+    </section>
+
+    <p class="context-line tracking-rules">
+        Renewed licenses, certifications and malpractice policies drop off once the newer one is on file.
+        Flu shots and TB tests are due a year after the last one; CAQH attestation every
+        <span th:text="${settings.caqhDays}">120</span> days. Follow-up dates show once they're within
+        <span th:text="${settings.urgentDays}">30</span> days.
+    </p>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>

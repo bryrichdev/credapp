@@ -8,6 +8,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 /**
  * Admitting privileges a provider holds at a hospital. A provider without privileges of
@@ -35,6 +36,9 @@ public class HospitalPrivilege extends GroupScopedEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admitting_physician")
     private Provider admittingPhysician;
+
+    /** When the hospital next reappoints the provider to its medical staff. */
+    private LocalDate reappointmentDate;
 
     @CreationTimestamp
     @Column(updatable = false)
@@ -92,5 +96,13 @@ public class HospitalPrivilege extends GroupScopedEntity {
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    public LocalDate getReappointmentDate() {
+        return reappointmentDate;
+    }
+
+    public void setReappointmentDate(LocalDate reappointmentDate) {
+        this.reappointmentDate = reappointmentDate;
     }
 }

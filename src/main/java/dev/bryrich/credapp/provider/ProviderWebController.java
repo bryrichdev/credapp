@@ -3,6 +3,7 @@ package dev.bryrich.credapp.provider;
 import dev.bryrich.credapp.payer.PayerService;
 import dev.bryrich.credapp.payer.enrollment.EnrollmentStatus;
 import dev.bryrich.credapp.payer.enrollment.PayerEnrollmentService;
+import dev.bryrich.credapp.tracking.TrackingService;
 import dev.bryrich.credapp.payer.enrollment.ProviderPayerForm;
 import dev.bryrich.credapp.group.GroupService;
 import dev.bryrich.credapp.group.location.GroupLocationRepository;
@@ -67,6 +68,7 @@ public class ProviderWebController {
     private final MalpracticeClaimService claimService;
     private final PayerService payerService;
     private final PayerEnrollmentService enrollmentService;
+    private final TrackingService trackingService;
 
     public ProviderWebController(ProviderService providerService,
                                  ProviderProfileService profileService,
@@ -85,7 +87,8 @@ public class ProviderWebController {
                                  MalpracticePolicyService policyService,
                                  MalpracticeClaimService claimService,
                                  PayerService payerService,
-                                 PayerEnrollmentService enrollmentService) {
+                                 PayerEnrollmentService enrollmentService,
+                                 TrackingService trackingService) {
         this.providerService = providerService;
         this.profileService = profileService;
         this.licenseService = licenseService;
@@ -104,6 +107,7 @@ public class ProviderWebController {
         this.claimService = claimService;
         this.payerService = payerService;
         this.enrollmentService = enrollmentService;
+        this.trackingService = trackingService;
     }
 
     /**
@@ -150,6 +154,7 @@ public class ProviderWebController {
 
     @GetMapping("/{id}")
     public String detail(@PathVariable Long id, Model model) {
+        model.addAttribute("attention", trackingService.forProvider(id));
         Provider provider = providerService.findById(id);
         model.addAttribute("provider", provider);
         model.addAttribute("ssnOnFile", ssnAccessService.providerSsnOnFile(id));

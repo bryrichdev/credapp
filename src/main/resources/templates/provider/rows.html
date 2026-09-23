@@ -203,6 +203,13 @@
             <span class="field__hint">Name a colleague only when this provider does not admit themselves</span>
             <span th:replace="~{fragments/rows :: err(${p + '.admittingPhysicianId'}, ${live})}"></span>
         </label>
+        <label class="field">
+            <span class="field__label">Reappointment date</span>
+            <input class="field__input" type="date" th:name="${p + '.reappointmentDate'}" th:value="${row.reappointmentDate}"
+                   th:classappend="${live and #fields.hasErrors(p + '.reappointmentDate')} ? 'field__input--invalid'">
+            <span class="field__hint">When the hospital next reappoints them</span>
+            <span th:replace="~{fragments/rows :: err(${p + '.reappointmentDate'}, ${live})}"></span>
+        </label>
     </div>
 </div>
 

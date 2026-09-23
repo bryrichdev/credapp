@@ -26,6 +26,12 @@
             <a class="topnav__link" th:classappend="${section == 'payers'} ? 'topnav__link--active'"
                th:attr="aria-current=${section == 'payers'} ? 'page'"
                th:href="@{/payers}">Payers</a>
+            <a class="topnav__link" th:classappend="${section == 'tracking'} ? 'topnav__link--active'"
+               th:attr="aria-current=${section == 'tracking'} ? 'page'"
+               th:href="@{/tracking}"
+               th:with="due=${trackingBadge != null ? trackingBadge.count : 0}">Tracking<span
+                    class="topnav__count" th:if="${due > 0}" th:text="${due > 99 ? '99+' : due}"
+                    th:title="${due} + ' need attention'">3</span></a>
             <a class="topnav__link" th:classappend="${section == 'users'} ? 'topnav__link--active'"
                th:attr="aria-current=${section == 'users'} ? 'page'"
                th:href="@{/admin/users}"
