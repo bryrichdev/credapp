@@ -7,6 +7,7 @@ import dev.bryrich.credapp.malpractice.MalpracticeClaim;
 import dev.bryrich.credapp.malpractice.MalpracticeClaimForm;
 import dev.bryrich.credapp.malpractice.MalpracticePolicy;
 import dev.bryrich.credapp.malpractice.MalpracticePolicyForm;
+import dev.bryrich.credapp.payer.enrollment.ProviderPayerForm;
 import dev.bryrich.credapp.provider.certification.Certification;
 import dev.bryrich.credapp.provider.certification.CertificationForm;
 import dev.bryrich.credapp.provider.disclosure.CriminalCharge;
@@ -68,6 +69,9 @@ public class ProviderProfileForm {
     @Valid
     private List<ChargeRow> charges = new ArrayList<>();
 
+    @Valid
+    private List<ProviderPayerForm> payers = new ArrayList<>();
+
     public ProviderProfileForm() {
     }
 
@@ -87,6 +91,7 @@ public class ProviderProfileForm {
         claims.removeIf(Objects::isNull);
         references.removeIf(Objects::isNull);
         charges.removeIf(Objects::isNull);
+        payers.removeIf(Objects::isNull);
     }
 
     // ============ rows ============
@@ -351,5 +356,13 @@ public class ProviderProfileForm {
 
     public void setCharges(List<ChargeRow> charges) {
         this.charges = charges;
+    }
+
+    public List<ProviderPayerForm> getPayers() {
+        return payers;
+    }
+
+    public void setPayers(List<ProviderPayerForm> payers) {
+        this.payers = payers;
     }
 }

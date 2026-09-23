@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.group;
 
+import dev.bryrich.credapp.payer.PayerService;
+import dev.bryrich.credapp.payer.enrollment.PayerEnrollmentService;
 import dev.bryrich.credapp.group.location.GroupLocationService;
 import dev.bryrich.credapp.group.membership.GroupProviderForm;
 import dev.bryrich.credapp.group.membership.GroupProviderService;
@@ -54,6 +56,8 @@ class GroupWebControllerTest {
     @MockitoBean private GroupTaxonomyService groupTaxonomyService;
     @MockitoBean private TaxonomyService taxonomyService;
     @MockitoBean private MalpracticePolicyService policyService;
+    @MockitoBean private PayerService payerService;
+    @MockitoBean private PayerEnrollmentService enrollmentService;
 
     private final Group group = group(1L);
 

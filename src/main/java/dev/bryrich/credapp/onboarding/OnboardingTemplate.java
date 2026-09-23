@@ -7,6 +7,7 @@ import dev.bryrich.credapp.onboarding.xlsx.XlsxWriter.Cell;
 import dev.bryrich.credapp.onboarding.xlsx.XlsxWriter.Style;
 import dev.bryrich.credapp.onboarding.xlsx.XlsxWriter.TextRow;
 import dev.bryrich.credapp.owner.Relationship;
+import dev.bryrich.credapp.payer.enrollment.EnrollmentStatus;
 import dev.bryrich.credapp.provider.Sex;
 import dev.bryrich.credapp.provider.disclosure.ChargeClassification;
 import dev.bryrich.credapp.provider.disclosure.ChargeStatus;
@@ -37,6 +38,8 @@ public final class OnboardingTemplate {
     public static final String LOCATION = "@location";
     public static final String POLICY = "@policy";
     public static final String ADMITTING_PROVIDER = "@admittingProvider";
+    public static final String PAYER = "@payer";
+    public static final String ACCOUNT_REP = "@accountRep";
 
     public record Column(String key, String header, ValueType type, boolean required, int width, String note) {
 
@@ -94,6 +97,8 @@ public final class OnboardingTemplate {
             case "L" -> "Location ID";
             case "O" -> "Owner ID";
             case "P" -> "Provider ID";
+            case "PAY" -> "Payer ID";
+            case "C" -> "Contact ID";
             default -> "Policy ID";
         };
     }
@@ -286,11 +291,65 @@ public final class OnboardingTemplate {
             optional("statutoryCitation", "Statutory citation", ValueType.TEXT, 18, null),
             optional("sentencingTerms", "Sentencing terms", ValueType.TEXT, 24, null)));
 
-    /** In template order, which is also the order they're read and saved. */
+    // ============ payers ============
+
+    private static final ValueType ENROLLMENT_STATUS = ValueType.choice(EnrollmentStatus.class,
+            EnrollmentStatus::getLabel, Map.of(
+                    "Participating", EnrollmentStatus.ACTIVE, "Par", EnrollmentStatus.ACTIVE,
+                    "Enrolled", EnrollmentStatus.ACTIVE, "Pending", EnrollmentStatus.SUBMITTED));
+
+    private static List<Column> enrollmentColumns() {
+        return List.of(
+                optional("status", "Status", ENROLLMENT_STATUS, 13, "Blank means Not started"),
+                optional("payerAssignedId", "Payer-assigned ID", ValueType.TEXT, 16,
+                        "The provider or group number the payer issued"),
+                optional("submittedDate", "Submitted date", ValueType.DATE, 14, null),
+                optional("effectiveDate", "Effective date", ValueType.DATE, 14, "Required when Active"),
+                optional("notes", "Notes", ValueType.TEXT, 30, null));
+    }
+
+    public static final Sheet PAYERS = new Sheet("Payers",
+            "Payers the practice is enrolled or enrolling with. A payer already in CredApp with the same name "
+                    + "is used as it is; only new payers are added.", List.of(
+            ownId("PAY"),
+            required("name", "Name", ValueType.TEXT, 26, null),
+            optional("note", "Note", ValueType.TEXT, 30, null)));
+
+    public static final Sheet PAYER_CONTACTS = new Sheet("Payer Contacts",
+            "People and lines at each payer. Fill in Group ID for a group's designated account rep, or leave "
+                    + "Group ID and Provider ID blank for a payer-wide contact.", concat(List.of(
+            new Column(ID, "Contact ID", ValueType.KEY, false, 11,
+                    "Only needed to name this contact as a group's account rep, such as C1"),
+            link(PAYER, "Payer ID", true, "Payers"),
+            link(GROUP, "Group ID", false, "Groups"),
+            link(PROVIDER, "Provider ID", false, "Providers"),
+            optional("name", "Name", ValueType.TEXT, 20, null),
+            required("role", "Role", ValueType.TEXT, 20, "Provider rep, credentialing analyst...")), List.of(
+            optional("phoneNumber", "Phone", ValueType.PHONE, 14, null),
+            optional("faxNumber", "Fax", ValueType.PHONE, 14, null),
+            optional("emailAddress", "Email", ValueType.TEXT, 24, null),
+            optional("address", "Address", ValueType.TEXT, 30, null))));
+
+    public static final Sheet GROUP_PAYERS = new Sheet("Group Payers",
+            "Each group's enrollment with a payer. One row per group per payer.", concat(concat(List.of(
+            link(GROUP, "Group ID", true, "Groups"),
+            link(PAYER, "Payer ID", true, "Payers")),
+            enrollmentColumns()), List.of(
+            new Column(ACCOUNT_REP, "Account rep ID", ValueType.KEY, false, 12,
+                    "A Contact ID from Payer Contacts: one of this payer's, payer-wide or for this group"))));
+
+    public static final Sheet PROVIDER_PAYERS = new Sheet("Provider Payers",
+            "Each provider's enrollment with a payer. One row per provider per payer.", concat(List.of(
+            link(PROVIDER, "Provider ID", true, "Providers"),
+            link(PAYER, "Payer ID", true, "Payers")),
+            enrollmentColumns()));
+
+    /** In template order, which is also the order problems are listed in. */
     public static final List<Sheet> SHEETS = List.of(
             GROUPS, GROUP_LOCATIONS, OWNERS, OWNERSHIP, OWNER_RELATIONSHIPS, GROUP_SPECIALTIES,
             PROVIDERS, GROUP_MEMBERS, PRACTICE_LOCATIONS, PROVIDER_SPECIALTIES, LICENSES,
-            CERTIFICATIONS, HOSPITAL_PRIVILEGES, POLICIES, CLAIMS, REFERENCES, DISCLOSURES);
+            CERTIFICATIONS, HOSPITAL_PRIVILEGES, POLICIES, CLAIMS, REFERENCES, DISCLOSURES,
+            PAYERS, PAYER_CONTACTS, GROUP_PAYERS, PROVIDER_PAYERS);
 
     public static final String INSTRUCTIONS = "Instructions";
 
@@ -323,11 +382,14 @@ public final class OnboardingTemplate {
                 "Fill in one sheet per kind of record. Leave a sheet empty if it doesn't apply to you.",
                 "Keep row 1 on every sheet as it is: CredApp finds each column by its header. Column order doesn't matter.",
                 "Green headers marked * are required on every row you fill in.",
-                "Give each group, location, owner and provider a short ID you make up: G1, L1, O1, P1 and so on. "
+                "Give each group, location, owner, provider and payer a short ID you make up: G1, L1, O1, P1, "
+                        + "PAY1 and so on. "
                         + "Other sheets use these IDs to say which record a row belongs to. They only need to be "
                         + "unique within their sheet, and they only mean something inside this file.",
                 "Dates can be typed as 2025-01-31 or 1/31/2025. Where a column has a dropdown, pick from it.",
                 "Provider SSNs aren't collected here. Add them in CredApp after the import.",
+                "Payers already in CredApp are matched by name and used as they are, so list Aetna even if it's "
+                        + "on file: its row just gives the other sheets a Payer ID to point at.",
                 "To import: in CredApp, open Import, upload this file and check the preview. Nothing is saved until "
                         + "you click Import, and then everything is saved together or not at all.")) {
             rows.add(new TextRow(List.of(new Cell("•", Style.WRAP), Cell.of(line)), true, heightFor(line, 115)));

@@ -7,7 +7,7 @@ import java.util.List;
  * import committed. counts lists the rows read from each sheet that had any.
  */
 public record ImportReport(boolean saved, List<ImportProblem> problems, List<SheetCount> counts,
-                           List<String> groups, List<String> providers) {
+                           List<String> groups, List<String> providers, List<String> payers) {
 
     public record SheetCount(String sheet, int rows) {
     }

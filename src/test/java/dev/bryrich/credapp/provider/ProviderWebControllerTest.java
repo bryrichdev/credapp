@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.provider;
 
+import dev.bryrich.credapp.payer.PayerService;
+import dev.bryrich.credapp.payer.enrollment.PayerEnrollmentService;
 import dev.bryrich.credapp.common.WebTestSupport;
 import dev.bryrich.credapp.group.GroupService;
 import dev.bryrich.credapp.group.location.GroupLocationRepository;
@@ -70,6 +72,8 @@ class ProviderWebControllerTest {
     @MockitoBean private CriminalChargeService chargeService;
     @MockitoBean private MalpracticePolicyService policyService;
     @MockitoBean private MalpracticeClaimService claimService;
+    @MockitoBean private PayerService payerService;
+    @MockitoBean private PayerEnrollmentService enrollmentService;
 
     private final Provider provider = WebTestSupport.provider(1L, "Ada", "Byron");
 

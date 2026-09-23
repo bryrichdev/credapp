@@ -1,5 +1,9 @@
 package dev.bryrich.credapp.group;
 
+import dev.bryrich.credapp.payer.PayerService;
+import dev.bryrich.credapp.payer.enrollment.EnrollmentStatus;
+import dev.bryrich.credapp.payer.enrollment.PayerEnrollmentService;
+import dev.bryrich.credapp.payer.enrollment.GroupPayerForm;
 import dev.bryrich.credapp.group.location.GroupLocationService;
 import dev.bryrich.credapp.group.membership.GroupProviderForm;
 import dev.bryrich.credapp.group.membership.GroupProviderService;
@@ -41,6 +45,8 @@ public class GroupWebController {
     private final GroupTaxonomyService groupTaxonomyService;
     private final TaxonomyService taxonomyService;
     private final MalpracticePolicyService policyService;
+    private final PayerService payerService;
+    private final PayerEnrollmentService enrollmentService;
 
     public GroupWebController(GroupService groupService,
                               GroupProfileService profileService,
@@ -51,7 +57,9 @@ public class GroupWebController {
                               ProviderService providerService,
                               GroupTaxonomyService groupTaxonomyService,
                               TaxonomyService taxonomyService,
-                              MalpracticePolicyService policyService) {
+                              MalpracticePolicyService policyService,
+                              PayerService payerService,
+                              PayerEnrollmentService enrollmentService) {
         this.groupService = groupService;
         this.profileService = profileService;
         this.locationService = locationService;
@@ -62,6 +70,8 @@ public class GroupWebController {
         this.groupTaxonomyService = groupTaxonomyService;
         this.taxonomyService = taxonomyService;
         this.policyService = policyService;
+        this.payerService = payerService;
+        this.enrollmentService = enrollmentService;
     }
 
     /** Blank text inputs submit "" — store null instead. */
@@ -94,6 +104,7 @@ public class GroupWebController {
         model.addAttribute("remainingPercent", ownershipService.remainingPercent(id));
         model.addAttribute("taxonomies", groupTaxonomyService.findByGroupId(id));
         model.addAttribute("policies", policyService.findByGroupId(id));
+        model.addAttribute("payerEnrollments", enrollmentService.findForGroup(id));
         return "group/detail";
     }
 
@@ -135,7 +146,7 @@ public class GroupWebController {
 
     private String save(Long id, GroupProfileForm form, BindingResult binding,
                         Model model, RedirectAttributes redirectAttributes) {
-        profileService.validate(form, binding);
+        profileService.validate(id, form, binding);
         if (binding.hasErrors()) {
             binding.reject("form.invalid", "Some fields need attention. They're marked below.");
             addFormOptions(id, form, model);
@@ -173,6 +184,9 @@ public class GroupWebController {
         model.addAttribute("taxonomyOptions", taxonomyService.findAllForSelect());
         model.addAttribute("relationships", Relationship.values());
         model.addAttribute("scopes", CoverageScope.values());
+        model.addAttribute("payerOptions", payerService.findAllForSelect());
+        model.addAttribute("enrollmentStatuses", EnrollmentStatus.values());
+        model.addAttribute("repOptions", enrollmentService.repCandidates(groupId));
 
         Map<String, Object> blank = new HashMap<>();
         blank.put("location", new GroupProfileForm.LocationRow());
@@ -181,6 +195,7 @@ public class GroupWebController {
         blank.put("provider", new GroupProviderForm());
         blank.put("taxonomy", new GroupTaxonomyForm());
         blank.put("policy", new GroupProfileForm.PolicyRow());
+        blank.put("payer", new GroupPayerForm());
         model.addAttribute("blank", blank);
     }
 }

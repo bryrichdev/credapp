@@ -21,6 +21,8 @@ import dev.bryrich.credapp.owner.OwnerNotFoundException;
 import dev.bryrich.credapp.owner.OwnerRepository;
 import dev.bryrich.credapp.owner.OwnerService;
 import dev.bryrich.credapp.owner.Relationship;
+import dev.bryrich.credapp.payer.enrollment.GroupPayerForm;
+import dev.bryrich.credapp.payer.enrollment.PayerEnrollmentService;
 import dev.bryrich.credapp.taxonomy.GroupTaxonomy;
 import dev.bryrich.credapp.taxonomy.GroupTaxonomyForm;
 import dev.bryrich.credapp.taxonomy.GroupTaxonomyRepository;
@@ -64,6 +66,7 @@ public class GroupProfileService {
     private final GroupTaxonomyRepository groupTaxonomyRepository;
     private final TaxonomyRepository taxonomyRepository;
     private final MalpracticePolicyService policyService;
+    private final PayerEnrollmentService enrollmentService;
 
     public GroupProfileService(GroupRepository groupRepository,
                                GroupService groupService,
@@ -77,7 +80,8 @@ public class GroupProfileService {
                                GroupTaxonomyService taxonomyService,
                                GroupTaxonomyRepository groupTaxonomyRepository,
                                TaxonomyRepository taxonomyRepository,
-                               MalpracticePolicyService policyService) {
+                               MalpracticePolicyService policyService,
+                               PayerEnrollmentService enrollmentService) {
         this.groupRepository = groupRepository;
         this.groupService = groupService;
         this.locationService = locationService;
@@ -91,6 +95,7 @@ public class GroupProfileService {
         this.groupTaxonomyRepository = groupTaxonomyRepository;
         this.taxonomyRepository = taxonomyRepository;
         this.policyService = policyService;
+        this.enrollmentService = enrollmentService;
     }
 
     // ============ load ============
@@ -106,6 +111,7 @@ public class GroupProfileService {
         form.setProviders(mapAll(groupProviderService.findProviders(groupId), GroupProviderForm::from));
         form.setTaxonomies(mapAll(taxonomyService.findByGroupId(groupId), GroupTaxonomyForm::from));
         form.setPolicies(mapAll(policyService.findByGroupId(groupId), PolicyRow::from));
+        form.setPayers(mapAll(enrollmentService.findForGroup(groupId), GroupPayerForm::from));
         return form;
     }
 
@@ -149,11 +155,18 @@ public class GroupProfileService {
      */
     @Transactional(readOnly = true)
     public void validate(GroupProfileForm form, Errors errors) {
+        validate(null, form, errors);
+    }
+
+    /** groupId is the group being edited, or null for a new one; account reps depend on it. */
+    @Transactional(readOnly = true)
+    public void validate(Long groupId, GroupProfileForm form, Errors errors) {
         Set<String> ownerKeys = checkOwners(form, errors);
         checkRelations(form, ownerKeys, errors);
         checkProviders(form, errors);
         checkTaxonomies(form, errors);
         checkPolicies(form, errors);
+        enrollmentService.validate(form.getPayers(), "payers", groupId, errors);
     }
 
     /** Gives rows a key if the page didn't, and returns the keys in use. */
@@ -301,6 +314,7 @@ public class GroupProfileService {
         saveTaxonomies(group, form.getTaxonomies());
         saveOwnersAndRelations(group, form.getOwners(), form.getRelations());
         savePolicies(id, form.getPolicies());
+        enrollmentService.syncGroup(group, form.getPayers());
 
         groupRepository.flush();
         return group;

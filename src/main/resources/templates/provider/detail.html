@@ -198,6 +198,55 @@
     </section>
 
 
+    <!-- ============ payers ============ -->
+    <section class="card card--flush" id="payers">
+        <div class="card__header">
+            <h2>Payers</h2>
+            <span class="count-pill" th:text="${payerEnrollments.size()}">0</span>
+        </div>
+
+        <div class="table-scroll" role="region" tabindex="0" aria-label="Payers" th:unless="${payerEnrollments.isEmpty()}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Payer</th>
+                    <th>Status</th>
+                    <th>Payer ID</th>
+                    <th>Submitted</th>
+                    <th>Effective</th>
+                    <th>Group rep</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="e : ${payerEnrollments}">
+                    <td>
+                        <a class="link-strong" th:href="@{/payers/{id}(id=${e.payer.id})}" th:text="${e.payer.name}"></a>
+                        <span class="enrollment-note" th:if="${e.notes != null}" th:text="${e.notes}"></span>
+                    </td>
+                    <td><span th:replace="~{fragments/enrollment :: status(${e.status})}"></span></td>
+                    <td th:text="${e.payerAssignedId} ?: '—'"></td>
+                    <td th:text="${e.submittedDate} ?: '—'"></td>
+                    <td th:text="${e.effectiveDate} ?: '—'"></td>
+                    <td>
+                        <th:block th:with="reps=${groupReps[e.payer.id]}">
+                            <span th:if="${reps == null}">—</span>
+                            <div class="rep" th:each="g : ${reps}">
+                                <th:block th:replace="~{fragments/enrollment :: rep(${g.accountRep})}"></th:block>
+                                <span class="rep__via" th:text="'for ' + ${g.group.lbn}"></span>
+                            </div>
+                        </th:block>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="empty" th:if="${payerEnrollments.isEmpty()}">
+            <p class="empty__title">Not enrolled with any payer</p>
+            <p class="empty__hint">Add payers on the provider form to track each enrollment.</p>
+        </div>
+    </section>
+
     <!-- ============ specialties ============ -->
     <section class="card card--flush">
         <div class="card__header">

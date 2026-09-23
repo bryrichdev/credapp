@@ -90,6 +90,10 @@
                 <summary th:text="${report.groups().size() == 1} ? '1 group' : ${report.groups().size()} + ' groups'">Groups</summary>
                 <ul><li th:each="name : ${report.groups()}" th:text="${name}"></li></ul>
             </details>
+            <details class="import-names" th:if="${!report.payers().isEmpty()}">
+                <summary th:text="${report.payers().size() == 1} ? '1 payer' : ${report.payers().size()} + ' payers'">Payers</summary>
+                <ul><li th:each="name : ${report.payers()}" th:text="${name}"></li></ul>
+            </details>
             <details class="import-names" th:if="${!report.providers().isEmpty()}">
                 <summary th:text="${report.providers().size() == 1} ? '1 provider' : ${report.providers().size()} + ' providers'">Providers</summary>
                 <ul><li th:each="name : ${report.providers()}" th:text="${name}"></li></ul>
@@ -115,7 +119,7 @@
             <div>
                 <h2>Download the template</h2>
                 <p>
-                    One sheet per kind of record: groups, locations, owners, providers, licenses and the rest.
+                    One sheet per kind of record: groups, owners, providers, licenses, payers and the rest.
                     The first sheet explains every column. Rows link to each other with short IDs you make up,
                     such as G1 and P1.
                 </p>

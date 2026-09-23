@@ -42,7 +42,13 @@
                      th:errors="*{contacts[__${stat.index}__].scopeExclusive}"></div>
 
                 <div class="form-grid">
-                    <label class="field field--wide">
+                    <label class="field">
+                        <span class="field__label">Name</span>
+                        <input class="field__input" type="text" autocomplete="off" placeholder="Optional"
+                               th:field="*{contacts[__${stat.index}__].name}">
+                    </label>
+
+                    <label class="field">
                         <span class="field__label">Role</span>
                         <input class="field__input" type="text" data-required
                                th:field="*{contacts[__${stat.index}__].role}"
@@ -126,7 +132,13 @@
             </div>
 
             <div class="form-grid">
-                <label class="field field--wide">
+                <label class="field">
+                    <span class="field__label">Name</span>
+                    <input class="field__input" type="text" autocomplete="off" placeholder="Optional"
+                           name="contacts[0].name">
+                </label>
+
+                <label class="field">
                     <span class="field__label">Role</span>
                     <input class="field__input" type="text" data-required
                            name="contacts[0].role"

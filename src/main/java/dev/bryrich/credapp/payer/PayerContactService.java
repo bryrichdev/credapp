@@ -3,6 +3,7 @@ package dev.bryrich.credapp.payer;
 import dev.bryrich.credapp.group.Group;
 import dev.bryrich.credapp.group.GroupNotFoundException;
 import dev.bryrich.credapp.group.GroupRepository;
+import dev.bryrich.credapp.payer.enrollment.GroupPayerRepository;
 import dev.bryrich.credapp.provider.Provider;
 import dev.bryrich.credapp.provider.ProviderNotFoundException;
 import dev.bryrich.credapp.provider.ProviderRepository;
@@ -24,15 +25,18 @@ public class PayerContactService {
     private final PayerRepository payerRepository;
     private final GroupRepository groupRepository;
     private final ProviderRepository providerRepository;
+    private final GroupPayerRepository groupPayerRepository;
 
     public PayerContactService(PayerContactRepository contactRepository,
                                PayerRepository payerRepository,
                                GroupRepository groupRepository,
-                               ProviderRepository providerRepository) {
+                               ProviderRepository providerRepository,
+                               GroupPayerRepository groupPayerRepository) {
         this.contactRepository = contactRepository;
         this.payerRepository = payerRepository;
         this.groupRepository = groupRepository;
         this.providerRepository = providerRepository;
+        this.groupPayerRepository = groupPayerRepository;
     }
 
     @Transactional(readOnly = true)
@@ -118,12 +122,16 @@ public class PayerContactService {
         PayerContact contact = contactRepository.findByIdAndPayerId(id, payerId)
                 .orElseThrow(() -> new PayerContactNotFoundException(id, payerId));
 
+        // A group's account rep has to be payer-wide or that group's own contact, so moving
+        // a contact takes it off any group it no longer fits.
         if (groupId != null) {
             contact.setGroup(groupRepository.findById(groupId)
                     .orElseThrow(() -> new GroupNotFoundException(groupId)));
+            groupPayerRepository.clearRepOutsideGroup(contact.getId(), groupId);
         } else if (providerId != null) {
             contact.setProvider(providerRepository.findById(providerId)
                     .orElseThrow(() -> new ProviderNotFoundException(providerId)));
+            groupPayerRepository.clearRep(contact.getId());
         } else {
             contact.setGroup(null);
             contact.setProvider(null);

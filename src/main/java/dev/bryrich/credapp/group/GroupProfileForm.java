@@ -9,6 +9,7 @@ import dev.bryrich.credapp.owner.GroupOwner;
 import dev.bryrich.credapp.owner.GroupOwnerRelation;
 import dev.bryrich.credapp.owner.OwnerForm;
 import dev.bryrich.credapp.owner.Relationship;
+import dev.bryrich.credapp.payer.enrollment.GroupPayerForm;
 import dev.bryrich.credapp.taxonomy.GroupTaxonomyForm;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
@@ -56,6 +57,9 @@ public class GroupProfileForm {
     @Valid
     private List<PolicyRow> policies = new ArrayList<>();
 
+    @Valid
+    private List<GroupPayerForm> payers = new ArrayList<>();
+
     public GroupProfileForm() {
     }
 
@@ -67,6 +71,7 @@ public class GroupProfileForm {
         providers.removeIf(Objects::isNull);
         taxonomies.removeIf(Objects::isNull);
         policies.removeIf(Objects::isNull);
+        payers.removeIf(Objects::isNull);
     }
 
     // ============ rows ============
@@ -310,5 +315,13 @@ public class GroupProfileForm {
 
     public void setPolicies(List<PolicyRow> policies) {
         this.policies = policies;
+    }
+
+    public List<GroupPayerForm> getPayers() {
+        return payers;
+    }
+
+    public void setPayers(List<GroupPayerForm> payers) {
+        this.payers = payers;
     }
 }

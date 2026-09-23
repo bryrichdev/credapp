@@ -7,6 +7,10 @@ import dev.bryrich.credapp.group.location.GroupLocationService;
 import dev.bryrich.credapp.group.membership.ProviderGroupForm;
 import dev.bryrich.credapp.malpractice.MalpracticePolicyRepository;
 import dev.bryrich.credapp.onboarding.OnboardingPlan.Claim;
+import dev.bryrich.credapp.onboarding.OnboardingPlan.ContactPlan;
+import dev.bryrich.credapp.onboarding.OnboardingPlan.GroupEnrollment;
+import dev.bryrich.credapp.onboarding.OnboardingPlan.PayerPlan;
+import dev.bryrich.credapp.onboarding.OnboardingPlan.ProviderEnrollment;
 import dev.bryrich.credapp.onboarding.OnboardingPlan.GroupPlan;
 import dev.bryrich.credapp.onboarding.OnboardingPlan.Item;
 import dev.bryrich.credapp.onboarding.OnboardingPlan.LinkedPrivilege;
@@ -19,6 +23,11 @@ import dev.bryrich.credapp.onboarding.xlsx.XlsxException;
 import dev.bryrich.credapp.onboarding.xlsx.XlsxReader;
 import dev.bryrich.credapp.onboarding.xlsx.XlsxWorkbook;
 import dev.bryrich.credapp.owner.OwnerService;
+import dev.bryrich.credapp.payer.PayerContact;
+import dev.bryrich.credapp.payer.PayerContactForm;
+import dev.bryrich.credapp.payer.PayerContactService;
+import dev.bryrich.credapp.payer.PayerService;
+import dev.bryrich.credapp.payer.enrollment.PayerEnrollmentService;
 import dev.bryrich.credapp.provider.ProviderProfileForm;
 import dev.bryrich.credapp.provider.ProviderProfileService;
 import dev.bryrich.credapp.provider.location.ProviderLocationForm;
@@ -44,10 +53,12 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static dev.bryrich.credapp.onboarding.OnboardingTemplate.ACCOUNT_REP;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.ADMITTING_PROVIDER;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.GROUP;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.LOCATION;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.OWNER;
+import static dev.bryrich.credapp.onboarding.OnboardingTemplate.PAYER;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.POLICY;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.PROVIDER;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.RELATED_OWNER;
@@ -69,15 +80,17 @@ public class OnboardingImportService {
     private static final Pattern LIST_FIELD = Pattern.compile("^([a-zA-Z]+)\\[(\\d+)]\\.?(.*)$");
 
     /** Form properties the services report on that are link columns in the sheets. */
-    private static final Map<String, String> LINK_COLUMNS = Map.of(
-            "ownerId", OWNER,
-            "ownerKey", OWNER,
-            "relatedOwnerKey", RELATED_OWNER,
-            "groupId", GROUP,
-            "locationId", LOCATION,
-            "policyKey", POLICY,
-            "admittingPhysicianId", ADMITTING_PROVIDER,
-            "providerId", PROVIDER);
+    private static final Map<String, String> LINK_COLUMNS = Map.ofEntries(
+            Map.entry("ownerId", OWNER),
+            Map.entry("ownerKey", OWNER),
+            Map.entry("relatedOwnerKey", RELATED_OWNER),
+            Map.entry("groupId", GROUP),
+            Map.entry("locationId", LOCATION),
+            Map.entry("policyKey", POLICY),
+            Map.entry("admittingPhysicianId", ADMITTING_PROVIDER),
+            Map.entry("providerId", PROVIDER),
+            Map.entry("payerId", PAYER),
+            Map.entry("accountRepId", ACCOUNT_REP));
 
     private final TransactionTemplate transactions;
     private final OnboardingPlanner planner;
@@ -87,6 +100,9 @@ public class OnboardingImportService {
     private final ProviderProfileService providerProfiles;
     private final HospitalPrivilegeService privileges;
     private final MalpracticePolicyRepository policyRepository;
+    private final PayerService payerService;
+    private final PayerContactService contactService;
+    private final PayerEnrollmentService enrollmentService;
 
     public OnboardingImportService(PlatformTransactionManager transactionManager,
                                    OnboardingPlanner planner,
@@ -95,7 +111,10 @@ public class OnboardingImportService {
                                    GroupLocationService groupLocations,
                                    ProviderProfileService providerProfiles,
                                    HospitalPrivilegeService privileges,
-                                   MalpracticePolicyRepository policyRepository) {
+                                   MalpracticePolicyRepository policyRepository,
+                                   PayerService payerService,
+                                   PayerContactService contactService,
+                                   PayerEnrollmentService enrollmentService) {
         this.transactions = new TransactionTemplate(transactionManager);
         this.planner = planner;
         this.ownerService = ownerService;
@@ -104,6 +123,9 @@ public class OnboardingImportService {
         this.providerProfiles = providerProfiles;
         this.privileges = privileges;
         this.policyRepository = policyRepository;
+        this.payerService = payerService;
+        this.contactService = contactService;
+        this.enrollmentService = enrollmentService;
     }
 
     /** Everything an import would do, and every problem stopping it. Saves nothing. */
@@ -164,7 +186,8 @@ public class OnboardingImportService {
                 .toList();
         return new ImportReport(saved, problems.sorted(), counts,
                 plan == null ? List.of() : plan.groupLabels(),
-                plan == null ? List.of() : plan.providerLabels());
+                plan == null ? List.of() : plan.providerLabels(),
+                plan == null ? List.of() : plan.payerLabels());
     }
 
     private static String describe(RuntimeException ex) {
@@ -213,6 +236,9 @@ public class OnboardingImportService {
         private final Map<String, Long> locationIds = new HashMap<>();
         private final Map<String, Long> groupPolicyIds = new HashMap<>();
         private final Map<String, Long> providerIds = new HashMap<>();
+        private final Map<String, Long> payerIds = new HashMap<>();
+        private final Map<String, Long> contactIds = new HashMap<>();
+        private final Map<String, Group> savedGroups = new HashMap<>();
         /** Groups that didn't pass; anything pointing at them is left off so it isn't reported twice. */
         private final Set<String> failedGroups = new HashSet<>();
 
@@ -225,11 +251,30 @@ public class OnboardingImportService {
                 current = owner.row;
                 ownerIds.put(owner.key, ownerService.create(owner.form.toEntity()).getId());
             }
+            for (PayerPlan payer : plan.payers.values()) {
+                current = payer.row;
+                payerIds.put(payer.key, payer.existingId != null ? payer.existingId
+                        : payerService.create(payer.form.toEntity()).getId());
+            }
             for (GroupPlan group : plan.groups.values()) {
                 saveGroup(group);
             }
+            // Payer-wide and group contacts go in before group enrollments, which can name them as rep.
+            for (ContactPlan contact : plan.contacts) {
+                if (contact.providerKey() == null) {
+                    saveContact(contact);
+                }
+            }
+            for (GroupPlan group : plan.groups.values()) {
+                saveGroupEnrollments(group);
+            }
             for (ProviderPlan provider : plan.providers.values()) {
                 saveProvider(provider, plan);
+            }
+            for (ContactPlan contact : plan.contacts) {
+                if (contact.providerKey() != null) {
+                    saveContact(contact);
+                }
             }
             for (ProviderPlan provider : plan.providers.values()) {
                 for (LinkedPrivilege linked : provider.linkedPrivileges) {
@@ -263,6 +308,7 @@ public class OnboardingImportService {
             current = group.row;
             Group saved = groupProfiles.save(null, form);
             groupIds.put(group.key, saved.getId());
+            savedGroups.put(group.key, saved);
 
             group.locations.forEach((key, item) -> {
                 current = item.row();
@@ -312,12 +358,66 @@ public class OnboardingImportService {
             }
             provider.references.forEach(item -> sources.add("references", form.getReferences(), item.form(), item.row()));
             provider.charges.forEach(item -> sources.add("charges", form.getCharges(), item.form(), item.row()));
+            for (ProviderEnrollment enrollment : provider.payers) {
+                enrollment.form().setPayerId(payerIds.get(enrollment.payerKey()));
+                sources.add("payers", form.getPayers(), enrollment.form(), enrollment.row());
+            }
 
             if (!validates(form, sources, errors -> providerProfiles.validate(null, form, errors))) {
                 return;
             }
             current = provider.row;
             providerIds.put(provider.key, providerProfiles.save(null, form).getId());
+        }
+
+        /** Skipped when the group or provider it's tied to didn't save, which is already reported. */
+        private void saveContact(ContactPlan contact) {
+            Long payerId = payerIds.get(contact.payerKey());
+            PayerContactForm form = contact.form();
+            current = contact.row();
+            PayerContact saved;
+            if (contact.groupKey() != null) {
+                Long groupId = groupIds.get(contact.groupKey());
+                if (groupId == null) {
+                    return;
+                }
+                saved = contactService.addGroupContact(payerId, groupId, form.getRole(), form::applyTo);
+            } else if (contact.providerKey() != null) {
+                Long providerId = providerIds.get(contact.providerKey());
+                if (providerId == null) {
+                    return;
+                }
+                saved = contactService.addProviderContact(payerId, providerId, form.getRole(), form::applyTo);
+            } else {
+                saved = contactService.addContact(payerId, form.getRole(), form::applyTo);
+            }
+            if (contact.key() != null) {
+                contactIds.put(contact.key(), saved.getId());
+            }
+        }
+
+        /**
+         * A group's enrollments go in after the group and its contacts, since a rep can be one
+         * of the group's own contacts. The same checks as the group form still run first.
+         */
+        private void saveGroupEnrollments(GroupPlan group) {
+            Group saved = savedGroups.get(group.key);
+            if (saved == null || group.payers.isEmpty()) {
+                return;
+            }
+            GroupProfileForm holder = new GroupProfileForm();
+            Sources sources = new Sources(group.row);
+            for (GroupEnrollment enrollment : group.payers) {
+                enrollment.form().setPayerId(payerIds.get(enrollment.payerKey()));
+                enrollment.form().setAccountRepId(enrollment.repKey() == null ? null : contactIds.get(enrollment.repKey()));
+                sources.add("payers", holder.getPayers(), enrollment.form(), enrollment.row());
+            }
+            if (!validates(holder, sources,
+                    errors -> enrollmentService.validate(holder.getPayers(), "payers", saved.getId(), errors))) {
+                return;
+            }
+            current = group.row;
+            enrollmentService.syncGroup(saved, holder.getPayers());
         }
 
         /**

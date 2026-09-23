@@ -33,4 +33,13 @@ public interface PayerContactRepository extends JpaRepository<PayerContact, Long
 
     /** Scoped lookup, so a contact can't be edited through the wrong payer. */
     Optional<PayerContact> findByIdAndPayerId(Long id, Long payerId);
+
+    /**
+     * Who can be a group's account rep: contacts tied to no one in particular, or to that
+     * group. groupId is null for a group not saved yet, which leaves only the former.
+     */
+    @Query("SELECT c FROM PayerContact c JOIN FETCH c.payer p LEFT JOIN c.group g "
+            + "WHERE c.provider IS NULL AND (g IS NULL OR g.id = :groupId) "
+            + "ORDER BY LOWER(p.name), LOWER(COALESCE(c.name, c.role))")
+    List<PayerContact> findRepCandidates(@Param("groupId") Long groupId);
 }

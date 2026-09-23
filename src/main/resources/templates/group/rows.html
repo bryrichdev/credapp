@@ -317,5 +317,26 @@
     </div>
 </div>
 
+<!-- ============ payer enrollment, with the payer's rep for this group ============ -->
+<div class="row-card" data-row th:fragment="payer(p, row, live)">
+    <button class="button button--quiet button--small row-card__remove" type="button" data-remove-row
+            aria-label="Remove this row">Remove</button>
+    <div class="form-grid">
+        <th:block th:replace="~{fragments/enrollment :: fields(${p}, ${row}, ${live})}"></th:block>
+        <label class="field field--wide">
+            <span class="field__label">Account rep</span>
+            <select class="field__input" data-rep-select th:name="${p + '.accountRepId'}"
+                    th:classappend="${live and #fields.hasErrors(p + '.accountRepId')} ? 'field__input--invalid'">
+                <option value="" data-static>No designated rep</option>
+                <option th:each="o : ${repOptions}" th:value="${o.id}" th:data-payer="${o.payer.id}"
+                        th:text="${o.group != null} ? ${o.label} + ' (this group)' : ${o.label}"
+                        th:selected="${row.accountRepId == o.id}"></option>
+            </select>
+            <span class="field__hint">From the payer's contacts. Add the rep there first if they aren't listed.</span>
+            <span th:replace="~{fragments/rows :: err(${p + '.accountRepId'}, ${live})}"></span>
+        </label>
+    </div>
+</div>
+
 </body>
 </html>

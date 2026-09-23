@@ -11,6 +11,8 @@ import jakarta.validation.constraints.NotBlank;
  */
 public class PayerContactForm {
 
+    private String name;
+
     @NotBlank(message = "Role is required")
     private String role;
 
@@ -30,6 +32,7 @@ public class PayerContactForm {
 
     public static PayerContactForm from(PayerContact contact) {
         PayerContactForm form = new PayerContactForm();
+        form.name = contact.getName();
         form.role = contact.getRole();
         form.groupId = contact.getGroup() == null ? null : contact.getGroup().getId();
         form.providerId = contact.getProvider() == null ? null : contact.getProvider().getId();
@@ -42,7 +45,8 @@ public class PayerContactForm {
 
     /** True when nothing was typed into this block, so it can be dropped before validating. */
     public boolean isBlank() {
-        return blankToNull(role) == null
+        return blankToNull(name) == null
+                && blankToNull(role) == null
                 && groupId == null
                 && providerId == null
                 && blankToNull(phoneNumber) == null
@@ -58,6 +62,7 @@ public class PayerContactForm {
 
     /** Copies the plain fields onto a contact. Scope is set by the service. */
     public void applyTo(PayerContact contact) {
+        contact.setName(blankToNull(name) == null ? null : name.trim());
         contact.setRole(role);
         contact.setPhoneNumber(blankToNull(phoneNumber));
         contact.setFaxNumber(blankToNull(faxNumber));
@@ -67,6 +72,14 @@ public class PayerContactForm {
 
     private static String blankToNull(String value) {
         return value == null || value.isBlank() ? null : value;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getRole() {

@@ -35,7 +35,13 @@
                  th:errors="*{scopeExclusive}"></div>
 
             <div class="form-grid">
-                <label class="field field--wide">
+                <label class="field">
+                    <span class="field__label">Name</span>
+                    <input class="field__input" type="text" th:field="*{name}" autocomplete="off"
+                           placeholder="Optional">
+                </label>
+
+                <label class="field">
                     <span class="field__label">Role</span>
                     <input class="field__input" type="text" th:field="*{role}"
                            th:classappend="${#fields.hasErrors('role')} ? 'field__input--invalid'"

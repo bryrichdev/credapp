@@ -4,6 +4,10 @@ import dev.bryrich.credapp.group.GroupForm;
 import dev.bryrich.credapp.group.GroupProfileForm;
 import dev.bryrich.credapp.group.location.GroupLocationForm;
 import dev.bryrich.credapp.owner.OwnerForm;
+import dev.bryrich.credapp.payer.PayerContactForm;
+import dev.bryrich.credapp.payer.PayerForm;
+import dev.bryrich.credapp.payer.enrollment.GroupPayerForm;
+import dev.bryrich.credapp.payer.enrollment.ProviderPayerForm;
 import dev.bryrich.credapp.provider.ProviderForm;
 import dev.bryrich.credapp.provider.ProviderProfileForm;
 import dev.bryrich.credapp.provider.location.PcpScp;
@@ -19,7 +23,7 @@ import java.util.Map;
 /**
  * Everything an upload will create, linked up by the IDs the sheets use but not yet saved.
  * Each item keeps the row it came from so a problem found while saving can point back at it.
- * Owners come first (groups reference them), then groups, then providers.
+ * Saving goes owners, payers, groups, their contacts and enrollments, then providers.
  */
 public class OnboardingPlan {
 
@@ -39,6 +43,37 @@ public class OnboardingPlan {
         }
     }
 
+    /** A payer on the Payers sheet: new, or one already in CredApp matched by name (existingId). */
+    public static class PayerPlan {
+        final String key;
+        final ParsedRow row;
+        final PayerForm form;
+        final Long existingId;
+
+        PayerPlan(String key, ParsedRow row, PayerForm form, Long existingId) {
+            this.key = key;
+            this.row = row;
+            this.form = form;
+            this.existingId = existingId;
+        }
+
+        String label() {
+            return form.getName() + " (" + key + (existingId == null ? ", new)" : ", already in CredApp)");
+        }
+    }
+
+    /** A contact at a payer, payer-wide or tied to one group or provider in this file. */
+    public record ContactPlan(String key, ParsedRow row, PayerContactForm form,
+                              String payerKey, String groupKey, String providerKey) {
+    }
+
+    /** A group's enrollment with a payer, and the Contact ID of its rep there, if any. */
+    public record GroupEnrollment(ParsedRow row, GroupPayerForm form, String payerKey, String repKey) {
+    }
+
+    public record ProviderEnrollment(ParsedRow row, ProviderPayerForm form, String payerKey) {
+    }
+
     public static class GroupPlan {
         final String key;
         final ParsedRow row;
@@ -51,6 +86,7 @@ public class OnboardingPlan {
         final List<Item<GroupTaxonomyForm>> taxonomies = new ArrayList<>();
         /** Keyed by policy ID, or a generated key when the row has none. */
         final Map<String, Item<GroupProfileForm.PolicyRow>> policies = new LinkedHashMap<>();
+        final List<GroupEnrollment> payers = new ArrayList<>();
 
         GroupPlan(String key, ParsedRow row, GroupForm details) {
             this.key = key;
@@ -93,6 +129,7 @@ public class OnboardingPlan {
         final List<Claim> claims = new ArrayList<>();
         final List<Item<ProviderProfileForm.ReferenceRow>> references = new ArrayList<>();
         final List<Item<ProviderProfileForm.ChargeRow>> charges = new ArrayList<>();
+        final List<ProviderEnrollment> payers = new ArrayList<>();
 
         ProviderPlan(String key, ParsedRow row, ProviderForm details) {
             this.key = key;
@@ -108,6 +145,10 @@ public class OnboardingPlan {
     final Map<String, OwnerPlan> owners = new LinkedHashMap<>();
     final Map<String, GroupPlan> groups = new LinkedHashMap<>();
     final Map<String, ProviderPlan> providers = new LinkedHashMap<>();
+    final Map<String, PayerPlan> payers = new LinkedHashMap<>();
+    final List<ContactPlan> contacts = new ArrayList<>();
+    /** Contacts that have a Contact ID, so a group can name them as its rep. */
+    final Map<String, ContactPlan> contactsByKey = new LinkedHashMap<>();
     /** Location ID to the group it belongs to. */
     final Map<String, GroupPlan> locationGroups = new LinkedHashMap<>();
     /** Policy ID to the group holding it, for claims against a group's policy. */
@@ -117,6 +158,10 @@ public class OnboardingPlan {
 
     public List<String> groupLabels() {
         return groups.values().stream().map(GroupPlan::label).toList();
+    }
+
+    public List<String> payerLabels() {
+        return payers.values().stream().map(PayerPlan::label).toList();
     }
 
     public List<String> providerLabels() {

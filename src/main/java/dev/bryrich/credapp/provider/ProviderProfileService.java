@@ -11,6 +11,8 @@ import dev.bryrich.credapp.malpractice.MalpracticePolicy;
 import dev.bryrich.credapp.malpractice.MalpracticePolicyNotFoundException;
 import dev.bryrich.credapp.malpractice.MalpracticePolicyRepository;
 import dev.bryrich.credapp.malpractice.MalpracticePolicyService;
+import dev.bryrich.credapp.payer.enrollment.PayerEnrollmentService;
+import dev.bryrich.credapp.payer.enrollment.ProviderPayerForm;
 import dev.bryrich.credapp.provider.ProviderProfileForm.ClaimRow;
 import dev.bryrich.credapp.provider.ProviderProfileForm.PolicyRow;
 import dev.bryrich.credapp.provider.certification.CertificationService;
@@ -70,6 +72,7 @@ public class ProviderProfileService {
     private final MalpracticeClaimService claimService;
     private final ProviderReferenceService referenceService;
     private final CriminalChargeService chargeService;
+    private final PayerEnrollmentService enrollmentService;
 
     public ProviderProfileService(ProviderRepository providerRepository,
                                   ProviderService providerService,
@@ -86,7 +89,8 @@ public class ProviderProfileService {
                                   MalpracticePolicyRepository policyRepository,
                                   MalpracticeClaimService claimService,
                                   ProviderReferenceService referenceService,
-                                  CriminalChargeService chargeService) {
+                                  CriminalChargeService chargeService,
+                                  PayerEnrollmentService enrollmentService) {
         this.providerRepository = providerRepository;
         this.providerService = providerService;
         this.groupProviderService = groupProviderService;
@@ -103,6 +107,7 @@ public class ProviderProfileService {
         this.claimService = claimService;
         this.referenceService = referenceService;
         this.chargeService = chargeService;
+        this.enrollmentService = enrollmentService;
     }
 
     // ============ load ============
@@ -124,6 +129,7 @@ public class ProviderProfileService {
         form.setClaims(mapAll(claimService.findByProviderId(providerId), ClaimRow::from));
         form.setReferences(mapAll(referenceService.findByProviderId(providerId), ProviderProfileForm.ReferenceRow::from));
         form.setCharges(mapAll(chargeService.findByProviderId(providerId), ProviderProfileForm.ChargeRow::from));
+        form.setPayers(mapAll(enrollmentService.findForProvider(providerId), ProviderPayerForm::from));
         return form;
     }
 
@@ -160,6 +166,7 @@ public class ProviderProfileService {
         checkPrivileges(providerId, form, errors);
         Set<String> policyKeys = checkPolicies(form, errors);
         checkClaims(providerId, form, policyKeys, errors);
+        enrollmentService.validate(form.getPayers(), "payers", null, errors);
     }
 
     private Set<Long> checkGroups(ProviderProfileForm form, Errors errors) {
@@ -347,6 +354,7 @@ public class ProviderProfileService {
                 row -> privilegeService.update(row.getId(), id, row.getAdmittingPhysicianId(), row::applyTo));
 
         savePoliciesAndClaims(id, form.getPolicies(), form.getClaims());
+        enrollmentService.syncProvider(provider, form.getPayers());
 
         providerRepository.flush();
         return provider;

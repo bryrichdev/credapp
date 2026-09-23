@@ -1,5 +1,9 @@
 package dev.bryrich.credapp.provider;
 
+import dev.bryrich.credapp.payer.PayerService;
+import dev.bryrich.credapp.payer.enrollment.EnrollmentStatus;
+import dev.bryrich.credapp.payer.enrollment.PayerEnrollmentService;
+import dev.bryrich.credapp.payer.enrollment.ProviderPayerForm;
 import dev.bryrich.credapp.group.GroupService;
 import dev.bryrich.credapp.group.location.GroupLocationRepository;
 import dev.bryrich.credapp.group.membership.GroupProviderService;
@@ -61,6 +65,8 @@ public class ProviderWebController {
     private final CriminalChargeService chargeService;
     private final MalpracticePolicyService policyService;
     private final MalpracticeClaimService claimService;
+    private final PayerService payerService;
+    private final PayerEnrollmentService enrollmentService;
 
     public ProviderWebController(ProviderService providerService,
                                  ProviderProfileService profileService,
@@ -77,7 +83,9 @@ public class ProviderWebController {
                                  HospitalPrivilegeService privilegeService,
                                  CriminalChargeService chargeService,
                                  MalpracticePolicyService policyService,
-                                 MalpracticeClaimService claimService) {
+                                 MalpracticeClaimService claimService,
+                                 PayerService payerService,
+                                 PayerEnrollmentService enrollmentService) {
         this.providerService = providerService;
         this.profileService = profileService;
         this.licenseService = licenseService;
@@ -94,6 +102,8 @@ public class ProviderWebController {
         this.chargeService = chargeService;
         this.policyService = policyService;
         this.claimService = claimService;
+        this.payerService = payerService;
+        this.enrollmentService = enrollmentService;
     }
 
     /**
@@ -153,6 +163,9 @@ public class ProviderWebController {
         model.addAttribute("charges", chargeService.findByProviderId(id));
         model.addAttribute("policies", policyService.findByProviderId(id));
         model.addAttribute("claims", claimService.findByProviderId(id));
+        model.addAttribute("payerEnrollments", enrollmentService.findForProvider(id));
+        model.addAttribute("groupReps", enrollmentService.groupRepsByPayer(
+                groupProviderService.findGroups(id).stream().map(m -> m.getGroup().getId()).toList()));
         return "provider/detail";
     }
 
@@ -238,12 +251,15 @@ public class ProviderWebController {
         model.addAttribute("scopes", CoverageScope.values());
         model.addAttribute("chargeClassifications", ChargeClassification.values());
         model.addAttribute("chargeStatuses", ChargeStatus.values());
+        model.addAttribute("payerOptions", payerService.findAllForSelect());
+        model.addAttribute("enrollmentStatuses", EnrollmentStatus.values());
 
         Map<String, Object> blank = new HashMap<>();
         blank.put("group", new ProviderGroupForm());
         blank.put("location", new ProviderLocationForm());
         blank.put("taxonomy", new ProviderTaxonomyForm());
         blank.put("license", new ProviderProfileForm.LicenseRow());
+        blank.put("payer", new ProviderPayerForm());
         blank.put("certification", new ProviderProfileForm.CertificationRow());
         blank.put("privilege", new ProviderProfileForm.PrivilegeRow());
         blank.put("policy", new ProviderProfileForm.PolicyRow());

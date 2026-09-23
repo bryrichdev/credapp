@@ -1862,3 +1862,38 @@ a.topbar__user:hover,
         background: var(--slate-50);
     }
 }
+
+/* ============ payer enrollment ============ */
+
+/* An enrollment's notes, under the payer's name. */
+.enrollment-note {
+    display: block;
+    margin-top: 0.15rem;
+    color: var(--slate-500);
+    font-size: 0.8rem;
+    font-weight: 400;
+    white-space: normal;
+}
+
+/* An account rep: who they are, then how to reach them. */
+.rep + .rep {
+    margin-top: 0.5rem;
+}
+
+.rep__name {
+    display: block;
+    font-weight: 500;
+}
+
+.rep__reach {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.75rem;
+    font-size: 0.85rem;
+}
+
+.rep__via {
+    display: block;
+    color: var(--slate-500);
+    font-size: 0.8rem;
+}

@@ -22,6 +22,8 @@
  *                               options marked data-static are kept as they are.
  *   select[data-location-select] options carry data-group and are limited to groups
  *                               picked in any select[data-group-select].
+ *   select[data-rep-select]     options carry data-payer and are limited to the payer
+ *                               picked in the same row's select[data-payer-select].
  *   [data-primary]              checkboxes in one section; ticking one clears the rest.
  *   [data-mode] + [data-mode-show="x"]  inside a row, shows a block only while the
  *                               row's mode control has value x.
@@ -120,6 +122,32 @@
         });
     }
 
+    // ---------- account reps limited to the row's payer ----------
+
+    /*
+     * A payer row's rep select lists every payer's contacts, each marked with data-payer;
+     * only those of the payer picked in the same row stay pickable. Changing the payer
+     * clears a rep that belonged to the old one.
+     */
+    function refreshReps() {
+        form.querySelectorAll('select[data-rep-select]').forEach(select => {
+            const row = select.closest('[data-row]');
+            const payer = row && row.querySelector('select[data-payer-select]');
+            const payerId = payer ? payer.value : '';
+            Array.from(select.options).forEach(option => {
+                if (option.hasAttribute('data-static')) {
+                    return;
+                }
+                const allowed = payerId !== '' && option.dataset.payer === payerId;
+                option.hidden = !allowed;
+                option.disabled = !allowed;
+                if (!allowed && option.selected) {
+                    select.value = '';
+                }
+            });
+        });
+    }
+
     // ---------- row modes (pick existing / add new) ----------
 
     function currentMode(control) {
@@ -154,6 +182,7 @@
         refreshModes(form);
         refreshLinks();
         refreshLocations();
+        refreshReps();
     }
 
     // ---------- add / remove ----------

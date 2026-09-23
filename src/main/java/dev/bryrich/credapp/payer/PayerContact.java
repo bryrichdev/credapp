@@ -35,6 +35,9 @@ public class PayerContact extends GroupScopedEntity {
     @JoinColumn(name = "provider_id")
     private Provider provider;
 
+    /** The person, when known. Optional: some contacts are a shared inbox or phone line. */
+    private String name;
+
     /** Free text, e.g. "provider rep", "credentialing analyst". */
     @Column(nullable = false)
     private String role;
@@ -111,6 +114,19 @@ public class PayerContact extends GroupScopedEntity {
         if (provider != null) {
             this.group = null;
         }
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /** How the contact is named in pickers and lists: "Jane Doe · Provider rep", or the role alone. */
+    public String getLabel() {
+        return name == null || name.isBlank() ? role : name + " · " + role;
     }
 
     public String getRole() {

@@ -7,6 +7,10 @@ import dev.bryrich.credapp.group.location.GroupLocationForm;
 import dev.bryrich.credapp.malpractice.MalpracticeClaimRepository;
 import dev.bryrich.credapp.malpractice.MalpracticePolicyRepository;
 import dev.bryrich.credapp.onboarding.OnboardingPlan.Claim;
+import dev.bryrich.credapp.onboarding.OnboardingPlan.ContactPlan;
+import dev.bryrich.credapp.onboarding.OnboardingPlan.GroupEnrollment;
+import dev.bryrich.credapp.onboarding.OnboardingPlan.PayerPlan;
+import dev.bryrich.credapp.onboarding.OnboardingPlan.ProviderEnrollment;
 import dev.bryrich.credapp.onboarding.OnboardingPlan.GroupPlan;
 import dev.bryrich.credapp.onboarding.OnboardingPlan.Item;
 import dev.bryrich.credapp.onboarding.OnboardingPlan.LinkedPrivilege;
@@ -17,6 +21,12 @@ import dev.bryrich.credapp.onboarding.OnboardingPlan.ProviderPlan;
 import dev.bryrich.credapp.onboarding.OnboardingTemplate.Sheet;
 import dev.bryrich.credapp.owner.OwnerForm;
 import dev.bryrich.credapp.owner.OwnerRepository;
+import dev.bryrich.credapp.payer.Payer;
+import dev.bryrich.credapp.payer.PayerContactForm;
+import dev.bryrich.credapp.payer.PayerForm;
+import dev.bryrich.credapp.payer.PayerRepository;
+import dev.bryrich.credapp.payer.enrollment.GroupPayerForm;
+import dev.bryrich.credapp.payer.enrollment.ProviderPayerForm;
 import dev.bryrich.credapp.provider.ProviderForm;
 import dev.bryrich.credapp.provider.ProviderProfileForm;
 import dev.bryrich.credapp.provider.ProviderRepository;
@@ -37,11 +47,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import static dev.bryrich.credapp.onboarding.OnboardingTemplate.ACCOUNT_REP;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.ADMITTING_PROVIDER;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.GROUP;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.ID;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.LOCATION;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.OWNER;
+import static dev.bryrich.credapp.onboarding.OnboardingTemplate.PAYER;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.POLICY;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.PROVIDER;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.RELATED_OWNER;
@@ -65,6 +77,7 @@ public class OnboardingPlanner {
     private final MalpracticePolicyRepository policyRepository;
     private final MalpracticeClaimRepository claimRepository;
     private final TaxonomyRepository taxonomyRepository;
+    private final PayerRepository payerRepository;
 
     public OnboardingPlanner(Validator validator,
                              GroupRepository groupRepository,
@@ -72,7 +85,8 @@ public class OnboardingPlanner {
                              OwnerRepository ownerRepository,
                              MalpracticePolicyRepository policyRepository,
                              MalpracticeClaimRepository claimRepository,
-                             TaxonomyRepository taxonomyRepository) {
+                             TaxonomyRepository taxonomyRepository,
+                             PayerRepository payerRepository) {
         this.validator = validator;
         this.groupRepository = groupRepository;
         this.providerRepository = providerRepository;
@@ -80,7 +94,11 @@ public class OnboardingPlanner {
         this.policyRepository = policyRepository;
         this.claimRepository = claimRepository;
         this.taxonomyRepository = taxonomyRepository;
+        this.payerRepository = payerRepository;
     }
+
+    /** Stands in for a payer id on enrollment rows until the payer is saved. */
+    static final Long PENDING_ID = -1L;
 
     public OnboardingPlan plan(Map<Sheet, List<ParsedRow>> rows, Problems problems) {
         Run run = new Run(new OnboardingPlan(), problems);
@@ -105,6 +123,10 @@ public class OnboardingPlanner {
                 (provider, item) -> provider.references.add(item));
         run.providerRows(rows.get(OnboardingTemplate.DISCLOSURES), ProviderProfileForm.ChargeRow::new,
                 (provider, item) -> provider.charges.add(item));
+        run.payers(rows.get(OnboardingTemplate.PAYERS));
+        run.payerContacts(rows.get(OnboardingTemplate.PAYER_CONTACTS));
+        run.groupPayers(rows.get(OnboardingTemplate.GROUP_PAYERS));
+        run.providerPayers(rows.get(OnboardingTemplate.PROVIDER_PAYERS));
         run.licenseDuplicates();
         return run.plan;
     }
@@ -473,6 +495,120 @@ public class OnboardingPlanner {
                 return false;
             }
             return true;
+        }
+
+        // ============ payers ============
+
+        void payers(List<ParsedRow> rows) {
+            Map<String, ParsedRow> ids = new HashMap<>();
+            Map<String, ParsedRow> names = new HashMap<>();
+            for (ParsedRow row : rows) {
+                String key = ownId(row, ids);
+                PayerForm form = bindAndCheck(row, new PayerForm());
+                Long existingId = null;
+                if (form.getName() != null) {
+                    String name = form.getName().trim();
+                    ParsedRow earlier = names.putIfAbsent(name.toLowerCase(Locale.ROOT), row);
+                    if (earlier != null) {
+                        problems.at(row, "name", "Same payer as row " + earlier.number()
+                                + ". List each payer once; other sheets point at its Payer ID.");
+                        continue;
+                    }
+                    // Payers are shared reference data: one already on file is used, not duplicated.
+                    existingId = payerRepository.findByNameIgnoreCase(name).map(Payer::getId).orElse(null);
+                }
+                if (key != null) {
+                    plan.payers.put(key, new PayerPlan(key, row, form, existingId));
+                }
+            }
+        }
+
+        void payerContacts(List<ParsedRow> rows) {
+            Map<String, ParsedRow> ids = new HashMap<>();
+            for (ParsedRow row : rows) {
+                String key = row.has(ID) ? ownId(row, ids) : null;
+                PayerPlan payer = link(row, PAYER, plan.payers, OnboardingTemplate.PAYERS);
+                GroupPlan group = row.has(GROUP) ? link(row, GROUP, plan.groups, OnboardingTemplate.GROUPS) : null;
+                ProviderPlan provider = row.has(PROVIDER)
+                        ? link(row, PROVIDER, plan.providers, OnboardingTemplate.PROVIDERS) : null;
+                if (row.has(GROUP) && row.has(PROVIDER)) {
+                    problems.at(row, PROVIDER, "A contact can be tied to a group or a provider, not both");
+                    continue;
+                }
+                PayerContactForm form = bindAndCheck(row, new PayerContactForm());
+                if (payer == null || (row.has(GROUP) && group == null) || (row.has(PROVIDER) && provider == null)) {
+                    continue;
+                }
+                ContactPlan contact = new ContactPlan(key, row, form, payer.key,
+                        group == null ? null : group.key, provider == null ? null : provider.key);
+                plan.contacts.add(contact);
+                if (key != null) {
+                    plan.contactsByKey.put(key, contact);
+                }
+            }
+        }
+
+        void groupPayers(List<ParsedRow> rows) {
+            Map<String, ParsedRow> pairs = new HashMap<>();
+            for (ParsedRow row : rows) {
+                GroupPlan group = link(row, GROUP, plan.groups, OnboardingTemplate.GROUPS);
+                PayerPlan payer = link(row, PAYER, plan.payers, OnboardingTemplate.PAYERS);
+                ContactPlan rep = row.has(ACCOUNT_REP)
+                        ? link(row, ACCOUNT_REP, plan.contactsByKey, OnboardingTemplate.PAYER_CONTACTS) : null;
+                GroupPayerForm form = bind(row, new GroupPayerForm());
+                // The real payer id is known only once payers are saved; this stands in for the check.
+                form.setPayerId(PENDING_ID);
+                check(row, form);
+                if (group == null || payer == null || (row.has(ACCOUNT_REP) && rep == null)) {
+                    continue;
+                }
+                ParsedRow earlier = pairs.putIfAbsent(group.key + "|" + payer.key, row);
+                if (earlier != null) {
+                    problems.at(row, PAYER, group.key + " is already enrolled with " + payer.key
+                            + " on row " + earlier.number());
+                    continue;
+                }
+                if (rep != null && !repFits(row, rep, payer, group)) {
+                    continue;
+                }
+                group.payers.add(new GroupEnrollment(row, form, payer.key, rep == null ? null : rep.key()));
+            }
+        }
+
+        /** A group's rep is a contact of that payer, and either payer-wide or tied to that group. */
+        private boolean repFits(ParsedRow row, ContactPlan rep, PayerPlan payer, GroupPlan group) {
+            if (!rep.payerKey().equals(payer.key)) {
+                problems.at(row, ACCOUNT_REP, rep.key() + " is a contact of " + rep.payerKey() + ", not " + payer.key);
+                return false;
+            }
+            if (rep.providerKey() != null || (rep.groupKey() != null && !rep.groupKey().equals(group.key))) {
+                problems.at(row, ACCOUNT_REP, rep.key() + " is tied to "
+                        + (rep.providerKey() != null ? rep.providerKey() : rep.groupKey())
+                        + "; a rep has to be payer-wide or tied to " + group.key);
+                return false;
+            }
+            return true;
+        }
+
+        void providerPayers(List<ParsedRow> rows) {
+            Map<String, ParsedRow> pairs = new HashMap<>();
+            for (ParsedRow row : rows) {
+                ProviderPlan provider = link(row, PROVIDER, plan.providers, OnboardingTemplate.PROVIDERS);
+                PayerPlan payer = link(row, PAYER, plan.payers, OnboardingTemplate.PAYERS);
+                ProviderPayerForm form = bind(row, new ProviderPayerForm());
+                form.setPayerId(PENDING_ID);
+                check(row, form);
+                if (provider == null || payer == null) {
+                    continue;
+                }
+                ParsedRow earlier = pairs.putIfAbsent(provider.key + "|" + payer.key, row);
+                if (earlier != null) {
+                    problems.at(row, PAYER, provider.key + " is already enrolled with " + payer.key
+                            + " on row " + earlier.number());
+                    continue;
+                }
+                provider.payers.add(new ProviderEnrollment(row, form, payer.key));
+            }
         }
 
         // ============ helpers ============

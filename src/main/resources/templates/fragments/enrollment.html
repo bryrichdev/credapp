@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<body>
+
+<!--
+    Payer enrollment pieces shared by the provider and group pages.
+-->
+
+<!-- The fields every enrollment row has. p is the name prefix, such as payers[0]. -->
+<th:block th:fragment="fields(p, row, live)">
+    <label class="field">
+        <span class="field__label">Payer</span>
+        <select class="field__input" data-payer-select th:name="${p + '.payerId'}"
+                th:classappend="${live and #fields.hasErrors(p + '.payerId')} ? 'field__input--invalid'">
+            <option value="">Select a payer</option>
+            <option th:each="o : ${payerOptions}" th:value="${o.id}" th:text="${o.name}"
+                    th:selected="${row.payerId == o.id}"></option>
+        </select>
+        <span th:replace="~{fragments/rows :: err(${p + '.payerId'}, ${live})}"></span>
+    </label>
+    <label class="field">
+        <span class="field__label">Status</span>
+        <select class="field__input" th:name="${p + '.status'}"
+                th:classappend="${live and #fields.hasErrors(p + '.status')} ? 'field__input--invalid'">
+            <option th:each="o : ${enrollmentStatuses}" th:value="${o}" th:text="${o.label}"
+                    th:selected="${row.status == o}"></option>
+        </select>
+        <span th:replace="~{fragments/rows :: err(${p + '.status'}, ${live})}"></span>
+    </label>
+    <label class="field">
+        <span class="field__label">Payer-assigned ID</span>
+        <input class="field__input" type="text" maxlength="100" th:name="${p + '.payerAssignedId'}"
+               th:value="${row.payerAssignedId}"
+               th:classappend="${live and #fields.hasErrors(p + '.payerAssignedId')} ? 'field__input--invalid'">
+        <span class="field__hint">The provider or group number the payer issued</span>
+        <span th:replace="~{fragments/rows :: err(${p + '.payerAssignedId'}, ${live})}"></span>
+    </label>
+    <label class="field">
+        <span class="field__label">Submitted</span>
+        <input class="field__input" type="date" th:name="${p + '.submittedDate'}" th:value="${row.submittedDate}"
+               th:classappend="${live and #fields.hasErrors(p + '.submittedDate')} ? 'field__input--invalid'">
+        <span th:replace="~{fragments/rows :: err(${p + '.submittedDate'}, ${live})}"></span>
+    </label>
+    <label class="field">
+        <span class="field__label">Effective</span>
+        <input class="field__input" type="date" th:name="${p + '.effectiveDate'}" th:value="${row.effectiveDate}"
+               th:classappend="${live and (#fields.hasErrors(p + '.effectiveDate') or #fields.hasErrors(p + '.effectiveDateSetWhenActive'))} ? 'field__input--invalid'">
+        <span th:replace="~{fragments/rows :: err(${p + '.effectiveDate'}, ${live})}"></span>
+        <span th:replace="~{fragments/rows :: err(${p + '.effectiveDateSetWhenActive'}, ${live})}"></span>
+    </label>
+    <label class="field field--wide">
+        <span class="field__label">Notes</span>
+        <textarea class="field__input" rows="2" maxlength="2000" th:name="${p + '.notes'}" th:text="${row.notes}"
+                  th:classappend="${live and #fields.hasErrors(p + '.notes')} ? 'field__input--invalid'"></textarea>
+        <span th:replace="~{fragments/rows :: err(${p + '.notes'}, ${live})}"></span>
+    </label>
+</th:block>
+
+<!-- An account rep, as a name line and how to reach them. -->
+<th:block th:fragment="rep(contact)">
+    <span class="rep__name" th:text="${contact.label}">Jane Doe · Provider rep</span>
+    <span class="rep__reach" th:if="${contact.phoneNumber != null or contact.emailAddress != null}">
+        <a th:if="${contact.phoneNumber != null}" th:href="'tel:' + ${contact.phoneNumber}"
+           th:text="${contact.phoneNumber}"></a>
+        <a th:if="${contact.emailAddress != null}" th:href="'mailto:' + ${contact.emailAddress}"
+           th:text="${contact.emailAddress}"></a>
+    </span>
+</th:block>
+
+<!-- A status as a badge. -->
+<span th:fragment="status(status)" class="badge" th:classappend="${status.badge}" th:text="${status.label}">Active</span>
+
+</body>
+</html>

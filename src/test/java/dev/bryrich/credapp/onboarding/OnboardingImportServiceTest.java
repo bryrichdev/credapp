@@ -8,6 +8,12 @@ import dev.bryrich.credapp.group.GroupRepository;
 import dev.bryrich.credapp.group.location.GroupLocationService;
 import dev.bryrich.credapp.malpractice.MalpracticePolicyRepository;
 import dev.bryrich.credapp.owner.OwnerRepository;
+import dev.bryrich.credapp.payer.Payer;
+import dev.bryrich.credapp.payer.PayerContact;
+import dev.bryrich.credapp.payer.PayerContactService;
+import dev.bryrich.credapp.payer.PayerRepository;
+import dev.bryrich.credapp.payer.enrollment.EnrollmentStatus;
+import dev.bryrich.credapp.payer.enrollment.PayerEnrollmentService;
 import dev.bryrich.credapp.provider.Provider;
 import dev.bryrich.credapp.provider.ProviderProfileForm;
 import dev.bryrich.credapp.provider.ProviderProfileService;
@@ -37,15 +43,19 @@ import static dev.bryrich.credapp.onboarding.OnboardingTemplate.DISCLOSURES;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.GROUPS;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.GROUP_LOCATIONS;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.GROUP_MEMBERS;
+import static dev.bryrich.credapp.onboarding.OnboardingTemplate.GROUP_PAYERS;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.GROUP_SPECIALTIES;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.HOSPITAL_PRIVILEGES;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.LICENSES;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.OWNERS;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.OWNERSHIP;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.OWNER_RELATIONSHIPS;
+import static dev.bryrich.credapp.onboarding.OnboardingTemplate.PAYERS;
+import static dev.bryrich.credapp.onboarding.OnboardingTemplate.PAYER_CONTACTS;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.POLICIES;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.PRACTICE_LOCATIONS;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.PROVIDERS;
+import static dev.bryrich.credapp.onboarding.OnboardingTemplate.PROVIDER_PAYERS;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.PROVIDER_SPECIALTIES;
 import static dev.bryrich.credapp.onboarding.OnboardingTemplate.REFERENCES;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,6 +78,9 @@ class OnboardingImportServiceTest {
     @Autowired ProviderProfileService providerProfiles;
     @Autowired GroupProfileService groupProfiles;
     @Autowired GroupLocationService groupLocations;
+    @Autowired PayerRepository payers;
+    @Autowired PayerContactService contacts;
+    @Autowired PayerEnrollmentService enrollments;
 
     @BeforeEach
     void signInToAFreshGroup() {
@@ -93,7 +106,8 @@ class OnboardingImportServiceTest {
         assertThat(report.saved()).isFalse();
         assertThat(report.groups()).containsExactly("Lakeside Clinic LLC (G1)", "North Surgery PC (G2)");
         assertThat(report.providers()).containsExactly("Shah, Priya (P1)", "Ng, Tom (P2)");
-        assertThat(report.counts()).extracting(ImportReport.SheetCount::sheet).hasSize(17);
+        assertThat(report.counts()).extracting(ImportReport.SheetCount::sheet).hasSize(21);
+        assertThat(report.payers()).containsExactly("Aetna (PAY1, new)", "Cigna (PAY2, new)");
         assertThat(providers.count()).isZero();
         assertThat(groups.count()).isZero();
         assertThat(owners.count()).isZero();
@@ -159,6 +173,91 @@ class OnboardingImportServiceTest {
         assertThat(tomForm.getClaims()).singleElement()
                 .satisfies(claim -> assertThat(claim.getPolicyKey()).isEqualTo("p" + groupPolicy));
         assertThat(tomForm.getCharges()).hasSize(1);
+
+        Payer aetna = payers.findByNameIgnoreCase("aetna").orElseThrow();
+        assertThat(aetna.getNote()).isEqualTo("Commercial");
+        assertThat(enrollments.findForGroup(lakeside.getId())).singleElement().satisfies(e -> {
+            assertThat(e.getPayer().getId()).isEqualTo(aetna.getId());
+            assertThat(e.getStatus()).isEqualTo(EnrollmentStatus.ACTIVE);
+            assertThat(e.getPayerAssignedId()).isEqualTo("G-88213");
+            assertThat(e.getAccountRep().getName()).isEqualTo("Jane Doe");
+            assertThat(e.getAccountRep().getGroup().getId()).isEqualTo(lakeside.getId());
+        });
+        assertThat(enrollments.findForGroup(north.getId())).singleElement().satisfies(e -> {
+            assertThat(e.getStatus()).isEqualTo(EnrollmentStatus.IN_PROGRESS);
+            assertThat(e.getNotes()).isEqualTo("Waiting on the W-9");
+            assertThat(e.getAccountRep()).isNull();
+        });
+        assertThat(priyaForm.getPayers()).singleElement()
+                .satisfies(e -> assertThat(e.getStatus()).isEqualTo(EnrollmentStatus.SUBMITTED));
+        assertThat(tomForm.getPayers()).singleElement()
+                .satisfies(e -> assertThat(e.getStatus()).isEqualTo(EnrollmentStatus.NOT_STARTED));
+        assertThat(contacts.findForProvider(priya.getId())).singleElement()
+                .satisfies(c -> assertThat(c.getRole()).isEqualTo("Provider's analyst"));
+        assertThat(contacts.findGeneralContacts(payers.findByNameIgnoreCase("Cigna").orElseThrow().getId()))
+                .extracting(PayerContact::getName).containsExactly("Credentialing line");
+    }
+
+    @Test
+    void aPayerAlreadyInCredAppIsUsedRatherThanDuplicated() {
+        Payer existing = payers.save(new Payer("Aetna"));
+
+        ImportReport report = imports.importFile(new TestWorkbook()
+                .row(GROUPS, "Group ID", "G1", "Legal business name", "Lakeside Clinic LLC", "Tax ID", "123456789")
+                .row(PAYERS, "Payer ID", "PAY1", "Name", "AETNA")
+                .row(GROUP_PAYERS, "Group ID", "G1", "Payer ID", "PAY1")
+                .bytes());
+
+        assertThat(report.problems()).isEmpty();
+        assertThat(report.payers()).containsExactly("AETNA (PAY1, already in CredApp)");
+        assertThat(payers.count()).isEqualTo(1);
+        Group group = groups.findByTaxId("123456789").getFirst();
+        assertThat(enrollments.findForGroup(group.getId())).singleElement()
+                .satisfies(e -> assertThat(e.getPayer().getId()).isEqualTo(existing.getId()));
+    }
+
+    @Test
+    void payerMistakesArePinnedToTheirCell() {
+        ImportReport report = imports.preview(new TestWorkbook()
+                .row(GROUPS, "Group ID", "G1", "Legal business name", "Lakeside Clinic LLC", "Tax ID", "123456789")
+                .row(GROUPS, "Group ID", "G2", "Legal business name", "North Surgery PC", "Tax ID", "987654321")
+                .row(PROVIDERS, "Provider ID", "P1", "First name", "Priya", "Last name", "Shah")
+                .row(PAYERS, "Payer ID", "PAY1", "Name", "Aetna")
+                .row(PAYERS, "Payer ID", "PAY2", "Name", "Cigna")
+                .row(PAYERS, "Payer ID", "PAY3", "Name", "aetna")
+                .row(PAYER_CONTACTS, "Contact ID", "C1", "Payer ID", "PAY2", "Role", "Rep")
+                .row(PAYER_CONTACTS, "Contact ID", "C2", "Payer ID", "PAY1", "Group ID", "G2", "Role", "Rep")
+                .row(PAYER_CONTACTS, "Payer ID", "PAY1", "Group ID", "G1", "Provider ID", "P1", "Role", "Rep")
+                .row(GROUP_PAYERS, "Group ID", "G1", "Payer ID", "PAY1", "Account rep ID", "C1")
+                .row(GROUP_PAYERS, "Group ID", "G1", "Payer ID", "PAY2", "Status", "Active")
+                .row(GROUP_PAYERS, "Group ID", "G1", "Payer ID", "PAY2")
+                .row(GROUP_PAYERS, "Group ID", "G2", "Payer ID", "PAY1", "Account rep ID", "C2")
+                .row(GROUP_PAYERS, "Group ID", "G2", "Payer ID", "PAY2", "Account rep ID", "C9")
+                .row(PROVIDER_PAYERS, "Provider ID", "P1", "Payer ID", "PAY9", "Status", "Sometimes")
+                .bytes());
+
+        assertThat(report.problems()).extracting(ImportProblem::sheet, ImportProblem::row, ImportProblem::column,
+                        ImportProblem::message)
+                .contains(
+                        org.assertj.core.groups.Tuple.tuple("Payers", 4, "Name",
+                                "Same payer as row 2. List each payer once; other sheets point at its Payer ID."),
+                        org.assertj.core.groups.Tuple.tuple("Payer Contacts", 4, "Provider ID",
+                                "A contact can be tied to a group or a provider, not both"),
+                        org.assertj.core.groups.Tuple.tuple("Group Payers", 2, "Account rep ID",
+                                "C1 is a contact of PAY2, not PAY1"),
+                        org.assertj.core.groups.Tuple.tuple("Group Payers", 3, null,
+                                "Add the effective date for an active enrollment"),
+                        org.assertj.core.groups.Tuple.tuple("Group Payers", 4, "Payer ID",
+                                "G1 is already enrolled with PAY2 on row 3"),
+                        org.assertj.core.groups.Tuple.tuple("Group Payers", 6, "Account rep ID",
+                                "\"C9\" isn't a Contact ID on the Payer Contacts sheet"),
+                        org.assertj.core.groups.Tuple.tuple("Provider Payers", 2, "Payer ID",
+                                "\"PAY9\" isn't a Payer ID on the Payers sheet"),
+                        org.assertj.core.groups.Tuple.tuple("Provider Payers", 2, "Status",
+                                "\"Sometimes\" isn't one of: Not started, In progress, Submitted, Active, Denied, Terminated"));
+        // C2 is G2's own contact, so it's a fine rep for G2.
+        assertThat(report.problems()).noneMatch(p -> "Group Payers".equals(p.sheet()) && Integer.valueOf(5).equals(p.row()));
+        assertThat(payers.count()).isZero();
     }
 
     @Test
@@ -314,6 +413,19 @@ class OnboardingImportServiceTest {
                 .row(REFERENCES, "Provider ID", "P1", "Name", "Dr. Jane Kim", "Relationship", "Colleague",
                         "Email", "jane.kim@example.com")
                 .row(DISCLOSURES, "Provider ID", "P2", "Classification", "Misdemeanor", "Status", "Dismissed",
-                        "Incident date", "2010-01-01");
+                        "Incident date", "2010-01-01")
+                .row(PAYERS, "Payer ID", "PAY1", "Name", "Aetna", "Note", "Commercial")
+                .row(PAYERS, "Payer ID", "PAY2", "Name", "Cigna")
+                .row(PAYER_CONTACTS, "Contact ID", "C1", "Payer ID", "PAY1", "Group ID", "G1", "Name", "Jane Doe",
+                        "Role", "Account rep", "Phone", "800-555-0100", "Email", "jane.doe@aetna.test")
+                .row(PAYER_CONTACTS, "Payer ID", "PAY2", "Name", "Credentialing line", "Role", "Provider services")
+                .row(PAYER_CONTACTS, "Payer ID", "PAY1", "Provider ID", "P1", "Role", "Provider's analyst")
+                .row(GROUP_PAYERS, "Group ID", "G1", "Payer ID", "PAY1", "Status", "Participating",
+                        "Payer-assigned ID", "G-88213", "Effective date", "2024-01-01", "Account rep ID", "C1")
+                .row(GROUP_PAYERS, "Group ID", "G2", "Payer ID", "PAY2", "Status", "In progress",
+                        "Submitted date", "2025-08-15", "Notes", "Waiting on the W-9")
+                .row(PROVIDER_PAYERS, "Provider ID", "P1", "Payer ID", "PAY1", "Status", "Submitted",
+                        "Submitted date", "2025-09-02")
+                .row(PROVIDER_PAYERS, "Provider ID", "P2", "Payer ID", "PAY2");
     }
 }

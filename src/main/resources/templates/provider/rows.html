@@ -454,5 +454,14 @@
     </div>
 </div>
 
+<!-- ============ payer enrollment ============ -->
+<div class="row-card" data-row th:fragment="payer(p, row, live)">
+    <button class="button button--quiet button--small row-card__remove" type="button" data-remove-row
+            aria-label="Remove this row">Remove</button>
+    <div class="form-grid">
+        <th:block th:replace="~{fragments/enrollment :: fields(${p}, ${row}, ${live})}"></th:block>
+    </div>
+</div>
+
 </body>
 </html>
