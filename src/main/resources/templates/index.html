@@ -14,33 +14,163 @@
 <div th:replace="~{fragments/layout :: topbar(${user}, 'home')}"></div>
 
 <main class="page">
-    <div class="page__header">
-        <h1 th:text="'Welcome, ' + ${user.fullName}">Welcome</h1>
-        <p class="page__subtitle">Provider credentialing and license tracking.</p>
+
+    <div class="page__header page__header--row">
+        <div>
+            <h1 th:text="${firstName != null} ? 'Welcome back, ' + ${firstName} : 'Welcome back'">Welcome back, Lena</h1>
+            <p class="page__subtitle">
+                <strong th:if="${groupName != null}" th:text="${groupName}">Riverbend Family Health</strong>
+                <span th:if="${groupName != null}"> &middot; </span>
+                <span th:text="${today}">Wednesday, September 23</span>
+            </p>
+        </div>
+        <div class="row-actions" th:if="${canEdit and !counts.isEmpty()}">
+            <a class="button button--quiet" th:if="${isAdmin}" th:href="@{/admin/import}">Import spreadsheet</a>
+            <a class="button" th:href="@{/providers/new}">Add provider</a>
+        </div>
     </div>
 
-    <section class="card">
-        <h2>Your account</h2>
-        <dl class="detail-list">
-            <dt>Name</dt>
-            <dd th:text="${user.fullName}">Dev Admin</dd>
+    <a class="alert alert--info home-approvals" th:if="${isAdmin and viewingGroupName == null and pendingApprovals > 0}"
+       th:href="@{/admin/users}">
+        <span th:text="${pendingApprovals == 1} ? '1 person is waiting for you to approve their account.'
+                : ${pendingApprovals} + ' people are waiting for you to approve their accounts.'">2 people are waiting.</span>
+        <strong>Review</strong>
+    </a>
 
-            <dt>Email</dt>
-            <dd th:text="${user.email}">user@example.com</dd>
-
-            <dt>Role</dt>
-            <dd>
-                <span class="badge badge--active" th:text="${user.role.value}">admin</span>
-            </dd>
-
-            <dt>Status</dt>
-            <dd>
-                <span class="badge"
-                      th:classappend="${user.enabled} ? 'badge--active' : 'badge--alert'"
-                      th:text="${user.enabled} ? 'Enabled' : 'Disabled'">Enabled</span>
-            </dd>
-        </dl>
+    <!-- ============ an empty group: how to start ============ -->
+    <section class="card home-start" th:if="${counts.isEmpty()}">
+        <h2>Get started</h2>
+        <p class="home-start__intro">Nothing's on file yet. Here's the quickest way to get your practice in.</p>
+        <ol class="home-start__steps">
+            <li th:if="${isAdmin and viewingGroupName == null}">
+                <strong>Import a spreadsheet.</strong>
+                Download the template, fill in a sheet per kind of record, and upload it. Groups, owners,
+                providers, licenses and payers all come in at once.
+                <a th:href="@{/admin/import}">Go to import</a>
+            </li>
+            <li th:if="${canEdit}">
+                <strong th:text="${isAdmin} ? 'Or add them one at a time.' : 'Add your records.'">Or add them one at a time.</strong>
+                Start with a <a th:href="@{/groups/new}">practice group</a>, then its
+                <a th:href="@{/providers/new}">providers</a> and <a th:href="@{/payers/new}">payers</a>.
+            </li>
+            <li th:if="${isAdmin and viewingGroupName == null}">
+                <strong>Choose your warning windows.</strong>
+                Tracking flags what's expiring or stalled; <a th:href="@{/admin/tracking-settings}">set how far ahead</a>.
+            </li>
+            <li th:if="${isAdmin and viewingGroupName == null}">
+                <strong>Bring in your team.</strong>
+                Coordinators join with your group's code from the <a th:href="@{/admin/users}">Users page</a>.
+            </li>
+            <li th:unless="${canEdit}">
+                Once your team adds providers and groups, what's expiring and what needs doing shows up here.
+            </li>
+        </ol>
     </section>
+
+    <th:block th:unless="${counts.isEmpty()}">
+
+        <!-- ============ tracking at a glance ============ -->
+        <nav class="tracking-tiles" aria-label="Tracking">
+            <a th:each="entry : ${stateCounts}" class="tracking-tile"
+               th:classappend="|tracking-tile--${#strings.toLowerCase(entry.key.name())}|"
+               th:href="@{/tracking(state=${entry.key})}">
+                <span class="tracking-tile__count" th:text="${entry.value}">0</span>
+                <span class="tracking-tile__label" th:text="${entry.key.label}">Overdue</span>
+                <span class="tracking-tile__hint" th:switch="${entry.key.name()}">
+                    <th:block th:case="'OVERDUE'">Expired or past due</th:block>
+                    <th:block th:case="'DUE_SOON'" th:text="'Within ' + ${settings.urgentDays} + ' days'">Within 30 days</th:block>
+                    <th:block th:case="'STALLED'" th:text="'Waiting ' + ${settings.stalledDays} + '+ days'">Waiting 60+ days</th:block>
+                    <th:block th:case="*" th:text="'Within ' + ${settings.warningDays} + ' days'">Within 90 days</th:block>
+                </span>
+            </a>
+        </nav>
+
+        <div class="home-grid">
+            <div class="home-grid__column">
+                <!-- ============ what to do next ============ -->
+                <section class="card">
+                    <div class="attention__head">
+                        <h2>Needs attention</h2>
+                        <a class="attention__more" th:href="@{/tracking}"
+                           th:text="${attentionTotal > attention.size()} ? 'See all ' + ${attentionTotal} : 'Tracking'">See all</a>
+                    </div>
+                    <ul class="attention__list" th:unless="${attention.isEmpty()}">
+                        <li class="attention__item" th:each="item : ${attention}">
+                            <span class="badge" th:classappend="${item.state().badge}" th:text="${item.stateLabel()}">Expired</span>
+                            <span class="attention__text">
+                                <strong th:text="${item.kind().label}">License</strong>
+                                <span th:text="${item.what()}">OH MD license</span>
+                                &middot; <a th:href="@{${item.subject().path()}}" th:text="${item.subject().name()}">Shah, Priya</a>
+                            </span>
+                            <span class="attention__when" th:text="${item.when()}">7 days ago</span>
+                            <a class="button button--quiet button--small" th:if="${canEdit}"
+                               th:href="@{${item.editPath()}}">Update</a>
+                        </li>
+                    </ul>
+                    <div class="home-clear" th:if="${attention.isEmpty()}">
+                        <p class="empty__title">You're all caught up</p>
+                        <p class="empty__hint" th:text="${comingUp > 0}
+                                ? 'Nothing is overdue, due soon or stalled. ' + ${comingUp} + ' coming up in the next ' + ${settings.warningDays} + ' days.'
+                                : 'Nothing is overdue, due soon, stalled or coming up.'">Nothing is overdue or due soon.</p>
+                    </div>
+                </section>
+
+                <!-- ============ payer enrollments ============ -->
+                <section class="card">
+                    <div class="attention__head">
+                        <h2>Payer enrollments</h2>
+                        <a class="attention__more" th:href="@{/tracking(category='PAYERS')}">Payer tracking</a>
+                    </div>
+                    <th:block th:if="${enrollmentTotal > 0}">
+                        <div class="pipeline" role="img"
+                             th:attr="aria-label=${enrollmentTotal} + ' provider and group enrollments by status'">
+                            <span th:each="step : ${pipeline}" th:if="${step.count() > 0}"
+                                  class="pipeline__bar" th:classappend="|pipeline__bar--${step.status().value}|"
+                                  th:style="'flex-grow:' + ${step.count()}"
+                                  th:title="${step.status().label} + ': ' + ${step.count()}"></span>
+                        </div>
+                        <ul class="pipeline__legend">
+                            <li th:each="step : ${pipeline}" th:classappend="${step.count() == 0} ? 'pipeline__legend--none'">
+                                <span class="pipeline__dot" th:classappend="|pipeline__bar--${step.status().value}|"></span>
+                                <span th:text="${step.status().label}">Active</span>
+                                <strong th:text="${step.count()}">9</strong>
+                            </li>
+                        </ul>
+                        <p class="pipeline__note">Every provider and group enrollment, by where it stands.</p>
+                    </th:block>
+                    <p class="empty__hint" th:if="${enrollmentTotal == 0}">
+                        No enrollments yet. Add payers to a provider or group to follow their applications here.
+                    </p>
+                </section>
+            </div>
+
+            <div class="home-grid__column">
+                <!-- ============ what's on file ============ -->
+                <section class="card">
+                    <h2>On file</h2>
+                    <ul class="home-counts">
+                        <li><a th:href="@{/providers}"><span>Providers</span><strong th:text="${counts.providers()}">5</strong></a></li>
+                        <li><a th:href="@{/groups}"><span>Practice groups</span><strong th:text="${counts.groups()}">2</strong></a></li>
+                        <li><a th:href="@{/owners}"><span>Owners</span><strong th:text="${counts.owners()}">3</strong></a></li>
+                        <li><a th:href="@{/payers}"><span>Payers</span><strong th:text="${counts.payers()}">4</strong></a></li>
+                        <li><a th:href="@{/licenses}"><span>Licenses in use</span><strong th:text="${counts.licenses()}">7</strong></a></li>
+                    </ul>
+                </section>
+
+                <!-- ============ recently changed ============ -->
+                <section class="card">
+                    <h2>Recently updated</h2>
+                    <ul class="home-recent" th:unless="${recent.isEmpty()}">
+                        <li th:each="r : ${recent}">
+                            <a th:href="@{${r.path()}}" th:text="${r.name()}">Alvarez, Maria</a>
+                            <span th:text="(${r.kind() == 'provider'} ? 'Provider' : 'Group') + ' · ' + ${r.ago()}">Provider · 2 hours ago</span>
+                        </li>
+                    </ul>
+                </section>
+            </div>
+        </div>
+    </th:block>
+
 </main>
 
 <div th:replace="~{fragments/layout :: footer}"></div>

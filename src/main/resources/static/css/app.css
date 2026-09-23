@@ -2135,3 +2135,184 @@ a.topbar__user:hover,
         justify-self: start;
     }
 }
+
+/* ============ home dashboard ============ */
+
+.home-approvals {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--teal-900);
+}
+
+.home-approvals:hover strong {
+    text-decoration: underline;
+}
+
+/* Independent stacks keep a tall working list from leaving gaps between quick facts. */
+.home-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.home-grid__column {
+    display: grid;
+    gap: 1.25rem;
+    min-width: 0;
+}
+
+.home-grid > .card + .card,
+.home-grid__column > .card + .card {
+    margin-top: 0;
+}
+
+.home-counts,
+.home-recent {
+    margin: 0.5rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.home-counts a {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.55rem 0;
+    border-top: 1px solid var(--slate-200);
+    color: var(--slate-700);
+}
+
+.home-counts li:first-child a {
+    border-top: 0;
+}
+
+.home-counts a:hover span {
+    color: var(--teal-700);
+}
+
+.home-counts strong {
+    font-size: 1.15rem;
+    color: var(--slate-900);
+    font-variant-numeric: tabular-nums;
+}
+
+.home-recent li {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--slate-200);
+}
+
+.home-recent li:first-child {
+    border-top: 0;
+}
+
+.home-recent a {
+    font-weight: 600;
+}
+
+.home-recent span {
+    font-size: 0.825rem;
+    color: var(--slate-500);
+}
+
+.home-clear {
+    padding: 0.75rem 0 0.25rem;
+}
+
+/* Enrollments by status, as one bar split in proportion, with a legend. */
+.pipeline {
+    display: flex;
+    gap: 3px;
+    height: 14px;
+    margin: 0.75rem 0 0.85rem;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.pipeline__bar {
+    min-width: 6px;
+    background-color: var(--slate-300);
+}
+
+.pipeline__bar--not_started { background-color: var(--slate-300); }
+.pipeline__bar--in_progress { background-color: #e0b34a; }
+.pipeline__bar--submitted { background-color: var(--amber-700); }
+.pipeline__bar--active { background-color: var(--green-700); }
+.pipeline__bar--denied { background-color: var(--red-700); }
+.pipeline__bar--terminated { background-color: var(--slate-500); }
+
+.pipeline__legend {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.4rem 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.875rem;
+    color: var(--slate-700);
+}
+
+.pipeline__legend li {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.pipeline__legend strong {
+    margin-left: auto;
+    color: var(--slate-900);
+    font-variant-numeric: tabular-nums;
+}
+
+.pipeline__legend--none {
+    opacity: 0.55;
+}
+
+.pipeline__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex: none;
+}
+
+.pipeline__note {
+    margin: 0.85rem 0 0;
+    font-size: 0.825rem;
+    color: var(--slate-500);
+}
+
+.home-start {
+    border-left: 4px solid var(--teal-600);
+}
+
+.home-start__intro {
+    margin: 0 0 0.75rem;
+    color: var(--slate-700);
+}
+
+.home-start__steps {
+    margin: 0;
+    padding-left: 1.25rem;
+    line-height: 1.55;
+}
+
+.home-start__steps li + li {
+    margin-top: 0.6rem;
+}
+
+@media (max-width: 860px) {
+    .home-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .pipeline__legend {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
