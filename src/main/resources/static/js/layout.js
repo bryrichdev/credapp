@@ -10,6 +10,10 @@
  *    label, which the phone CSS shows beside the value; the first column becomes the
  *    card's title. Tables marked this way get table--stack, so without the script they
  *    keep their sideways scroll instead.
+ *
+ * 3. The sticky section nav on the long provider and group forms. It wraps to two rows
+ *    on a desktop, so its height isn't fixed; this keeps --section-nav-height in step
+ *    with it so a section jumped to lands just below it rather than underneath.
  */
 (function () {
     // ---------- menu ----------
@@ -81,4 +85,18 @@
     }
 
     document.querySelectorAll('table.table').forEach(label);
+
+    // ---------- section nav ----------
+
+    const sectionNav = document.querySelector('.section-nav');
+    if (sectionNav) {
+        const track = () => document.documentElement.style.setProperty(
+            '--section-nav-height', sectionNav.offsetHeight + 'px');
+        track();
+        if ('ResizeObserver' in window) {
+            new ResizeObserver(track).observe(sectionNav);
+        } else {
+            window.addEventListener('resize', track);
+        }
+    }
 })();

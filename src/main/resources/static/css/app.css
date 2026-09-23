@@ -1060,9 +1060,10 @@ input.field__input[type="date"] {
     color: var(--teal-700);
 }
 
-/* Keeps a section heading clear of the sticky nav when jumped to. */
+/* Keeps a section heading clear of the sticky nav when jumped to. layout.js measures
+   the nav, which wraps to two rows on wider screens; without the script, allow one row. */
 .form-section {
-    scroll-margin-top: 4.5rem;
+    scroll-margin-top: calc(var(--section-nav-height, 3.75rem) + 0.75rem);
 }
 
 .form-section__body {
