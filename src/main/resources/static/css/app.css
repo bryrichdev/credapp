@@ -452,6 +452,7 @@ input.field__input[type="date"] {
 
 .badge {
     display: inline-block;
+    white-space: nowrap;
     padding: 0.15rem 0.55rem;
     border-radius: 999px;
     font-size: 0.75rem;

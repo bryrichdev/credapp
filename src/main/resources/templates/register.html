@@ -15,6 +15,13 @@
     <h1 class="signin__title">Create account</h1>
     <p class="signin__hint">Start a user group or request to join your team.</p>
 
+    <div class="alert alert--info" th:if="${user != null}">
+        You're signed in as <strong th:text="${user.email}">you@example.com</strong>.
+        Creating an account here doesn't sign you out. <a th:href="@{/}">Back to CredCloud</a>
+    </div>
+    <div class="alert alert--error" th:if="${param.expired}">
+        That page had expired, so nothing was sent. Fill it in again.
+    </div>
     <form th:action="@{/register}" th:object="${form}" method="post">
         <div class="alert alert--error" th:if="${#fields.hasGlobalErrors()}">
             <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>

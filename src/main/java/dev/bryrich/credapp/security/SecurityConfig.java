@@ -3,6 +3,7 @@ package dev.bryrich.credapp.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import dev.bryrich.credapp.user.UserRepository;
+import dev.bryrich.credapp.usergroup.ViewedGroup;
 import org.springframework.http.HttpMethod;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
@@ -77,7 +78,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/login", "/register", "/css/**", "/js/**",
                                 "/favicon.ico", "/favicon.svg", "/apple-touch-icon.png").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/login", "/register").anonymous()
+                        // Open to everyone, signed in or not: signing in again switches accounts,
+                        // and registering never touches the account you're signed in with.
+                        .requestMatchers(HttpMethod.POST, "/login", "/register").permitAll()
                         .requestMatchers("/admin/**").hasAnyRole("SUPERUSER", "ADMIN")
                         // Reveals are reads with a server-generated audit entry, never record edits.
                         .requestMatchers(HttpMethod.POST, "/providers/{id}/ssn", "/owners/{id}/ssn",
@@ -91,8 +94,14 @@ public class SecurityConfig {
                 .addFilterAfter(new GroupViewFilter(), AccountStatusFilter.class)
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/", true)
+                        // Always land on home. Switching accounts also ends any group the previous
+                        // account was viewing, since the session carries over.
+                        .successHandler((request, response, authentication) -> {
+                            ViewedGroup.stop(request.getSession());
+                            response.sendRedirect(request.getContextPath() + "/");
+                        })
                         .permitAll())
+                .exceptionHandling(exceptions -> exceptions.accessDeniedHandler(new ExpiredFormHandler()))
                 .logout(logout -> logout.logoutSuccessUrl("/login?logout"))
                 .headers(headers -> headers
                         .addHeaderWriter(new NonceContentSecurityPolicyWriter())
