@@ -48,7 +48,7 @@
 
     <!-- ============ edit view ============ -->
     <form th:if="${canEdit and editing}"
-          id="payerEditForm"
+          id="payerEditForm" data-watch-changes
           th:action="@{/payers/{id}/edit(id=${payer.id})}"
           th:object="${form}"
           method="post">
@@ -123,7 +123,7 @@
                                th:href="@{/payers/{pid}/contacts/{cid}/edit(pid=${payer.id}, cid=${contact.id})}" th:if="${canEdit}">Edit</a>
                             <form th:action="@{/payers/{pid}/contacts/{cid}/delete(pid=${payer.id}, cid=${contact.id})}"
                                   method="post"
-                                  onsubmit="return confirm('Delete this contact?');">
+                                  data-confirm="Delete this contact?">
                                 <button class="button button--danger button--small" type="submit">Delete</button>
                             </form>
                         </div>
@@ -230,49 +230,14 @@
             <p class="empty__hint">This removes the payer and every contact recorded for it.</p>
         </div>
         <form th:action="@{/payers/{id}/delete(id=${payer.id})}" method="post"
-              onsubmit="return confirm('Delete this payer and all of its contacts? This cannot be undone.');">
+              data-confirm="Delete this payer and all of its contacts? This cannot be undone.">
             <button class="button button--danger" type="submit">Delete payer</button>
         </form>
     </section>
 
 </main>
 
-<script>
-    (function () {
-        const form = document.getElementById('payerEditForm');
-        const saveBar = document.getElementById('saveBar');
-        if (!form || !saveBar) {
-            return;
-        }
-
-        // Remember what every field looked like when the page loaded.
-        const fields = Array.from(form.querySelectorAll('input, select, textarea'));
-        const initial = new Map(fields.map(field => [field, field.value]));
-        let dirty = false;
-
-        function check() {
-            dirty = fields.some(field => field.value !== initial.get(field));
-            saveBar.hidden = !dirty;
-        }
-
-        fields.forEach(field => {
-            field.addEventListener('input', check);
-            field.addEventListener('change', check);
-        });
-
-        // Don't warn when the change is being saved on purpose.
-        form.addEventListener('submit', () => {
-            dirty = false;
-        });
-
-        window.addEventListener('beforeunload', event => {
-            if (dirty) {
-                event.preventDefault();
-                event.returnValue = '';
-            }
-        });
-    })();
-</script>
+<script th:src="@{/js/watch-changes.js}"></script>
 
 <div th:replace="~{fragments/layout :: footer}"></div>
 

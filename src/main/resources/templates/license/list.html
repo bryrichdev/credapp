@@ -97,7 +97,7 @@
                                th:href="@{/licenses/{lid}/edit(lid=${license.id})}" th:if="${canEdit}">Edit</a>
                             <form th:action="@{/licenses/{lid}/delete(lid=${license.id})}"
                                   method="post"
-                                  onsubmit="return confirm('Delete this license?');">
+                                  data-confirm="Delete this license?">
                                 <button class="button button--danger button--small" type="submit">Delete</button>
                             </form>
                         </div>

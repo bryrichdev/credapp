@@ -9,6 +9,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.util.UrlPathHelper;
@@ -19,6 +20,32 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 public class SecurityConfig {
 
     private static final String[] EDIT_ROLES = {"SUPERUSER", "ADMIN", "COORDINATOR"};
+
+    /**
+     * Only the app's own scripts, styles, images and fonts load, and forms post only back to
+     * the app or to Cloudflare Access (whose sign-in a protected page redirects to; browsers
+     * apply form-action to redirects too). Inline style attributes are allowed for the few
+     * computed widths; inline scripts and event handlers are not, so templates wire behaviour
+     * through data- attributes and the files in /js. The one exception is scripts carrying
+     * this response's nonce, which only Cloudflare adds (see NonceContentSecurityPolicyWriter).
+     */
+    static String contentSecurityPolicy(String nonce) {
+        return String.join("; ",
+                "default-src 'self'",
+                "script-src 'self' 'nonce-" + nonce + "'",
+                "style-src 'self'",
+                "style-src-attr 'unsafe-inline'",
+                "img-src 'self' data:",
+                "font-src 'self'",
+                "connect-src 'self'",
+                "form-action 'self' https://*.cloudflareaccess.com",
+                "frame-ancestors 'none'",
+                "base-uri 'self'",
+                "object-src 'none'");
+    }
+
+    static final String PERMISSIONS_POLICY =
+            "camera=(), microphone=(), geolocation=(), payment=(), usb=()";
     private static final RequestMatcher WRITE_REQUEST = request ->
             !java.util.Set.of("GET", "HEAD", "OPTIONS").contains(request.getMethod());
     private static final RequestMatcher EDIT_PAGE = request ->
@@ -66,7 +93,17 @@ public class SecurityConfig {
                         .loginPage("/login")
                         .defaultSuccessUrl("/", true)
                         .permitAll())
-                .logout(logout -> logout.logoutSuccessUrl("/login?logout"));
+                .logout(logout -> logout.logoutSuccessUrl("/login?logout"))
+                .headers(headers -> headers
+                        .addHeaderWriter(new NonceContentSecurityPolicyWriter())
+                        .referrerPolicy(referrer -> referrer.policy(
+                                ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                        .permissionsPolicyHeader(permissions -> permissions.policy(PERMISSIONS_POLICY))
+                        .frameOptions(frame -> frame.deny())
+                        // Sent only over HTTPS, which behind the tunnel is every request.
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .includeSubDomains(true)
+                                .maxAgeInSeconds(31_536_000)));
         return http.build();
     }
 }

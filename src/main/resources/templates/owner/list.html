@@ -70,7 +70,7 @@
                             <a class="button button--quiet button--small"
                                th:href="@{/owners/{id}(id=${owner.id}, edit=1)}" th:if="${canEdit}">Edit</a>
                             <form th:action="@{/owners/{id}/delete(id=${owner.id})}" method="post"
-                                  onsubmit="return confirm('Delete this owner and remove them from every group?');">
+                                  data-confirm="Delete this owner and remove them from every group?">
                                 <button class="button button--danger button--small" type="submit">Delete</button>
                             </form>
                         </div>

@@ -54,19 +54,12 @@ public class OwnerWebController {
     public Map<String, String> revealSsn(@AuthenticationPrincipal CredAppUserDetails principal,
                                          @PathVariable Long id,
                                          HttpServletRequest request) {
-        String ssn = ssnAccessService.revealOwnerSsn(principal.getUser(), id, clientIp(request));
+        String ssn = ssnAccessService.revealOwnerSsn(principal.getUser(), id, request.getRemoteAddr());
         Map<String, String> body = new HashMap<>();
         body.put("ssn", ssn);
         return body;
     }
 
-    private static String clientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
-    }
 
     /** Blank text inputs submit "" — store null instead. */
     @InitBinder

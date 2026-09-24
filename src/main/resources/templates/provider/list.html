@@ -80,7 +80,7 @@
                             <a class="button button--quiet button--small"
                                th:href="@{/providers/{id}/edit(id=${provider.id})}" th:if="${canEdit}">Edit</a>
                             <form th:action="@{/providers/{id}/delete(id=${provider.id})}" method="post"
-                                  onsubmit="return confirm('Delete this provider and all of their licenses?');">
+                                  data-confirm="Delete this provider and all of their licenses?">
                                 <button class="button button--danger button--small" type="submit">Delete</button>
                             </form>
                         </div>

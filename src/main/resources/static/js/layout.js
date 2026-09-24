@@ -14,6 +14,10 @@
  * 3. The sticky section nav on the long provider and group forms. It wraps to two rows
  *    on a desktop, so its height isn't fixed; this keeps --section-nav-height in step
  *    with it so a section jumped to lands just below it rather than underneath.
+ *
+ * 4. Forms marked data-confirm ask before submitting (deletes), and selects marked
+ *    data-autosubmit submit their form on change. These replace inline onsubmit and
+ *    onchange handlers, which the Content-Security-Policy doesn't allow.
  */
 (function () {
     // ---------- menu ----------
@@ -99,4 +103,24 @@
             window.addEventListener('resize', track);
         }
     }
+
+    // ---------- confirmations and auto-submit ----------
+
+    document.addEventListener('submit', event => {
+        const message = event.target.getAttribute && event.target.getAttribute('data-confirm');
+        if (message && !window.confirm(message)) {
+            event.preventDefault();
+        }
+    });
+
+    document.addEventListener('change', event => {
+        const field = event.target;
+        if (field.hasAttribute && field.hasAttribute('data-autosubmit') && field.form) {
+            if (typeof field.form.requestSubmit === 'function') {
+                field.form.requestSubmit();
+            } else {
+                field.form.submit();
+            }
+        }
+    });
 })();

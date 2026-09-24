@@ -150,7 +150,7 @@
                         <!-- Promote or demote in place. Only the roles this account may hand out are listed. -->
                         <form class="row-actions row-actions--start" th:if="${manageable and approved}"
                               th:action="@{/admin/users/{id}/role(id=${account.id})}" method="post">
-                            <select class="field__input field__input--small" name="role" onchange="this.form.submit()">
+                            <select class="field__input field__input--small" name="role" data-autosubmit>
                                 <option th:each="option : ${user.role.assignableRoles()}"
                                         th:value="${option}"
                                         th:text="${option.label}"
@@ -188,7 +188,7 @@
 
                             <form th:if="${manageable}"
                                   th:action="@{/admin/users/{id}/delete(id=${account.id})}" method="post"
-                                  onsubmit="return confirm('Delete this account? They will lose access immediately.');">
+                                  data-confirm="Delete this account? They will lose access immediately.">
                                 <button class="button button--danger button--small" type="submit">Delete</button>
                             </form>
                         </div>

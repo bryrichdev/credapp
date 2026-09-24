@@ -8,6 +8,9 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
       SERVER_FORWARD_HEADERS_STRATEGY: framework
+      # Cloudflare's tunnel is the only way in (no published ports), so its CF-Connecting-IP
+      # header is the visitor's real address. Never enable this if the port is published.
+      CREDAPP_CLOUDFLARE_TRUST_CLIENT_IP: "true"
       DB_HOST: db
       DB_NAME: ${DB_NAME:-credapp}
       DB_USERNAME: ${DB_USERNAME:-credapp}

@@ -67,7 +67,7 @@
 
     <!-- ============ edit view ============ -->
     <form th:if="${canEdit and editing}"
-          id="ownerEditForm"
+          id="ownerEditForm" data-watch-changes
           th:action="@{/owners/{id}/edit(id=${owner.id})}"
           th:object="${form}"
           method="post">
@@ -182,7 +182,7 @@
                                th:href="@{/groups/{gid}/edit(gid=${stake.group.id})} + '#owners'" th:if="${canEdit}">Edit</a>
                             <form th:action="@{/owners/{oid}/groups/{gid}/delete(oid=${owner.id}, gid=${stake.group.id})}"
                                   method="post"
-                                  onsubmit="return confirm('Remove this owner from the group? Their relationships there go too.');">
+                                  data-confirm="Remove this owner from the group? Their relationships there go too.">
                                 <button class="button button--danger button--small" type="submit">Remove</button>
                             </form>
                         </div>
@@ -233,49 +233,14 @@
             </p>
         </div>
         <form th:action="@{/owners/{id}/delete(id=${owner.id})}" method="post"
-              onsubmit="return confirm('Delete this owner? This cannot be undone.');">
+              data-confirm="Delete this owner? This cannot be undone.">
             <button class="button button--danger" type="submit">Delete owner</button>
         </form>
     </section>
 
 </main>
 
-<script>
-    (function () {
-        const form = document.getElementById('ownerEditForm');
-        const saveBar = document.getElementById('saveBar');
-        if (!form || !saveBar) {
-            return;
-        }
-
-        // Remember what every field looked like when the page loaded.
-        const fields = Array.from(form.querySelectorAll('input, select, textarea'));
-        const initial = new Map(fields.map(field => [field, field.value]));
-        let dirty = false;
-
-        function check() {
-            dirty = fields.some(field => field.value !== initial.get(field));
-            saveBar.hidden = !dirty;
-        }
-
-        fields.forEach(field => {
-            field.addEventListener('input', check);
-            field.addEventListener('change', check);
-        });
-
-        // Don't warn when the change is being saved on purpose.
-        form.addEventListener('submit', () => {
-            dirty = false;
-        });
-
-        window.addEventListener('beforeunload', event => {
-            if (dirty) {
-                event.preventDefault();
-                event.returnValue = '';
-            }
-        });
-    })();
-</script>
+<script th:src="@{/js/watch-changes.js}"></script>
 
 <script th:src="@{/js/ssn-reveal.js}"></script>
 

@@ -346,7 +346,7 @@
             </p>
         </div>
         <form th:action="@{/groups/{id}/delete(id=${group.id})}" method="post"
-              onsubmit="return confirm('Delete this group? This cannot be undone.');">
+              data-confirm="Delete this group? This cannot be undone.">
             <button class="button button--danger" type="submit">Delete group</button>
         </form>
     </section>

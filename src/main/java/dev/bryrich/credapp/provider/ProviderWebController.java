@@ -127,19 +127,12 @@ public class ProviderWebController {
     public Map<String, String> revealSsn(@AuthenticationPrincipal CredAppUserDetails principal,
                                          @PathVariable Long id,
                                          HttpServletRequest request) {
-        String ssn = ssnAccessService.revealProviderSsn(principal.getUser(), id, clientIp(request));
+        String ssn = ssnAccessService.revealProviderSsn(principal.getUser(), id, request.getRemoteAddr());
         Map<String, String> body = new HashMap<>();
         body.put("ssn", ssn);
         return body;
     }
 
-    private static String clientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
-    }
 
     @PostMapping("/{id}/caqh-password")
     @ResponseBody

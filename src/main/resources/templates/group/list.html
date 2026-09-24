@@ -77,7 +77,7 @@
                             <a class="button button--quiet button--small"
                                th:href="@{/groups/{id}/edit(id=${group.id})}" th:if="${canEdit}">Edit</a>
                             <form th:action="@{/groups/{id}/delete(id=${group.id})}" method="post"
-                                  onsubmit="return confirm('Delete this group, its locations and its ownership records?');">
+                                  data-confirm="Delete this group, its locations and its ownership records?">
                                 <button class="button button--danger button--small" type="submit">Delete</button>
                             </form>
                         </div>

@@ -6,6 +6,7 @@ import dev.bryrich.credapp.user.UserManagementDeniedException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -54,6 +55,23 @@ public class UserGroupViewController {
                     "You're viewing " + group.getName() + " as its admin sees it. Nothing can be changed here.");
         }
         return destination;
+    }
+
+    /**
+     * Cloudflare Access guards everything under /admin/user-groups. A form posted there before
+     * you've signed in to Access is sent to its sign-in and comes back as a plain GET, with the
+     * post itself dropped; so these send you back to the Users page to choose again. Visiting
+     * /admin/user-groups directly is also a way to sign in to Access ahead of time.
+     */
+    @GetMapping({"", "/", "/{id}/view", "/view/exit"})
+    public String afterAccessSignIn(@AuthenticationPrincipal CredAppUserDetails principal,
+                                    RedirectAttributes redirectAttributes) {
+        if (principal.getUser().getRole() != Role.SUPERUSER) {
+            throw new UserManagementDeniedException("Only a superuser can manage other user groups");
+        }
+        redirectAttributes.addFlashAttribute("message",
+                "Verified with Cloudflare Access. Choose the group action again to carry on.");
+        return "redirect:/admin/users";
     }
 
     @PostMapping("/view/exit")
