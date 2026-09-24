@@ -1,0 +1,23 @@
+name: Promote to production
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Commit to deploy. Leave empty for whatever staging is running."
+        required: false
+
+concurrency: deploy-prod
+
+jobs:
+  deploy-prod:
+    runs-on: [self-hosted, credcloud]
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Deploy to production
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          TAG="${TAG:-$(cat "$HOME/credcloud/staging/deployed")}"
+          bash deploy/deploy.sh prod "$TAG"

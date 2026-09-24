@@ -31,7 +31,4 @@ jobs:
         run: docker build -t "credcloud:${GITHUB_SHA::7}" .
 
       - name: Deploy to staging
-        run: |
-          APP_TAG="${GITHUB_SHA::7}" docker compose -f deploy/compose.yml -p credcloud-staging \
-            --env-file "$HOME/credcloud/staging/.env" up -d --wait --wait-timeout 180
-          echo "${GITHUB_SHA::7}" > "$HOME/credcloud/staging/deployed"
+        run: bash deploy/deploy.sh staging "${GITHUB_SHA::7}"
