@@ -38,3 +38,29 @@ resource "cloudflare_zero_trust_access_application" "superuser_pages" {
     precedence = 1
   }]
 }
+
+locals {
+  staging_hostname = "staging.${var.hostname}"
+}
+
+# All of staging sits behind Access: only superuser_emails get in, with a one-time code.
+resource "cloudflare_zero_trust_access_application" "staging" {
+  account_id = var.account_id
+  name       = "CredCloud staging"
+  type       = "self_hosted"
+  domain     = local.staging_hostname
+  destinations = [{
+    type = "public"
+    uri  = local.staging_hostname
+  }]
+
+  session_duration           = "24h"
+  app_launcher_visible       = false
+  http_only_cookie_attribute = true
+  same_site_cookie_attribute = "lax"
+
+  policies = [{
+    id         = cloudflare_zero_trust_access_policy.superusers.id
+    precedence = 1
+  }]
+}
