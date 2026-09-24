@@ -15,6 +15,11 @@ RUN --mount=type=cache,target=/root/.m2 \
 FROM eclipse-temurin:25-jre
 WORKDIR /app
 
+# curl for the container health check (deploy/compose.yml)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN groupadd --system app && useradd --system --gid app --uid 10001 app
 
 COPY --from=build /workspace/target/app.jar app.jar

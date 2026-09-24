@@ -1,0 +1,52 @@
+# Staging and production. Each is its own compose project with its own .env:
+#   APP_TAG=<commit> docker compose -f deploy/compose.yml -p credcloud-staging --env-file ~/credcloud/staging/.env up -d
+# No ports are published: the tunnel is the only way in.
+services:
+  app:
+    image: credcloud:${APP_TAG:?set APP_TAG to the commit to run}
+    environment:
+      SERVER_FORWARD_HEADERS_STRATEGY: framework
+      CREDAPP_CLOUDFLARE_TRUST_CLIENT_IP: "true"
+      DB_HOST: db
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      CREDAPP_SSN_KEY: ${CREDAPP_SSN_KEY}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  data:
