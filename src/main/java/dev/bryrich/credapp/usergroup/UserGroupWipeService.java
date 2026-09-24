@@ -128,7 +128,8 @@ public class UserGroupWipeService {
         return before;
     }
 
-    private Contents count(Long userGroupId) {
+    /** Counts in the caller's transaction, so a delete can count after taking its lock. */
+    Contents count(Long userGroupId) {
         List<Count> records = new ArrayList<>();
         long total = 0;
         for (var table : WIPED.entrySet()) {

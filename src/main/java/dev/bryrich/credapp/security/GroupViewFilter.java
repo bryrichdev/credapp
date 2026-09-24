@@ -33,8 +33,8 @@ public class GroupViewFilter extends OncePerRequestFilter {
                     + "|providers/\\d+/caqh-password"
                     // A superuser onboarding a practice imports into the group they're viewing.
                     + "|admin/import/(preview|confirm|cancel)"
-                    // A wipe names its group in the URL and is confirmed with a password.
-                    + "|admin/user-groups/\\d+/wipe"
+                    // A wipe or delete names its group in the URL and is confirmed with a password.
+                    + "|admin/user-groups/\\d+/(wipe|delete)"
                     // Your own account isn't the viewed group's data.
                     + "|account)$");
     private static final Pattern READABLE_PAGE = Pattern.compile("^(/admin)?/[a-z-]+(/\\d+)?$");

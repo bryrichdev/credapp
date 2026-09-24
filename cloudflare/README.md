@@ -27,7 +27,7 @@ normally takes 2 or 3 requests.
 
 **Cloudflare Access** (`access.tf`): a second sign-in, with a one-time code sent by email, in
 front of `/admin/user-groups/*`. Those are the superuser-only pages: view another group as
-admin, import into it, and wipe it. Only `superuser_emails` get through. Practice users never
+admin, import into it, wipe it and delete it. Only `superuser_emails` get through. Practice users never
 reach these paths, so nothing changes for them. After signing in to Access, a superuser is sent
 back to the Users page with a note to choose the action again, because Access can't replay the
 original click.

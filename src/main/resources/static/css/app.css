@@ -1974,6 +1974,49 @@ a.topbar__user:hover,
     border-top: 0;
 }
 
+/* ============ delete a user group ============ */
+
+.delete-group__none,
+.delete-group__logs {
+    margin: 0 0 16px;
+    color: var(--slate-700);
+}
+
+.delete-group__accounts {
+    margin: 0 0 16px;
+}
+
+.delete-group__accounts h3 {
+    margin: 0 0 8px;
+    font-size: 0.95rem;
+}
+
+.delete-group__accounts ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: 1px solid var(--slate-200);
+    border-radius: var(--radius);
+}
+
+.delete-group__accounts li {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 4px 12px;
+    padding: 8px 12px;
+}
+
+.delete-group__accounts li + li {
+    border-top: 1px solid var(--slate-200);
+}
+
+.delete-group__meta {
+    color: var(--slate-500);
+    font-size: 0.85rem;
+    overflow-wrap: anywhere;
+}
+
 /* ============ tracking ============ */
 
 /* The count beside the Tracking link: things needing doing now. */
