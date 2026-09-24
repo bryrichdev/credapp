@@ -86,6 +86,8 @@
                             </form>
                             <a class="button button--danger button--small"
                                th:href="@{/admin/user-groups/{id}/wipe(id=${group.id})}">Wipe data</a>
+                            <a th:unless="${own}" class="button button--danger button--small"
+                               th:href="@{/admin/user-groups/{id}/delete(id=${group.id})}">Delete group</a>
                         </div>
                     </td>
                 </tr>

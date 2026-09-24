@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Delete user group &middot; CredCloud</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any">
+    <link rel="icon" th:href="@{/favicon.svg}" type="image/svg+xml">
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'users')}"></div>
+
+<main class="page page--narrow" th:with="contents=${preview.contents()}, accounts=${preview.accounts()}">
+
+    <div class="page__header">
+        <h1>Delete user group</h1>
+        <p class="page__subtitle"><strong th:text="${deleteGroup.name}">Lakeside Clinic</strong></p>
+    </div>
+
+    <section class="card" th:unless="${preview.allowed()}">
+        <h2>This group can't be deleted</h2>
+        <p th:text="${preview.refusal()}">Reason</p>
+        <div class="form-actions">
+            <a class="button button--quiet" th:href="@{/admin/users(group=${deleteGroup.id})}">Its accounts</a>
+            <a class="button button--quiet" th:href="@{/admin/users}">Back to users</a>
+        </div>
+    </section>
+
+    <section class="card import-result import-result--problems" th:if="${preview.allowed()}">
+        <div class="import-result__head">
+            <h2>This deletes the whole group</h2>
+            <p>
+                <strong th:text="${deleteGroup.name}">Lakeside Clinic</strong>, its join code, its data and every
+                account in it are deleted for good, and those accounts are signed out. There's no undo.
+                To empty the group but keep its accounts,
+                <a th:href="@{/admin/user-groups/{id}/wipe(id=${deleteGroup.id})}">wipe its data</a> instead.
+            </p>
+        </div>
+
+        <dl class="import-stats" th:unless="${contents.isEmpty()}">
+            <div th:each="count : ${contents.records()}">
+                <dt th:text="${count.label()}">Providers</dt>
+                <dd th:text="${count.rows()}">0</dd>
+            </div>
+        </dl>
+        <p class="delete-group__none" th:if="${contents.isEmpty()}">
+            It has no providers, groups, owners or payers.
+        </p>
+
+        <div class="delete-group__accounts" th:unless="${accounts.isEmpty()}">
+            <h3 th:text="${accounts.size() == 1} ? '1 account' : ${accounts.size()} + ' accounts'">3 accounts</h3>
+            <ul>
+                <li th:each="account : ${accounts}">
+                    <span th:text="${account.fullName() != null and !#strings.isEmpty(account.fullName())} ? ${account.fullName()} : ${account.email()}">Name</span>
+                    <span class="delete-group__meta"
+                          th:text="${account.email()} + ' · ' + ${account.role().label}">email · Admin</span>
+                </li>
+            </ul>
+        </div>
+
+        <p class="delete-group__logs">SSN and CAQH password access logs and the group's tracking settings go too.</p>
+
+        <form method="post" th:action="@{/admin/user-groups/{id}/delete(id=${deleteGroup.id})}" th:object="${form}"
+              class="wipe-form" autocomplete="off">
+            <div class="form-grid">
+                <label class="field">
+                    <span class="field__label">Type <strong th:text="${deleteGroup.name}">Lakeside Clinic</strong> to confirm</span>
+                    <input class="field__input" type="text" th:field="*{confirmName}" required spellcheck="false"
+                           th:classappend="${#fields.hasErrors('confirmName')} ? 'field__input--invalid'">
+                    <span class="field__error" th:errors="*{confirmName}" th:if="${#fields.hasErrors('confirmName')}"></span>
+                </label>
+                <label class="field">
+                    <span class="field__label">Your current password</span>
+                    <input class="field__input" type="password" th:field="*{currentPassword}" required
+                           autocomplete="current-password"
+                           th:classappend="${#fields.hasErrors('currentPassword')} ? 'field__input--invalid'">
+                    <span class="field__error" th:errors="*{currentPassword}" th:if="${#fields.hasErrors('currentPassword')}"></span>
+                </label>
+            </div>
+            <div class="form-actions">
+                <button class="button button--destructive" type="submit">Delete group</button>
+                <a class="button button--quiet" th:href="@{/admin/users}">Cancel</a>
+            </div>
+        </form>
+    </section>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+</body>
+</html>
