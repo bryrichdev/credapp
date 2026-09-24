@@ -20,6 +20,13 @@
     <h1 class="signin__title">Sign in</h1>
     <p class="signin__hint">Credentialing workspace</p>
 
+    <div class="alert alert--info" th:if="${user != null}">
+        You're signed in as <strong th:text="${user.email}">you@example.com</strong>.
+        Signing in here switches to the other account. <a th:href="@{/}">Back to CredCloud</a>
+    </div>
+    <div class="alert alert--error" th:if="${param.expired}">
+        That page had expired, so nothing was sent. Sign in again.
+    </div>
     <div class="alert alert--error" th:if="${param.error}">
         Unable to sign in. Check your email and password. New coordinators must be approved by their group's admin.
     </div>

@@ -130,8 +130,9 @@ class AccountAccessIntegrationTest {
     @Test
     void invalidRegistrationCannotMintPrivilegedUsersOrOrphanGroups() throws Exception {
         long groupCount = userGroups.count();
+        // Without a CSRF token nothing is created; the form comes back as expired.
         mvc.perform(signup(email(), "ADMIN").param("groupName", "No CSRF"))
-                .andExpect(status().isForbidden());
+                .andExpect(redirectedUrl("/register?expired"));
         for (String role : List.of("SUPERUSER", "READONLY", "not-a-role")) {
             mvc.perform(signup(email(), role).with(csrf())).andExpect(status().isOk())
                     .andExpect(model().attributeHasFieldErrors("form", "role"));
@@ -231,7 +232,7 @@ class AccountAccessIntegrationTest {
             mvc.perform(get(path).with(user(new CredAppUserDetails(reader)))).andExpect(status().isForbidden());
         }
         for (String path : List.of("/owners/1/groups", "/owners/1/groups/1/delete", "/payers/1/contacts",
-                "/payers/1/contacts/1/edit", "/payers/1/contacts/1/delete", "/admin/users", "/register")) {
+                "/payers/1/contacts/1/edit", "/payers/1/contacts/1/delete", "/admin/users")) {
             mvc.perform(post(path).with(csrf()).with(user(new CredAppUserDetails(reader)))).andExpect(status().isForbidden());
         }
         for (String path : List.of("/api/providers", "/api/providers/" + data.providerId() + "/licenses", "/api/users")) {

@@ -35,8 +35,8 @@ public class GroupViewFilter extends OncePerRequestFilter {
                     + "|admin/import/(preview|confirm|cancel)"
                     // A wipe or delete names its group in the URL and is confirmed with a password.
                     + "|admin/user-groups/\\d+/(wipe|delete)"
-                    // Your own account isn't the viewed group's data.
-                    + "|account)$");
+                    // Your own account isn't the viewed group's data, and nor is a new one.
+                    + "|account|register)$");
     private static final Pattern READABLE_PAGE = Pattern.compile("^(/admin)?/[a-z-]+(/\\d+)?$");
     private static final Pattern EDIT_SCREEN = Pattern.compile("^(.*?)/(new|edit)(/.*)?$");
 
