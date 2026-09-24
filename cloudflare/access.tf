@@ -1,0 +1,40 @@
+# Cloudflare Access puts a second sign-in (a one-time code sent by email) in front of the
+# superuser-only pages: viewing another user group, importing into it, and wiping it.
+# Practice users never hit these paths, so they're unaffected. Free for up to 50 users.
+
+resource "cloudflare_zero_trust_access_identity_provider" "one_time_pin" {
+  count = var.create_one_time_pin_login ? 1 : 0
+
+  account_id = var.account_id
+  name       = "One-time PIN"
+  type       = "onetimepin"
+  config     = {}
+}
+
+resource "cloudflare_zero_trust_access_policy" "superusers" {
+  account_id = var.account_id
+  name       = "CredCloud superusers"
+  decision   = "allow"
+  include    = [for email in var.superuser_emails : { email = { email = email } }]
+}
+
+resource "cloudflare_zero_trust_access_application" "superuser_pages" {
+  account_id = var.account_id
+  name       = "CredCloud superuser pages"
+  type       = "self_hosted"
+  domain     = "${var.hostname}/admin/user-groups"
+  destinations = [{
+    type = "public"
+    uri  = "${var.hostname}/admin/user-groups"
+  }]
+
+  session_duration           = var.access_session_duration
+  app_launcher_visible       = false
+  http_only_cookie_attribute = true
+  same_site_cookie_attribute = "lax"
+
+  policies = [{
+    id         = cloudflare_zero_trust_access_policy.superusers.id
+    precedence = 1
+  }]
+}

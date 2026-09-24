@@ -1,0 +1,12 @@
+# Copy to terraform.tfvars (git-ignored) and fill in.
+account_id       = ""
+zone_id          = ""
+superuser_emails = [""]
+
+# Optional:
+# sign_in_countries         = ["US"]
+# password_requests_per_10s = 5
+# access_session_duration   = "12h"
+
+# True unless Zero Trust > Integrations > Identity providers already lists "One-time PIN".
+create_one_time_pin_login = true
