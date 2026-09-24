@@ -101,7 +101,7 @@ class TrackingServiceTest {
         assertThat(items.get(3).when()).isEqualTo("today");
         assertThat(items.get(3).editPath()).endsWith("/edit#privileges");
         assertThat(items.get(5).editPath()).endsWith("/edit#caqh");
-        assertThat(items.get(0).editPath()).endsWith("/edit#details");
+        assertThat(items.get(0).editPath()).endsWith("/edit#caqh");
         assertThat(items.get(4).what()).isEqualTo("Humana");
         assertThat(items.get(8).what()).isEqualTo("Cigna, submitted");
         assertThat(items.get(8).when()).isEqualTo("waiting 92 days");
