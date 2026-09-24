@@ -17,4 +17,4 @@ jobs:
           cache: maven
       - run: ./mvnw -B verify
         env:
-          CREDAPP_SSN_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY
+          CREDAPP_SSN_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
