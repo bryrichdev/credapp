@@ -10,9 +10,9 @@ public enum TrackedKind {
     CERTIFICATION("Board certification", TrackedCategory.CERTIFICATIONS, Timing.EXPIRES, "certifications"),
     MALPRACTICE_POLICY("Malpractice policy", TrackedCategory.MALPRACTICE, Timing.EXPIRES, "policies"),
     REAPPOINTMENT("Hospital reappointment", TrackedCategory.HOSPITAL, Timing.DUE, "privileges"),
-    FLU_SHOT("Flu shot", TrackedCategory.HEALTH, Timing.DUE, "details"),
-    TB_TEST("TB test", TrackedCategory.HEALTH, Timing.DUE, "details"),
-    CAQH_ATTESTATION("CAQH attestation", TrackedCategory.CAQH, Timing.DUE, "details"),
+    FLU_SHOT("Flu shot", TrackedCategory.HEALTH, Timing.DUE, "caqh"),
+    TB_TEST("TB test", TrackedCategory.HEALTH, Timing.DUE, "caqh"),
+    CAQH_ATTESTATION("CAQH attestation", TrackedCategory.CAQH, Timing.DUE, "caqh"),
     RECREDENTIAL("Recredentialing", TrackedCategory.PAYERS, Timing.DUE, "payers"),
     FOLLOW_UP("Payer follow-up", TrackedCategory.PAYERS, Timing.DUE, "payers"),
     STALLED("Stalled application", TrackedCategory.PAYERS, Timing.WAITING, "payers");
