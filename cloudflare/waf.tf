@@ -1,6 +1,6 @@
 locals {
-  sign_in_paths  = "{\"/login\" \"/register\"}"
-  password_paths = "{\"/login\" \"/register\" \"/account\"}"
+  sign_in_paths  = "{\"/login\" \"/register\" \"/password-reset\"}"
+  password_paths = "{\"/login\" \"/register\" \"/account\" \"/password-reset\"}"
   countries      = join(" ", [for c in var.sign_in_countries : "\"${c}\""])
 }
 
