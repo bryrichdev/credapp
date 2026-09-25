@@ -12,6 +12,14 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       CREDAPP_SSN_KEY: ${CREDAPP_SSN_KEY}
+      # Links in emails start with this, e.g. https://staging.credcloud.app
+      CREDAPP_BASE_URL: ${CREDAPP_BASE_URL:?set CREDAPP_BASE_URL in this environment's .env}
+      # Outgoing email. Leave MAIL_HOST unset and emails are only logged.
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
       interval: 10s

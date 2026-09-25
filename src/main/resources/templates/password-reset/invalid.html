@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Link expired &middot; CredCloud</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any">
+    <link rel="icon" th:href="@{/favicon.svg}" type="image/svg+xml">
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}">
+</head>
+<body class="signin">
+
+<main class="signin__card">
+    <div class="signin__brand">
+        <span class="topbar__mark">CC</span>
+        <span class="topbar__brand">CredCloud</span>
+    </div>
+
+    <h1 class="signin__title">This link doesn't work</h1>
+    <p class="signin__hint">
+        It's already been used, it's expired, or a newer link replaced it. Reset links work once, and
+        only for a limited time.
+    </p>
+
+    <a class="button button--block" th:href="@{/password-reset}">Ask for a new link</a>
+    <p class="signin__hint signin__footer"><a th:href="@{/login}">Back to sign in</a></p>
+</main>
+
+</body>
+</html>

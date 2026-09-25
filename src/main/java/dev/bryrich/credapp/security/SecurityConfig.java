@@ -81,6 +81,7 @@ public class SecurityConfig {
                         // Open to everyone, signed in or not: signing in again switches accounts,
                         // and registering never touches the account you're signed in with.
                         .requestMatchers(HttpMethod.POST, "/login", "/register").permitAll()
+                        .requestMatchers("/password-reset", "/password-reset/*").permitAll()
                         .requestMatchers("/admin/**").hasAnyRole("SUPERUSER", "ADMIN")
                         // Reveals are reads with a server-generated audit entry, never record edits.
                         .requestMatchers(HttpMethod.POST, "/providers/{id}/ssn", "/owners/{id}/ssn",

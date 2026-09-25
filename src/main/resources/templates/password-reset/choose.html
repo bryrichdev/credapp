@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Choose a new password &middot; CredCloud</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any">
+    <link rel="icon" th:href="@{/favicon.svg}" type="image/svg+xml">
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}">
+</head>
+<body class="signin">
+
+<main class="signin__card">
+    <div class="signin__brand">
+        <span class="topbar__mark">CC</span>
+        <span class="topbar__brand">CredCloud</span>
+    </div>
+
+    <h1 class="signin__title">Choose a new password</h1>
+    <p class="signin__hint">
+        For <strong th:text="${email}">you@example.com</strong>. At least 12 characters.
+        You'll be signed out everywhere and can sign in with the new one.
+    </p>
+
+    <div class="alert alert--error" th:if="${param.expired}">
+        That page had expired, so nothing was changed. Try again.
+    </div>
+    <div class="alert alert--error" th:if="${error}" th:text="${error}"></div>
+
+    <form method="post" th:action="@{/password-reset/{token}(token=${token})}">
+        <!-- Lets password managers save the new password against the right account. -->
+        <input type="hidden" name="username" autocomplete="username" th:value="${email}">
+        <label class="field">
+            <span class="field__label">New password</span>
+            <input class="field__input" type="password" name="newPassword" autocomplete="new-password"
+                   minlength="12" maxlength="72" required autofocus>
+        </label>
+        <label class="field">
+            <span class="field__label">Confirm new password</span>
+            <input class="field__input" type="password" name="confirmPassword" autocomplete="new-password"
+                   minlength="12" maxlength="72" required>
+        </label>
+
+        <button class="button button--block" type="submit">Change password</button>
+    </form>
+</main>
+
+</body>
+</html>

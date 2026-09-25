@@ -89,6 +89,10 @@ class UserGroupDeleteIntegrationTest {
                     VALUES (?, 1, 'Shah, Priya', 1, 'someone@example.com')""", group);
             jdbc.update("INSERT INTO tracking_settings (user_group_id) VALUES (?) ON CONFLICT DO NOTHING", group);
         }
+        jdbc.update("INSERT INTO password_reset_requests (user_group_id, user_id, status) VALUES (?, ?, 'PENDING')",
+                otherGroup, otherCoordinator.getId());
+        jdbc.update("INSERT INTO password_reset_requests (user_group_id, user_id, status) VALUES (?, ?, 'PENDING')",
+                superGroup, superuser.getId());
         signedInSession(otherAdmin.getEmail().toUpperCase());
         signedInSession(superuser.getEmail());
     }

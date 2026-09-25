@@ -32,6 +32,47 @@
            th:href="${groupFilter != null} ? @{/admin/users/new(group=${groupFilter})} : @{/admin/users/new}">Add user</a>
     </div>
 
+    <!-- ============ forgotten passwords waiting for a decision ============ -->
+    <section class="card card--flush" th:if="${passwordResets != null and !passwordResets.isEmpty()}">
+        <div class="card__header">
+            <h2>Password reset requests</h2>
+            <span class="count-pill" th:text="${passwordResets.size()}">0</span>
+        </div>
+        <p class="card__intro">
+            These people say they've forgotten their password. Approve to email them a reset link that works
+            once, for 24 hours. If you don't recognize a request, decline it.
+        </p>
+        <div class="table-scroll" role="region" tabindex="0" aria-label="Password reset requests">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th th:if="${userGroupNames != null}">User group</th>
+                    <th>Asked</th>
+                    <th class="table__actions"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="reset : ${passwordResets}">
+                    <td th:text="${reset.displayName()}">Pat Pending</td>
+                    <td th:text="${reset.email()}">pat@example.com</td>
+                    <td th:if="${userGroupNames != null}" th:text="${userGroupNames[reset.userGroupId()]}">Group</td>
+                    <td th:text="${reset.requestedAgo()}">2 hours ago</td>
+                    <td class="table__actions">
+                        <form class="row-actions" th:action="@{/admin/users/password-resets/{id}(id=${reset.id()})}"
+                              method="post">
+                            <button class="button button--small" name="approve" value="true" type="submit">Send reset link</button>
+                            <button class="button button--danger button--small" name="approve" value="false"
+                                    type="submit">Decline</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
     <section class="card" th:if="${userGroup != null}">
         <h2 th:text="${userGroup.name}">Your user group</h2>
         <p th:if="${viewingGroupName == null}">Share this group code with coordinators. They can request to join; you approve access here.</p>

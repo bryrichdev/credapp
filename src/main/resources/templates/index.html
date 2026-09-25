@@ -37,6 +37,13 @@
         <strong>Review</strong>
     </a>
 
+    <a class="alert alert--info home-approvals" th:if="${isAdmin and viewingGroupName == null and pendingResets > 0}"
+       th:href="@{/admin/users}">
+        <span th:text="${pendingResets == 1} ? '1 person has asked to reset their password.'
+                : ${pendingResets} + ' people have asked to reset their passwords.'">2 people asked.</span>
+        <strong>Review</strong>
+    </a>
+
     <!-- ============ an empty group: how to start ============ -->
     <section class="card home-start" th:if="${counts.isEmpty()}">
         <h2>Get started</h2>

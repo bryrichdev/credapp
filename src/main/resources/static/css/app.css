@@ -515,6 +515,15 @@ input.field__input[type="date"] {
     border-bottom: 1px solid var(--slate-200);
 }
 
+.card__intro {
+    margin: 0;
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid var(--slate-200);
+    color: var(--slate-700);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
 .card__header h2 {
     margin: 0;
 }
@@ -1356,6 +1365,7 @@ input.field__input[type="date"] {
 /* Account onboarding */
 .signin__card--register { max-width: 540px; }
 .signin__footer { margin-top: 1.5rem; text-align: center; }
+.signin__forgot { margin: -0.25rem 0 1rem; text-align: right; font-size: 0.85rem; }
 .group-code { display: inline-block; max-width: 100%; overflow-wrap: anywhere; user-select: all; }
 
 

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Forgot password &middot; CredCloud</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any">
+    <link rel="icon" th:href="@{/favicon.svg}" type="image/svg+xml">
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}">
+</head>
+<body class="signin">
+
+<main class="signin__card">
+    <div class="signin__brand">
+        <span class="topbar__mark">CC</span>
+        <span class="topbar__brand">CredCloud</span>
+    </div>
+
+    <h1 class="signin__title">Forgot password</h1>
+    <p class="signin__hint">
+        Enter the email you sign in with. Admins get a reset link straight away. Anyone else's
+        request goes to their admin to approve first.
+    </p>
+
+    <div class="alert alert--error" th:if="${param.expired}">
+        That page had expired, so nothing was sent. Try again.
+    </div>
+    <div class="alert alert--error" th:if="${error}" th:text="${error}"></div>
+
+    <form th:action="@{/password-reset}" method="post">
+        <label class="field">
+            <span class="field__label">Email</span>
+            <input class="field__input" type="email" name="email" autocomplete="username" required autofocus>
+        </label>
+
+        <button class="button button--block" type="submit">Send</button>
+    </form>
+    <p class="signin__hint signin__footer">Remembered it? <a th:href="@{/login}">Sign in</a></p>
+</main>
+
+</body>
+</html>
