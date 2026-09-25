@@ -21,7 +21,6 @@ jobs:
           CREDAPP_SSN_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
 
   deploy-staging:
-    needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: [ self-hosted, credcloud ]
     concurrency: deploy-staging
