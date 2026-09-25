@@ -19,10 +19,10 @@ Cloudflare provider 5.25+; works with Terraform or OpenTofu.
 | 2 | Any method other than GET, HEAD or POST | Block |
 | 3 | Scanner paths: `.php`, `/wp-`, `/.env`, `/.git`, `/cgi-bin`, `/.aws` | Block |
 | 4 | Verified bots, such as search engines. There's nothing public to index. | Block |
-| 5 | `/login` and `/register` from outside `sign_in_countries` (default US) | Managed challenge |
+| 5 | `/login`, `/register` and `/password-reset` from outside `sign_in_countries` (default US) | Managed challenge |
 
 **Rate limit** (`waf.tf`): the Free plan's one rule. More than 5 requests from one IP within
-10 seconds to `/login`, `/register` or `/account` blocks that IP for 10 seconds. Signing in
+10 seconds to `/login`, `/register`, `/account` or `/password-reset` blocks that IP for 10 seconds. Signing in
 normally takes 2 or 3 requests.
 
 **Cloudflare Access** (`access.tf`): a second sign-in, with a one-time code sent by email, in
