@@ -29,7 +29,7 @@ public class UserGroupDeleteService {
      * of these because nothing else may still point at them.
      */
     static final List<String> AFTER_WIPE = List.of(
-            "ssn_access_log", "caqh_password_access_log", "tracking_settings", "users");
+            "password_reset_requests", "ssn_access_log", "caqh_password_access_log", "tracking_settings", "users");
 
     static {
         if (!Set.copyOf(AFTER_WIPE).equals(UserGroupWipeService.KEPT)) {

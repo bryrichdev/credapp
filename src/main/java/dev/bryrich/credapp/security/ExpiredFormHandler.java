@@ -30,8 +30,8 @@ class ExpiredFormHandler implements AccessDeniedHandler {
             throws IOException, ServletException {
         if (exception instanceof CsrfException) {
             String path = UrlPathHelper.defaultInstance.getPathWithinApplication(request);
-            if (path.equals("/register")) {
-                response.sendRedirect(request.getContextPath() + "/register?expired");
+            if (path.equals("/register") || path.startsWith("/password-reset")) {
+                response.sendRedirect(request.getContextPath() + path + "?expired");
                 return;
             }
             if (path.equals("/login") || !signedIn()) {

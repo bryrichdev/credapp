@@ -16,6 +16,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findAllByRole(Role role);
 
+    List<User> findAllByUserGroupIdAndRole(Long userGroupId, Role role);
+
     long countByRole(Role role);
 
     Page<User> findByEmailContainingIgnoreCaseOrFullNameContainingIgnoreCase(

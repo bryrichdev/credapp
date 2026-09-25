@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.user;
 
+import dev.bryrich.credapp.mail.AccountEmails;
+import dev.bryrich.credapp.passwordreset.PasswordResetService;
 import dev.bryrich.credapp.security.CredAppUserDetails;
 import dev.bryrich.credapp.usergroup.UserGroupRepository;
 import dev.bryrich.credapp.usergroup.ViewedGroup;
@@ -31,10 +33,15 @@ public class UserWebController {
 
     private final UserService userService;
     private final UserGroupRepository userGroups;
+    private final AccountEmails accountEmails;
+    private final PasswordResetService passwordResets;
 
-    public UserWebController(UserService userService, UserGroupRepository userGroups) {
+    public UserWebController(UserService userService, UserGroupRepository userGroups,
+                             AccountEmails accountEmails, PasswordResetService passwordResets) {
         this.userService = userService;
         this.userGroups = userGroups;
+        this.accountEmails = accountEmails;
+        this.passwordResets = passwordResets;
     }
 
     /** Blank text inputs submit "" — store null instead. Also lets a blank password mean "unchanged". */
@@ -61,6 +68,9 @@ public class UserWebController {
         Long scope = viewed != null ? viewed : groupFilter;
 
         model.addAttribute("page", userService.searchAs(actor, q, scope, pageable));
+        if (viewed == null) {
+            model.addAttribute("passwordResets", passwordResets.pendingFor(actor));
+        }
         model.addAttribute("q", q);
         if (superuser && viewed == null) {
             List<UserGroupSummary> summaries = userService.userGroupSummariesAs(actor);
@@ -231,8 +241,29 @@ public class UserWebController {
         } catch (UserManagementDeniedException ex) {
             return refused(ex, redirectAttributes);
         }
-        redirectAttributes.addFlashAttribute("message", approve ? "Join request approved. The coordinator can now sign in."
+        if (approve) {
+            accountEmails.joinApproved(userService.findById(id), principal.getUser());
+        }
+        redirectAttributes.addFlashAttribute("message", approve
+                ? "Join request approved. We've emailed them to say they can sign in."
                 : "Join request rejected. The account has no access.");
+        return "redirect:/admin/users";
+    }
+
+    /** Approve a forgotten-password request, which emails the reset link, or decline it. */
+    @PostMapping("/password-resets/{requestId}")
+    public String decidePasswordReset(@AuthenticationPrincipal CredAppUserDetails principal,
+                                      @PathVariable long requestId, @RequestParam boolean approve,
+                                      RedirectAttributes redirectAttributes) {
+        User target;
+        try {
+            target = passwordResets.decide(principal.getUser(), requestId, approve);
+        } catch (UserManagementDeniedException ex) {
+            return refused(ex, redirectAttributes);
+        }
+        redirectAttributes.addFlashAttribute("message", approve
+                ? "Reset link emailed to " + target.getEmail() + ". It works once, for 24 hours."
+                : "Reset request declined. We've let " + target.getEmail() + " know.");
         return "redirect:/admin/users";
     }
 

@@ -1,6 +1,7 @@
 package dev.bryrich.credapp.common;
 
 import dev.bryrich.credapp.dashboard.DashboardService;
+import dev.bryrich.credapp.passwordreset.PasswordResetService;
 import dev.bryrich.credapp.payer.enrollment.EnrollmentStatus;
 import dev.bryrich.credapp.security.CredAppUserDetails;
 import dev.bryrich.credapp.tracking.TrackedItem;
@@ -31,11 +32,14 @@ public class HomeController {
     private final DashboardService dashboard;
     private final TrackingService tracking;
     private final UserGroupRepository userGroups;
+    private final PasswordResetService passwordResets;
 
-    public HomeController(DashboardService dashboard, TrackingService tracking, UserGroupRepository userGroups) {
+    public HomeController(DashboardService dashboard, TrackingService tracking, UserGroupRepository userGroups,
+                          PasswordResetService passwordResets) {
         this.dashboard = dashboard;
         this.tracking = tracking;
         this.userGroups = userGroups;
+        this.passwordResets = passwordResets;
     }
 
     /** One enrollment status and how many provider and group enrollments are in it. */
@@ -69,6 +73,7 @@ public class HomeController {
         model.addAttribute("enrollmentTotal", enrollments.values().stream().mapToLong(Long::longValue).sum());
         model.addAttribute("recent", dashboard.recentlyUpdated(group, RECENT_ITEMS));
         model.addAttribute("pendingApprovals", dashboard.pendingApprovals(group));
+        model.addAttribute("pendingResets", passwordResets.pendingFor(principal.getUser()).size());
         return "index";
     }
 
