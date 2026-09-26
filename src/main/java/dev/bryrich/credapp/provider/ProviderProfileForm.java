@@ -15,6 +15,10 @@ import dev.bryrich.credapp.provider.disclosure.CriminalChargeForm;
 import dev.bryrich.credapp.provider.location.ProviderLocationForm;
 import dev.bryrich.credapp.provider.privilege.HospitalPrivilege;
 import dev.bryrich.credapp.provider.privilege.HospitalPrivilegeForm;
+import dev.bryrich.credapp.provider.history.ProviderTraining;
+import dev.bryrich.credapp.provider.history.TrainingForm;
+import dev.bryrich.credapp.provider.history.WorkHistoryEntry;
+import dev.bryrich.credapp.provider.history.WorkHistoryForm;
 import dev.bryrich.credapp.provider.reference.ProviderReference;
 import dev.bryrich.credapp.provider.reference.ProviderReferenceForm;
 import dev.bryrich.credapp.taxonomy.ProviderTaxonomyForm;
@@ -66,6 +70,10 @@ public class ProviderProfileForm {
 
     private List<@Valid ReferenceRow> references = new ArrayList<>();
 
+    private List<@Valid TrainingRow> training = new ArrayList<>();
+
+    private List<@Valid WorkRow> work = new ArrayList<>();
+
     private List<@Valid ChargeRow> charges = new ArrayList<>();
 
     private List<@Valid ProviderPayerForm> payers = new ArrayList<>();
@@ -88,6 +96,8 @@ public class ProviderProfileForm {
         policies.removeIf(Objects::isNull);
         claims.removeIf(Objects::isNull);
         references.removeIf(Objects::isNull);
+        training.removeIf(Objects::isNull);
+        work.removeIf(Objects::isNull);
         charges.removeIf(Objects::isNull);
         payers.removeIf(Objects::isNull);
     }
@@ -228,6 +238,44 @@ public class ProviderProfileForm {
         }
     }
 
+    public static class TrainingRow extends TrainingForm {
+        private Long id;
+
+        public static TrainingRow from(ProviderTraining entry) {
+            TrainingRow row = new TrainingRow();
+            BeanUtils.copyProperties(TrainingForm.from(entry), row);
+            row.id = entry.getId();
+            return row;
+        }
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+    }
+
+    public static class WorkRow extends WorkHistoryForm {
+        private Long id;
+
+        public static WorkRow from(WorkHistoryEntry entry) {
+            WorkRow row = new WorkRow();
+            BeanUtils.copyProperties(WorkHistoryForm.from(entry), row);
+            row.id = entry.getId();
+            return row;
+        }
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+    }
+
     public static class ReferenceRow extends ProviderReferenceForm {
         private Long id;
 
@@ -343,6 +391,22 @@ public class ProviderProfileForm {
 
     public void setClaims(List<ClaimRow> claims) {
         this.claims = claims;
+    }
+
+    public List<TrainingRow> getTraining() {
+        return training;
+    }
+
+    public void setTraining(List<TrainingRow> training) {
+        this.training = training;
+    }
+
+    public List<WorkRow> getWork() {
+        return work;
+    }
+
+    public void setWork(List<WorkRow> work) {
+        this.work = work;
     }
 
     public List<ReferenceRow> getReferences() {

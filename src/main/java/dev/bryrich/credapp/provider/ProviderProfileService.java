@@ -22,6 +22,7 @@ import dev.bryrich.credapp.provider.disclosure.CriminalChargeService;
 import dev.bryrich.credapp.provider.location.ProviderLocationForm;
 import dev.bryrich.credapp.provider.location.ProviderLocationService;
 import dev.bryrich.credapp.provider.privilege.HospitalPrivilegeService;
+import dev.bryrich.credapp.provider.history.ProviderHistoryService;
 import dev.bryrich.credapp.provider.reference.ProviderReferenceService;
 import dev.bryrich.credapp.taxonomy.ProviderTaxonomy;
 import dev.bryrich.credapp.taxonomy.ProviderTaxonomyForm;
@@ -73,6 +74,7 @@ public class ProviderProfileService {
     private final MalpracticePolicyRepository policyRepository;
     private final MalpracticeClaimService claimService;
     private final ProviderReferenceService referenceService;
+    private final ProviderHistoryService historyService;
     private final CriminalChargeService chargeService;
     private final PayerEnrollmentService enrollmentService;
     private final CaqhPasswordService caqhPasswords;
@@ -92,6 +94,7 @@ public class ProviderProfileService {
                                   MalpracticePolicyRepository policyRepository,
                                   MalpracticeClaimService claimService,
                                   ProviderReferenceService referenceService,
+                                  ProviderHistoryService historyService,
                                   CriminalChargeService chargeService,
                                   PayerEnrollmentService enrollmentService,
                                   CaqhPasswordService caqhPasswords) {
@@ -110,6 +113,7 @@ public class ProviderProfileService {
         this.policyRepository = policyRepository;
         this.claimService = claimService;
         this.referenceService = referenceService;
+        this.historyService = historyService;
         this.chargeService = chargeService;
         this.enrollmentService = enrollmentService;
         this.caqhPasswords = caqhPasswords;
@@ -133,6 +137,8 @@ public class ProviderProfileService {
         form.setPolicies(mapAll(policyService.findByProviderId(providerId), PolicyRow::from));
         form.setClaims(mapAll(claimService.findByProviderId(providerId), ClaimRow::from));
         form.setReferences(mapAll(referenceService.findByProviderId(providerId), ProviderProfileForm.ReferenceRow::from));
+        form.setTraining(mapAll(historyService.findTraining(providerId), ProviderProfileForm.TrainingRow::from));
+        form.setWork(mapAll(historyService.findWork(providerId), ProviderProfileForm.WorkRow::from));
         form.setCharges(mapAll(chargeService.findByProviderId(providerId), ProviderProfileForm.ChargeRow::from));
         form.setPayers(mapAll(enrollmentService.findForProvider(providerId), ProviderPayerForm::from));
         return form;
@@ -348,6 +354,18 @@ public class ProviderProfileService {
                 r -> referenceService.delete(r.getId(), id),
                 row -> referenceService.addReference(id, row.toEntity()),
                 row -> referenceService.update(row.getId(), id, row::applyTo));
+
+        sync(historyService.findTraining(id), t -> t.getId(),
+                form.getTraining(), ProviderProfileForm.TrainingRow::getId,
+                t -> historyService.deleteTraining(t.getId(), id),
+                row -> historyService.addTraining(id, row.toEntity()),
+                row -> historyService.updateTraining(row.getId(), id, row::applyTo));
+
+        sync(historyService.findWork(id), w -> w.getId(),
+                form.getWork(), ProviderProfileForm.WorkRow::getId,
+                w -> historyService.deleteWork(w.getId(), id),
+                row -> historyService.addWork(id, row.toEntity()),
+                row -> historyService.updateWork(row.getId(), id, row::applyTo));
 
         sync(chargeService.findByProviderId(id), c -> c.getId(),
                 form.getCharges(), ProviderProfileForm.ChargeRow::getId,

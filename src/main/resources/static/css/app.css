@@ -2068,6 +2068,11 @@ a.topbar__user:hover,
     font-weight: 400;
 }
 
+.work-gaps {
+    margin: 0.4rem 0 0.5rem;
+    padding-left: 1.2rem;
+}
+
 /* ============ dialogs (modal.js) ============ */
 
 .modal {
