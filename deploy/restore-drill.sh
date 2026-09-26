@@ -41,9 +41,9 @@ age -d -i "$key" "$file" \
 
 q() { docker exec "$name" psql -U postgres -d drill -Atc "$1"; }
 version=$(q "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank DESC LIMIT 1")
+# Only tables every schema version has, so a backup of an older release checks out too.
 counts=$(q "SELECT 'user groups ' || (SELECT count(*) FROM user_groups) || ', users ' || (SELECT count(*) FROM users)
-             || ', providers ' || (SELECT count(*) FROM providers) || ', groups ' || (SELECT count(*) FROM groups)
-             || ', documents ' || (SELECT count(*) FROM documents)")
+             || ', providers ' || (SELECT count(*) FROM providers) || ', groups ' || (SELECT count(*) FROM groups)")
 users=$(q "SELECT count(*) FROM users")
 
 if [ "$users" -lt 1 ]; then
