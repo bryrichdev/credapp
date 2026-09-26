@@ -2,6 +2,8 @@ package dev.bryrich.credapp.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import dev.bryrich.credapp.twostep.TwoStepFilter;
+import dev.bryrich.credapp.twostep.TwoStepService;
 import dev.bryrich.credapp.user.UserRepository;
 import dev.bryrich.credapp.usergroup.ViewedGroup;
 import org.springframework.http.HttpMethod;
@@ -9,6 +11,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
@@ -73,7 +76,8 @@ public class SecurityConfig {
 
     @Bean
     @Order(2)
-    public SecurityFilterChain webSecurityFilterChain(HttpSecurity http, UserRepository users) throws Exception {
+    public SecurityFilterChain webSecurityFilterChain(HttpSecurity http, UserRepository users,
+                                                      TwoStepService twoStep) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/login", "/register", "/css/**", "/js/**",
@@ -88,19 +92,27 @@ public class SecurityConfig {
                                 "/providers/{id}/caqh-password").authenticated()
                         // Your own account, whatever your role; it asks for your current password.
                         .requestMatchers(HttpMethod.POST, "/account").authenticated()
+                        // The two-step code at sign-in, and turning two-step on or off: anyone's own.
+                        .requestMatchers(HttpMethod.POST, "/login/two-step", "/account/two-step/**").authenticated()
                         .requestMatchers(WRITE_REQUEST).hasAnyRole(EDIT_ROLES)
                         .requestMatchers(EDIT_PAGE).hasAnyRole(EDIT_ROLES)
                         .anyRequest().authenticated())
                 .addFilterBefore(new AccountStatusFilter(users), AuthorizationFilter.class)
-                .addFilterAfter(new GroupViewFilter(), AccountStatusFilter.class)
+                .addFilterAfter(new TwoStepFilter(twoStep), AccountStatusFilter.class)
+                .addFilterAfter(new GroupViewFilter(), TwoStepFilter.class)
                 .formLogin(form -> form
                         .loginPage("/login")
                         // Always land on home. Switching accounts also ends any group the previous
                         // account was viewing, since the session carries over.
                         .successHandler((request, response, authentication) -> {
                             ViewedGroup.stop(request.getSession());
+                            // The two-step code comes next, if the account uses one (TwoStepFilter).
+                            TwoStepFilter.forget(request.getSession());
                             response.sendRedirect(request.getContextPath() + "/");
                         })
+                        .failureHandler((request, response, exception) -> response.sendRedirect(
+                                request.getContextPath() + (exception instanceof LockedException
+                                        ? "/login?locked" : "/login?error")))
                         .permitAll())
                 .exceptionHandling(exceptions -> exceptions.accessDeniedHandler(new ExpiredFormHandler()))
                 .logout(logout -> logout.logoutSuccessUrl("/login?logout"))

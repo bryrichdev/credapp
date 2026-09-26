@@ -36,7 +36,9 @@ public class GroupViewFilter extends OncePerRequestFilter {
                     // A wipe or delete names its group in the URL and is confirmed with a password.
                     + "|admin/user-groups/\\d+/(wipe|delete)"
                     // Your own account isn't the viewed group's data, and nor is a new one.
-                    + "|account|register|password-reset(/[A-Za-z0-9_-]+)?)$");
+                    + "|account|register|password-reset(/[A-Za-z0-9_-]+)?"
+                    // Two-step sign-in is about your own account too.
+                    + "|login/two-step|account/two-step/[a-z-]+)$");
     private static final Pattern READABLE_PAGE = Pattern.compile("^(/admin)?/[a-z-]+(/\\d+)?$");
     private static final Pattern EDIT_SCREEN = Pattern.compile("^(.*?)/(new|edit)(/.*)?$");
 

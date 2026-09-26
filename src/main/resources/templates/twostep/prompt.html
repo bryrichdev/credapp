@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Two-step sign-in &middot; CredCloud</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any">
+    <link rel="icon" th:href="@{/favicon.svg}" type="image/svg+xml">
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}">
+</head>
+<body class="signin">
+
+<main class="signin__card">
+    <div class="signin__brand">
+        <span class="topbar__mark">CC</span>
+        <span class="topbar__brand">CredCloud</span>
+    </div>
+
+    <h1 class="signin__title">Enter your code</h1>
+    <p class="signin__hint">
+        Open your authenticator app and enter the 6-digit code for CredCloud
+        (<span th:text="${user.email}">you@example.com</span>).
+    </p>
+
+    <div class="alert alert--error" th:if="${error}" th:text="${error}"></div>
+
+    <form th:action="@{/login/two-step}" method="post">
+        <label class="field">
+            <span class="field__label">Code</span>
+            <input class="field__input twostep__code" type="text" name="code" inputmode="numeric"
+                   autocomplete="one-time-code" maxlength="12" required autofocus>
+            <span class="field__hint">Lost your phone? Enter one of your recovery codes instead.</span>
+        </label>
+        <button class="button button--block" type="submit">Continue</button>
+    </form>
+
+    <form class="signin__footer" th:action="@{/logout}" method="post">
+        <button class="button button--quiet button--block" type="submit">Cancel and sign out</button>
+    </form>
+</main>
+
+</body>
+</html>

@@ -52,6 +52,13 @@ public class User implements Serializable {
     public void setMembershipStatus(MembershipStatus value) { membershipStatus = value; }
     public boolean isPendingApproval() { return membershipStatus == MembershipStatus.PENDING; }
 
+    /** Set by SignInLockout after repeated wrong passwords; never written through the entity. */
+    @Column(insertable = false, updatable = false)
+    private Instant lockedUntil;
+
+    public Instant getLockedUntil() { return lockedUntil; }
+    public boolean isLocked() { return lockedUntil != null && lockedUntil.isAfter(Instant.now()); }
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;

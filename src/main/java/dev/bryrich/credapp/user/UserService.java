@@ -296,6 +296,19 @@ public class UserService {
         target.setPasswordHash(passwordEncoder.encode(password));
     }
 
+    /**
+     * Checks the actor may manage how this account signs in (lift a lockout, reset two-step
+     * sign-in) and returns it. Never your own: that would let you skip your own two-step.
+     */
+    @Transactional(readOnly = true)
+    public User manageSignInAs(User actor, Long targetId) {
+        User target = loadTarget(actor, targetId);
+        if (target.getId().equals(actor.getId())) {
+            throw new UserManagementDeniedException("You can't do that to your own account");
+        }
+        return target;
+    }
+
     @Transactional
     public void decideJoinRequestAs(User actor, Long targetId, boolean approve) {
         User target = loadTarget(actor, targetId);
