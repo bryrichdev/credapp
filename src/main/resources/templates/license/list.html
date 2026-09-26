@@ -27,7 +27,7 @@
                   th:text="${page.totalElements} + ' license(s) for providers matching &quot;' + ${providerName} + '&quot;'">0 results</span>
         </p>
         </div>
-        <a class="button" th:href="@{/licenses/new}" th:if="${canEdit}">Add license</a>
+        <a class="button" th:href="@{/licenses/new}" th:if="${canEdit}" data-modal>Add license</a>
     </div>
 
     <form class="toolbar" th:action="@{/licenses}" method="get">
@@ -94,7 +94,7 @@
                     <td class="table__actions" th:if="${canEdit}">
                         <div class="row-actions" th:if="${canEdit}">
                             <a class="button button--quiet button--small"
-                               th:href="@{/licenses/{lid}/edit(lid=${license.id})}" th:if="${canEdit}">Edit</a>
+                               th:href="@{/licenses/{lid}/edit(lid=${license.id})}" th:if="${canEdit}" data-modal>Edit</a>
                             <form th:action="@{/licenses/{lid}/delete(lid=${license.id})}"
                                   method="post"
                                   data-confirm="Delete this license?">

@@ -2028,6 +2028,105 @@ a.topbar__user:hover,
     overflow-wrap: anywhere;
 }
 
+/* ============ dialogs (modal.js) ============ */
+
+.modal {
+    width: min(620px, calc(100vw - 32px));
+    max-height: calc(100dvh - 48px);
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: #ffffff;
+    color: inherit;
+    box-shadow: 0 24px 64px rgba(22, 32, 43, 0.28);
+    overflow: auto;
+    overscroll-behavior: contain;
+}
+
+.modal::backdrop {
+    background: rgba(22, 32, 43, 0.45);
+}
+
+.modal__header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px 14px;
+    background: inherit;
+    border-bottom: 1px solid var(--slate-200);
+}
+
+.modal__title {
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+.modal__subtitle {
+    margin: 4px 0 0;
+    color: var(--slate-500);
+    font-size: 0.875rem;
+    line-height: 1.45;
+}
+
+.modal__close {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--slate-500);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.modal__close:hover,
+.modal__close:focus-visible {
+    background: var(--slate-100);
+    color: var(--slate-900);
+}
+
+.modal__error {
+    margin: 16px 20px 0;
+}
+
+.modal__body {
+    padding: 4px 20px 20px;
+}
+
+/* The form arrives as the page's card; inside the dialog it shouldn't look like one. */
+.modal__body > .card,
+.modal__body > form > .card {
+    margin: 0;
+    padding: 12px 0 0;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+}
+
+.modal__body .form-actions {
+    position: sticky;
+    bottom: 0;
+    margin: 16px -20px -20px;
+    padding: 14px 20px;
+    background: #ffffff;
+    border-top: 1px solid var(--slate-200);
+}
+
+a[aria-busy="true"] {
+    cursor: progress;
+    opacity: 0.7;
+}
+
+body:has(.modal[open]) {
+    overflow: hidden;
+}
+
 /* ============ tracking ============ */
 
 /* The count beside the Tracking link: things needing doing now. */

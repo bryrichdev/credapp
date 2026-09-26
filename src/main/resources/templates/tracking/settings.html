@@ -16,11 +16,11 @@
 <main class="page page--narrow">
 
     <div class="page__header">
-        <h1>Tracking settings</h1>
+        <h1 data-modal-title>Tracking settings</h1>
         <p class="page__subtitle">How far ahead your user group hears about what's coming due.</p>
     </div>
 
-    <form method="post" th:action="@{/admin/tracking-settings}" th:object="${form}">
+    <form method="post" th:action="@{/admin/tracking-settings}" th:object="${form}" data-modal-content>
         <section class="card">
             <div class="form-grid">
                 <label class="field">
@@ -67,7 +67,7 @@
             </div>
             <div class="form-actions">
                 <button class="button" type="submit">Save settings</button>
-                <a class="button button--quiet" th:href="@{/tracking}">Cancel</a>
+                <a class="button button--quiet" th:href="@{/tracking}" data-modal-cancel>Cancel</a>
             </div>
         </section>
     </form>

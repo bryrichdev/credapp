@@ -19,10 +19,10 @@
         provider</a>
 
     <div class="page__header">
-        <h1 th:text="${licenseId} != null ? 'Edit license' : 'Add license'">Add license</h1>
+        <h1 data-modal-title th:text="${licenseId} != null ? 'Edit license' : 'Add license'">Add license</h1>
     </div>
 
-    <section class="card">
+    <section class="card" data-modal-content>
         <p class="context-line" th:if="${provider != null}">
             For
             <strong th:text="${provider.firstName} + ' ' + ${provider.lastName}"></strong>
@@ -109,7 +109,7 @@
                 <button class="button" th:text="${licenseId} != null ? 'Save changes' : 'Save license'" type="submit">
                     Save license
                 </button>
-                <a class="button button--quiet"
+                <a class="button button--quiet" data-modal-cancel
                    th:href="${provider != null} ? @{/providers/{id}(id=${provider.id})} : @{/licenses}">Cancel</a>
             </div>
         </form>

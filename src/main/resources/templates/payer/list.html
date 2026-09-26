@@ -25,7 +25,7 @@
                   th:text="${page.totalElements} + ' result(s) for &quot;' + ${name} + '&quot;'">0 results</span>
         </p>
         </div>
-        <a class="button" th:href="@{/payers/new}" th:if="${canEdit}">Add payer</a>
+        <a class="button" th:href="@{/payers/new}" th:if="${canEdit}" data-modal>Add payer</a>
     </div>
 
     <form class="toolbar" th:action="@{/payers}" method="get">

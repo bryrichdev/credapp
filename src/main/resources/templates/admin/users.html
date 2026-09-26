@@ -29,7 +29,7 @@
         </p>
         </div>
         <a class="button" th:if="${viewingGroupName == null}"
-           th:href="${groupFilter != null} ? @{/admin/users/new(group=${groupFilter})} : @{/admin/users/new}">Add user</a>
+           th:href="${groupFilter != null} ? @{/admin/users/new(group=${groupFilter})} : @{/admin/users/new}" data-modal>Add user</a>
     </div>
 
     <!-- ============ forgotten passwords waiting for a decision ============ -->
@@ -220,7 +220,8 @@
                             </form>
                             <a class="button button--quiet button--small"
                                th:if="${approved and (manageable or self) and viewingGroupName == null}"
-                               th:href="${self} ? @{/account} : @{/admin/users/{id}/edit(id=${account.id})}">Edit</a>
+                               th:href="${self} ? @{/account} : @{/admin/users/{id}/edit(id=${account.id})}"
+                               th:attr="data-modal=${self} ? null : 'true'">Edit</a>
 
                             <form th:if="${manageable and approved}"
                                   th:action="@{/admin/users/{id}/enabled(id=${account.id})}" method="post">

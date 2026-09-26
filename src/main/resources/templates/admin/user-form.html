@@ -18,12 +18,12 @@
     <a class="backlink" th:href="@{/admin/users}">&larr; All users</a>
 
     <div class="page__header">
-        <h1 th:text="${target} != null ? 'Edit user' : 'Add user'">Add user</h1>
+        <h1 data-modal-title th:text="${target} != null ? 'Edit user' : 'Add user'">Add user</h1>
         <p class="page__subtitle" th:if="${target == null}">Passwords must be at least 12 characters.</p>
         <p class="page__subtitle" th:unless="${target == null}">Leave the password blank to keep the current one.</p>
     </div>
 
-    <section class="card">
+    <section class="card" data-modal-content>
         <p class="context-line" th:if="${target != null}">
             Editing
             <strong th:text="${target.email}"></strong>
@@ -95,7 +95,7 @@
             <div class="form-actions">
                 <button class="button" type="submit"
                         th:text="${target} != null ? 'Save changes' : 'Save user'">Save user</button>
-                <a class="button button--quiet" th:href="@{/admin/users}">Cancel</a>
+                <a class="button button--quiet" th:href="@{/admin/users}" data-modal-cancel>Cancel</a>
             </div>
         </form>
     </section>

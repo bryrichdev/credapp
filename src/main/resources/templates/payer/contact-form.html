@@ -18,13 +18,13 @@
     <a class="backlink" th:href="@{/payers/{id}(id=${payer.id})}">&larr; Back to payer</a>
 
     <div class="page__header">
-        <h1>Edit contact</h1>
+        <h1 data-modal-title>Edit contact</h1>
         <p class="page__subtitle">
             Leave both group and provider blank for a contact that covers the whole payer.
         </p>
     </div>
 
-    <section class="card">
+    <section class="card" data-modal-content>
         <p class="context-line">
             For
             <strong th:text="${payer.name}"></strong>
@@ -98,7 +98,7 @@
 
             <div class="form-actions">
                 <button class="button" type="submit">Save changes</button>
-                <a class="button button--quiet" th:href="@{/payers/{id}(id=${payer.id})}">Cancel</a>
+                <a class="button button--quiet" th:href="@{/payers/{id}(id=${payer.id})}" data-modal-cancel>Cancel</a>
             </div>
         </form>
     </section>
