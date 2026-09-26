@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="'History · ' + ${title} + ' · CredCloud'">History &middot; CredCloud</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any">
+    <link rel="icon" th:href="@{/favicon.svg}" type="image/svg+xml">
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, ${section})}"></div>
+
+<main class="page">
+
+    <a class="backlink" th:href="@{${backPath}}" th:text="'← ' + ${title}">&larr; Back</a>
+
+    <div class="page__header">
+        <h1>History</h1>
+        <p class="page__subtitle">Every change to <span th:text="${title}"></span>'s records, newest first.</p>
+    </div>
+
+    <section class="card card--flush">
+        <ol class="history" th:unless="${page.entries().isEmpty()}">
+            <li class="history__entry" th:each="entry : ${page.entries()}">
+                <div class="history__head">
+                    <span class="badge"
+                          th:classappend="${entry.action().name() == 'ADDED'} ? 'badge--active' : (${entry.action().name() == 'REMOVED'} ? 'badge--alert' : 'badge--pending')"
+                          th:text="${entry.action().label}">Changed</span>
+                    <span class="history__what">
+                        <strong th:text="${entry.section()}">License</strong>
+                        <span th:if="${entry.item() != null}" th:text="${entry.item()}">UT 12345</span>
+                    </span>
+                </div>
+                <ul class="history__fields" th:unless="${entry.fields().isEmpty()}">
+                    <li th:each="field : ${entry.fields()}">
+                        <span class="history__field" th:text="${field.label()}">License number</span>
+                        <span th:if="${field.masked()}" class="history__masked">changed (not shown)</span>
+                        <th:block th:unless="${field.masked()}">
+                            <del class="history__from" th:if="${field.from() != null}" th:text="${field.from()}">12345</del>
+                            <span class="history__none" th:if="${field.from() == null}">empty</span>
+                            <span class="history__arrow" aria-label="to">&rarr;</span>
+                            <ins class="history__to" th:if="${field.to() != null}" th:text="${field.to()}">12346</ins>
+                            <span class="history__none" th:if="${field.to() == null}">empty</span>
+                        </th:block>
+                    </li>
+                </ul>
+                <p class="history__meta">
+                    <time data-local-time th:datetime="${entry.at()}" th:text="${entry.when()}">Sep 26, 2026</time>
+                    <span th:text="${entry.actor() != null} ? ' · by ' + ${entry.actor()} : ' · automatic, no one signed in'"></span>
+                </p>
+            </li>
+        </ol>
+
+        <div class="empty" th:if="${page.entries().isEmpty()}">
+            <p class="empty__title">No changes recorded yet</p>
+            <p class="empty__hint">Changes made from now on show up here, with who made them.</p>
+        </div>
+    </section>
+
+    <nav class="pagination" th:if="${page.olderThan() != null}">
+        <span class="pagination__status">Showing 100 changes</span>
+        <a class="button button--quiet" th:href="@{${backPath} + '/history'(before=${page.olderThan()})}">Older changes</a>
+    </nav>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+<script th:src="@{/js/local-time.js}"></script>
+</body>
+</html>

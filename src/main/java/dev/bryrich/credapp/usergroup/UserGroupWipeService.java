@@ -53,10 +53,12 @@ public class UserGroupWipeService {
             "provider_payers", "Provider enrollments",
             "documents", "Documents",
             "provider_training", "Training",
-            "provider_work_history", "Work history");
+            "provider_work_history", "Work history",
+            "change_log", "Change history");
 
     /** Children before parents, so no foreign key ever blocks a delete. */
     static final List<String> DELETE_ORDER = List.of(
+            "change_log",
             "documents",
             "provider_training",
             "provider_work_history",
@@ -124,6 +126,7 @@ public class UserGroupWipeService {
         // Holding the group's row makes a second wipe of the same group wait for this one.
         jdbc.queryForObject("SELECT id FROM user_groups WHERE id = ? FOR UPDATE", Long.class, userGroupId);
         entityManager.flush();
+        stopChangeHistory(jdbc);
         Contents before = count(userGroupId);
         for (String table : DELETE_ORDER) {
             jdbc.update("DELETE FROM " + table + " WHERE user_group_id = ?", userGroupId);
@@ -133,6 +136,14 @@ public class UserGroupWipeService {
         log.warn("{} wiped user group {}: {} records deleted, {} accounts kept",
                 wipedBy, userGroupId, before.total(), before.accounts());
         return before;
+    }
+
+    /**
+     * Keeps this transaction's deletes out of the change history. Emptying a whole group isn't
+     * a change to any one record, and the group's history goes with it.
+     */
+    static void stopChangeHistory(JdbcTemplate jdbc) {
+        jdbc.queryForObject("SELECT set_config('credapp.audit_off', 'on', true)", String.class);
     }
 
     /** Counts in the caller's transaction, so a delete can count after taking its lock. */

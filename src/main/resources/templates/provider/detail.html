@@ -28,7 +28,10 @@
                 NPI <span th:text="${#strings.isEmpty(provider.npi)} ? 'not on file' : ${provider.npi}"></span>
             </p>
         </div>
-        <a class="button" th:href="@{/providers/{id}/edit(id=${provider.id})}" th:if="${canEdit}">Edit provider</a>
+        <div class="page__actions">
+            <a class="button button--quiet" th:href="@{/providers/{id}/history(id=${provider.id})}">History</a>
+            <a class="button" th:href="@{/providers/{id}/edit(id=${provider.id})}" th:if="${canEdit}">Edit provider</a>
+        </div>
     </div>
 
     <section th:replace="~{fragments/tracking :: attention(${attention}, false, '/tracking')}"></section>

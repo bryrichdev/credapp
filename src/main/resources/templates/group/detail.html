@@ -27,7 +27,10 @@
                 NPI <span th:text="${#strings.isEmpty(group.npi)} ? 'not on file' : ${group.npi}"></span>
             </p>
         </div>
-        <a class="button" th:href="@{/groups/{id}/edit(id=${group.id})}" th:if="${canEdit}">Edit group</a>
+        <div class="page__actions">
+            <a class="button button--quiet" th:href="@{/groups/{id}/history(id=${group.id})}">History</a>
+            <a class="button" th:href="@{/groups/{id}/edit(id=${group.id})}" th:if="${canEdit}">Edit group</a>
+        </div>
     </div>
 
     <!-- ============ read view ============ -->
