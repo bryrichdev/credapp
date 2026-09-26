@@ -28,6 +28,14 @@ public class ProviderForm {
     @Pattern(regexp = "^$|^[0-9]{10}$", message = "NPI must be exactly 10 digits")
     private String npi;
 
+    /** Write-only: never load a stored SSN into an edit form. Blank preserves it. */
+    @Pattern(regexp = "^$|^[0-9]{9}$", message = "SSN must be exactly 9 digits")
+    private String ssn;
+
+    public String getSsn() { return ssn; }
+    /** People type 123-45-6789 or 123 45 6789; only the digits are kept. */
+    public void setSsn(String ssn) { this.ssn = ssn == null ? null : ssn.replaceAll("[\\s-]", ""); }
+
     private Sex sex;
 
     private String phoneNumber;
@@ -122,6 +130,7 @@ public class ProviderForm {
         provider.setDob(dob);
         provider.setPlaceOfBirth(blankToNull(placeOfBirth));
         provider.setNpi(blankToNull(npi));
+        if (blankToNull(ssn) != null) provider.setSsn(ssn);
         provider.setSex(sex);
         provider.setPhoneNumber(blankToNull(phoneNumber));
         provider.setEmailAddress(blankToNull(emailAddress));

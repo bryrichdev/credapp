@@ -47,8 +47,7 @@ public class SsnAccessService {
     }
 
     /**
-     * The provider equivalent. Nothing writes providers.ssn through the web UI yet, so
-     * this will report nothing on file until a field for it exists.
+     * The provider equivalent, including values entered through the provider form.
      */
     @Transactional
     public String revealProviderSsn(User actor, Long providerId, String ipAddress) {

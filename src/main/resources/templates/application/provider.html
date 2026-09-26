@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF applications · CredCloud</title><link rel="stylesheet" th:href="@{/css/app.css}"><link rel="icon" th:href="@{/favicon.ico}"></head>
+<body><div th:replace="~{fragments/layout :: topbar(${user}, 'providers')}"></div>
+<main class="page">
+<div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
+<div class="alert alert--error" role="alert" th:if="${error}" th:text="${error}"></div>
+
+<a class="backlink" th:href="@{/providers/{id}(id=${provider.id})}">&larr; Back to provider</a>
+<div class="page__header"><h1>PDF applications</h1><p class="page__subtitle" th:text="${provider.firstName} + ' ' + ${provider.lastName}"></p></div>
+<section class="card" th:if="${canEdit}"><h2>Start an application</h2>
+<p th:if="${#lists.isEmpty(templates)}">No payer templates are ready. Open a <a th:href="@{/payers}">payer</a> and add a PDF template first.</p>
+<form th:unless="${#lists.isEmpty(templates)}" method="post" th:action="@{/providers/{id}/applications(id=${provider.id})}">
+<div class="form-grid"><label class="field field--wide"><span class="field__label">Payer template</span><select class="field__input" name="templateId" required>
+<option value="">Choose a template</option><option th:each="t : ${templates}" th:value="${t.id}" th:text="${t.payerName} + ' / ' + ${t.name}"></option></select></label>
+<label class="field"><span class="field__label">Practice</span><select class="field__input" name="groupId"><option value="">No practice selected</option><option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.label}"></option></select></label>
+<label class="field"><span class="field__label">Practice location</span><select class="field__input" name="locationId"><option value="">No location selected</option><option th:each="l : ${locations}" th:value="${l.id}" th:text="${l.label}"></option></select></label></div>
+<p class="field__hint">A draft captures current data for review. Missing answers can be completed in the draft. An SSN is read and logged only when the template uses it.</p>
+<div class="form-actions"><button class="button" type="submit">Create draft for review</button></div></form></section>
+<section class="card"><h2>Saved applications</h2><p th:if="${#lists.isEmpty(runs)}">No applications yet.</p>
+<div class="application-template" th:each="r : ${runs}"><div><strong th:text="${r.payerName} + ' / ' + ${r.name}"></strong>
+<p class="field__hint"><span th:text="${r.status == 'generated'} ? 'Generated' : 'Draft'"></span> · <time data-local-time th:datetime="${r.createdAt}" th:text="${r.createdLabel()}"></time></p></div>
+<a class="button button--quiet" th:href="@{/applications/{id}(id=${r.id})}">Open application</a></div></section>
+</main><div th:replace="~{fragments/layout :: footer}"></div>
+<script th:src="@{/js/local-time.js}"></script></body></html>

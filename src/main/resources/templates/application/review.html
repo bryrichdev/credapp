@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF applications · CredCloud</title><link rel="stylesheet" th:href="@{/css/app.css}"><link rel="icon" th:href="@{/favicon.ico}"></head>
+<body><div th:replace="~{fragments/layout :: topbar(${user}, 'providers')}"></div>
+<main class="page">
+<div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
+<div class="alert alert--error" role="alert" th:if="${error}" th:text="${error}"></div>
+
+<a class="backlink" th:href="@{/providers/{id}/applications(id=${run.providerId})}">&larr; Provider applications</a>
+<div class="page__header"><h1 th:text="${run.name}"></h1><p class="page__subtitle" th:text="${provider.firstName} + ' ' + ${provider.lastName} + ' · ' + ${run.payerName}"></p>
+<p class="field__hint"><span th:text="'Template revision ' + ${run.revision} + ' · Created by ' + ${run.createdBy} + ' · '"></span><time data-local-time th:datetime="${run.createdAt}" th:text="${run.createdLabel()}"></time></p></div>
+<section class="card" th:if="${run.status == 'generated'}"><h2>Generated PDF</h2>
+<p>Open the PDF and check its layout and answers before signing or sending it. Generation does not submit the application or change its payer enrollment status.</p>
+<a class="button" th:if="${run.documentId != null}" th:href="@{/documents/{id}(id=${run.documentId})}">Download PDF</a>
+<p th:if="${run.documentId == null}">The generated document has been deleted. Create a new application to generate another copy.</p></section>
+<section class="card"><h2 th:text="${run.status == 'draft'} ? 'Review answers' : 'Saved answers'"></h2>
+<p th:if="${run.status == 'draft'}">Check every answer, including the selected licenses and history entries. Edits here affect only this application. Start a new draft to pull updated provider data.</p>
+<form method="post" autocomplete="off" th:action="@{/applications/{id}(id=${run.id})}">
+<div class="application-answer" th:each="a, iter : ${run.answers}" th:with="value=${submitted != null ? submitted.get('value' + iter.index) : a.value}, editable=${canEdit and run.status == 'draft'}">
+<label class="field"><span class="field__label"><span th:text="${a.field.label}"></span><span th:if="${a.required}"> (required)</span></span>
+<span class="field__hint" th:text="${#strings.isEmpty(a.source)} ? 'Entered for this application' : ${a.source}"></span>
+<select class="field__input" th:if="${a.field.type == 'checkbox' or a.field.type == 'choice'}" th:name="'value' + ${iter.index}" th:disabled="${!editable}">
+<option value="">Choose an answer</option>
+<option th:if="${!#strings.isEmpty(value) and !#lists.contains(a.field.options, value)}" th:value="${value}" th:text="'Review saved value: ' + ${value}" selected></option><option th:each="o : ${a.field.options}" th:value="${o}" th:text="${o}" th:selected="${o == value}"></option></select>
+<textarea class="field__input" rows="3" th:if="${a.field.type == 'multiline'}" th:name="'value' + ${iter.index}" th:text="${value}" th:maxlength="${a.field.maxLength}" th:readonly="${!editable}"></textarea>
+<input class="field__input" th:if="${a.field.type == 'text' and a.source != 'provider.ssn'}" type="text" th:name="'value' + ${iter.index}" th:value="${value}" th:maxlength="${a.field.maxLength}" th:readonly="${!editable}">
+<span class="application-secret" th:if="${a.field.type == 'text' and a.source == 'provider.ssn'}">
+<input class="field__input" type="password" autocomplete="off" data-secret th:name="'value' + ${iter.index}" th:value="${value}" th:maxlength="${a.field.maxLength}" th:readonly="${!editable}">
+<button class="button button--quiet button--small" type="button" data-secret-toggle>Show</button></span>
+<span class="field__error" th:if="${a.required and #strings.isEmpty(value)}">Required answer is missing.</span></label></div>
+<div th:if="${canEdit and run.status == 'draft'}"><label class="application-check"><input type="checkbox" name="reviewed" value="yes"> I reviewed these answers and want to generate the PDF.</label>
+<div class="form-actions"><button class="button button--quiet" name="action" value="save" type="submit">Save draft</button><button class="button" name="action" value="generate" type="submit">Generate PDF</button></div></div>
+</form></section>
+</main><div th:replace="~{fragments/layout :: footer}"></div>
+<script th:src="@{/js/application-review.js}"></script>
+<script th:src="@{/js/local-time.js}"></script></body></html>

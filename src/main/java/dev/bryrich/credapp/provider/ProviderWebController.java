@@ -134,8 +134,7 @@ public class ProviderWebController {
     }
 
     /**
-     * Same contract as the owner endpoint. Nothing writes providers.ssn through the web
-     * UI yet, so this reports nothing on file until a field for it exists.
+     * Audited provider SSN reveal, with the same contract as the owner endpoint.
      */
     @PostMapping("/{id}/ssn")
     @ResponseBody

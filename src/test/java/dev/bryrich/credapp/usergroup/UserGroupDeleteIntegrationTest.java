@@ -281,6 +281,18 @@ class UserGroupDeleteIntegrationTest {
                                        content, uploaded_by)
                 SELECT user_group_id, min(id), 'cv', 'cv.pdf', 'application/pdf', 3, '\\x010203'::bytea, 'test'
                 FROM providers WHERE user_group_id = ? GROUP BY user_group_id""", account.getUserGroupId());
+        long template = jdbc.queryForObject("""
+                INSERT INTO application_templates (user_group_id, payer_id, name, content, mappings, created_by)
+                SELECT user_group_id, min(id), 'Application', decode('010203', 'hex'), decode('010203', 'hex'), 'test'
+                FROM payers WHERE user_group_id = ? GROUP BY user_group_id RETURNING id
+                """, Long.class, account.getUserGroupId());
+        long run = jdbc.queryForObject("""
+                INSERT INTO application_runs (user_group_id, provider_id, template_id, template_revision, field_values, created_by)
+                SELECT user_group_id, min(id), ?, 1, decode('010203', 'hex'), 'test'
+                FROM providers WHERE user_group_id = ? GROUP BY user_group_id RETURNING id
+                """, Long.class, template, account.getUserGroupId());
+        jdbc.update("INSERT INTO application_access_log (user_group_id, run_id, user_id, user_email, action) VALUES (?, ?, ?, ?, 'review')",
+                account.getUserGroupId(), run, account.getId(), account.getEmail());
         // Nor training or work history.
         jdbc.update("""
                 INSERT INTO provider_training (user_group_id, provider_id, training_type, institution, start_date)

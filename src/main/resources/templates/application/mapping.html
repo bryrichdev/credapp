@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF applications · CredCloud</title><link rel="stylesheet" th:href="@{/css/app.css}"><link rel="icon" th:href="@{/favicon.ico}"></head>
+<body><div th:replace="~{fragments/layout :: topbar(${user}, 'payers')}"></div>
+<main class="page page--template">
+<div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
+<div class="alert alert--error" role="alert" th:if="${error}" th:text="${error}"></div>
+
+<a class="backlink" th:href="@{/payers/{id}/templates(id=${template.summary.payerId})}">&larr; Payer templates</a>
+<div class="page__header"><h1 th:text="${template.summary.name}"></h1>
+<p class="page__subtitle">Match PDF fields to saved data. Leave the source as “Enter during review” for answers that vary by application.</p></div>
+<div class="application-builder">
+<aside class="card application-preview"><h2>PDF field guide</h2>
+<label class="field"><span class="field__label">Page</span><select class="field__input" data-pdf-page>
+<option th:each="page : ${#numbers.sequence(0, pageCount - 1)}" th:value="${page}" th:text="'Page ' + ${page + 1}"></option></select></label>
+<p class="field__hint">Numbers on the PDF match the fields in the builder.</p>
+<img class="application-preview__image" data-pdf-image th:attr="data-preview-base=@{/application-templates/{id}/preview/(id=${template.summary.id})}" th:src="@{/application-templates/{id}/preview/0(id=${template.summary.id})}" alt="PDF page with numbered form fields">
+<p class="field__hint" data-preview-error hidden>The page preview could not be loaded. Try selecting the page again.</p>
+</aside><section class="card"><p class="field__hint">Dates are saved as YYYY-MM-DD; pick a format for fields that want another. Numbered licenses are ordered by state, type and number; training and work entries by start date; references by creation order. Review the selected records each time. Passwords are never available as a source.</p>
+<form method="post" th:action="@{/application-templates/{id}(id=${template.summary.id})}">
+<input type="hidden" name="revision" th:value="${template.summary.revision}">
+<div class="application-mapping" th:each="m, iter : ${template.mappings}">
+<div><h2 th:text="${iter.index + 1} + '. ' + ${m.field.label}"></h2>
+<button class="button button--quiet button--small" type="button" th:attr="data-show-pdf-page=${m.field.page}">Show on PDF</button><span class="field__hint" th:text="${m.field.name} + ' · ' + ${m.field.type}"></span></div>
+<label class="field"><span class="field__label">Answer source</span>
+<select class="field__input" th:name="'source' + ${iter.index}" th:with="selected=${submitted != null ? submitted.get('source' + iter.index) : m.source}">
+<option value="">Enter during review</option><option th:each="s : ${sources}" th:value="${s.key}" th:text="${s.label}" th:selected="${s.key == selected}"></option></select></label>
+<label class="field"><span class="field__label">Format</span>
+<select class="field__input" th:name="'format' + ${iter.index}" th:with="chosen=${submitted != null ? submitted.get('format' + iter.index) : m.format}">
+<option th:each="f : ${formats}" th:value="${f.name() == 'AS_SAVED'} ? '' : ${f.name()}" th:text="${f.label}" th:selected="${(f.name() == 'AS_SAVED' and #strings.isEmpty(chosen)) or f.name() == chosen}"></option></select>
+<span class="field__hint">How a saved value is written into this field.</span></label>
+<label class="field"><span class="field__label">Default answer for manual fields</span>
+<input class="field__input" th:name="'default' + ${iter.index}" th:maxlength="${m.field.maxLength}" th:value="${submitted != null ? submitted.get('default' + iter.index) : m.defaultValue}">
+<span class="field__hint" th:if="${!#lists.isEmpty(m.field.options)}" th:text="'Choices: ' + ${#strings.listJoin(m.field.options, ', ')}"></span></label>
+<label class="application-check"><input type="checkbox" th:name="'required' + ${iter.index}" th:checked="${m.field.required or (submitted != null ? submitted.containsKey('required' + iter.index) : m.required)}" th:disabled="${m.field.required}"> Required before generation</label>
+</div><div class="form-actions"><button class="button" type="submit">Save template</button></div></form></section></div>
+<script th:src="@{/js/pdf-template.js}" defer></script>
+</main><div th:replace="~{fragments/layout :: footer}"></div></body></html>

@@ -43,7 +43,7 @@ public class ChangeHistoryService {
     private static final Map<String, String> FIELD_LABELS = Map.ofEntries(
             Map.entry("lbn", "Legal business name"), Map.entry("dba", "DBA"), Map.entry("npi", "NPI"),
             Map.entry("tax_id", "Tax ID"), Map.entry("caqh_id", "CAQH ID"), Map.entry("caqh_username", "CAQH username"),
-            Map.entry("caqh_secret_ref", "CAQH password"), Map.entry("ssn", "SSN"), Map.entry("dob", "Date of birth"),
+            Map.entry("caqh_secret_ref", "CAQH password"), Map.entry("caqh_password_ciphertext", "CAQH password"), Map.entry("ssn", "SSN"), Map.entry("dob", "Date of birth"),
             Map.entry("is_primary", "Primary"), Map.entry("pcp_scp", "PCP or SCP"), Map.entry("us_citizen", "US citizen"),
             Map.entry("ecfmg", "ECFMG"), Map.entry("prev_names", "Previous names"), Map.entry("zip_code", "ZIP code"),
             Map.entry("street_1", "Street"), Map.entry("street_2", "Street, line 2"),

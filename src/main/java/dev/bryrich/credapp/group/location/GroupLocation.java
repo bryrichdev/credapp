@@ -31,6 +31,12 @@ public class GroupLocation extends GroupScopedEntity {
     @Column(nullable = false)
     private String address;
 
+    private String street1;
+    private String street2;
+    private String city;
+    private String state;
+    private String zipCode;
+
     private String faxNumber;
     private String phoneNumber;
     private String handicapAccess;
@@ -81,6 +87,17 @@ public class GroupLocation extends GroupScopedEntity {
     public void setAddress(String address) {
         this.address = address;
     }
+
+    public String getStreet1() { return street1; }
+    public void setStreet1(String value) { street1 = value; }
+    public String getStreet2() { return street2; }
+    public void setStreet2(String value) { street2 = value; }
+    public String getCity() { return city; }
+    public void setCity(String value) { city = value; }
+    public String getState() { return state; }
+    public void setState(String value) { state = value; }
+    public String getZipCode() { return zipCode; }
+    public void setZipCode(String value) { zipCode = value; }
 
     public String getFaxNumber() {
         return faxNumber;

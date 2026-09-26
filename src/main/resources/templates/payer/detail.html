@@ -24,8 +24,11 @@
             <h1 th:text="${payer.name}"></h1>
             <p class="page__subtitle" th:text="${contacts.size()} + ' contact(s) on file'">0 contacts</p>
         </div>
-        <a class="button button--quiet" th:if="${canEdit and !editing}"
-           th:href="@{/payers/{id}(id=${payer.id}, edit=1)}">Edit payer</a>
+        <div class="page__actions">
+            <a class="button button--quiet" th:href="@{/payers/{id}/templates(id=${payer.id})}">PDF templates</a>
+            <a class="button button--quiet" th:if="${canEdit and !editing}"
+               th:href="@{/payers/{id}(id=${payer.id}, edit=1)}">Edit payer</a>
+        </div>
     </div>
 
     <!-- ============ read view ============ -->
@@ -227,7 +230,7 @@
     <section class="card danger-zone" th:if="${canEdit and !editing}">
         <div>
             <h2>Delete payer</h2>
-            <p class="empty__hint">This removes the payer and every contact recorded for it.</p>
+            <p class="empty__hint">This removes the payer, its contacts, PDF templates and application history. Generated PDFs already saved under providers remain in their documents.</p>
         </div>
         <form th:action="@{/payers/{id}/delete(id=${payer.id})}" method="post"
               data-confirm="Delete this payer and all of its contacts? This cannot be undone.">

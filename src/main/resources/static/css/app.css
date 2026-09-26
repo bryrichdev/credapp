@@ -2677,3 +2677,28 @@ body:has(.modal[open]) {
 .twostep__manage {
     max-width: 24rem;
 }
+
+/* Payer templates and reviewed PDF applications. */
+.application-template { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--line, #e3e6e4); }
+.application-mapping { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 1rem; padding: 1.5rem 0; border-bottom: 1px solid var(--line, #e3e6e4); }
+.application-mapping h2 { font-size: 1rem; overflow-wrap: anywhere; }
+.application-check { display: flex; align-items: center; gap: .65rem; margin: 1rem 0; }
+.application-answer { max-width: 52rem; padding: 1rem 0; }
+@media (max-width: 700px) { .application-mapping { grid-template-columns: 1fr; } .application-template { align-items: flex-start; flex-direction: column; } }
+
+.page--template { max-width: 1400px; }
+.application-builder { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.application-preview { position: sticky; top: 1rem; }
+.application-preview__image { display: block; width: 100%; height: auto; border: 1px solid var(--line, #e3e6e4); }
+@media (max-width: 1000px) { .application-builder { grid-template-columns: 1fr; } .application-preview { position: static; } }
+
+.application-secret {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.application-secret .field__input {
+    flex: 1;
+    min-width: 0;
+}
