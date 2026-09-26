@@ -1,5 +1,7 @@
 package dev.bryrich.credapp.user;
 
+import dev.bryrich.credapp.security.SignInLockout;
+import dev.bryrich.credapp.twostep.TwoStepService;
 import dev.bryrich.credapp.mail.AccountEmails;
 import dev.bryrich.credapp.passwordreset.PasswordResetService;
 import dev.bryrich.credapp.security.CredAppUserDetails;
@@ -35,10 +37,15 @@ public class UserWebController {
     private final UserGroupRepository userGroups;
     private final AccountEmails accountEmails;
     private final PasswordResetService passwordResets;
+    private final TwoStepService twoStep;
+    private final SignInLockout lockout;
 
     public UserWebController(UserService userService, UserGroupRepository userGroups,
-                             AccountEmails accountEmails, PasswordResetService passwordResets) {
+                             AccountEmails accountEmails, PasswordResetService passwordResets,
+                             TwoStepService twoStep, SignInLockout lockout) {
         this.userService = userService;
+        this.twoStep = twoStep;
+        this.lockout = lockout;
         this.userGroups = userGroups;
         this.accountEmails = accountEmails;
         this.passwordResets = passwordResets;
@@ -67,7 +74,9 @@ public class UserWebController {
         Long viewed = superuser ? ViewedGroup.id(request) : null;
         Long scope = viewed != null ? viewed : groupFilter;
 
-        model.addAttribute("page", userService.searchAs(actor, q, scope, pageable));
+        var page = userService.searchAs(actor, q, scope, pageable);
+        model.addAttribute("page", page);
+        model.addAttribute("twoStepIds", twoStep.enabledAmong(page.getContent().stream().map(User::getId).toList()));
         if (viewed == null) {
             model.addAttribute("passwordResets", passwordResets.pendingFor(actor));
         }
@@ -216,6 +225,40 @@ public class UserWebController {
             return refused(ex, redirectAttributes);
         }
         redirectAttributes.addFlashAttribute("message", enabled ? "Account enabled." : "Account disabled.");
+        return "redirect:/admin/users";
+    }
+
+    @PostMapping("/{id}/unlock")
+    public String unlock(@AuthenticationPrincipal CredAppUserDetails principal,
+                         @PathVariable Long id,
+                         RedirectAttributes redirectAttributes) {
+        try {
+            userService.manageSignInAs(principal.getUser(), id);
+        } catch (UserManagementDeniedException | IllegalArgumentException ex) {
+            return refused(ex, redirectAttributes);
+        }
+        lockout.unlock(id);
+        redirectAttributes.addFlashAttribute("message", "Account unlocked. They can sign in again now.");
+        return "redirect:/admin/users";
+    }
+
+    /** For someone who's lost their phone and their recovery codes. */
+    @PostMapping("/{id}/two-step/reset")
+    public String resetTwoStep(@AuthenticationPrincipal CredAppUserDetails principal,
+                               @PathVariable Long id,
+                               RedirectAttributes redirectAttributes) {
+        User target;
+        try {
+            target = userService.manageSignInAs(principal.getUser(), id);
+        } catch (UserManagementDeniedException | IllegalArgumentException ex) {
+            return refused(ex, redirectAttributes);
+        }
+        if (twoStep.turnOff(id)) {
+            accountEmails.twoStepTurnedOff(target, principal.getUser());
+        }
+        redirectAttributes.addFlashAttribute("message", twoStep.requiredFor(target.getRole())
+                ? "Two-step sign-in reset. They'll set it up again the next time they sign in."
+                : "Two-step sign-in turned off for that account.");
         return "redirect:/admin/users";
     }
 

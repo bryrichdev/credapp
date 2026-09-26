@@ -27,6 +27,10 @@
     <div class="alert alert--error" th:if="${param.expired}">
         That page had expired, so nothing was sent. Sign in again.
     </div>
+    <div class="alert alert--error" th:if="${param.locked}">
+        This account is locked for 15 minutes after too many wrong passwords or codes. Try again later,
+        or ask your admin to unlock it.
+    </div>
     <div class="alert alert--error" th:if="${param.error}">
         Unable to sign in. Check your email and password. New coordinators must be approved by their group's admin.
     </div>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Set up two-step sign-in &middot; CredCloud</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any">
+    <link rel="icon" th:href="@{/favicon.svg}" type="image/svg+xml">
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}">
+</head>
+<body>
+
+<!-- Held here until it's set up, so no navigation: every link would lead back. -->
+<th:block th:unless="${required}">
+    <div th:replace="~{fragments/layout :: topbar(${user}, 'account')}"></div>
+</th:block>
+
+<main class="page page--narrow">
+
+    <a class="backlink" th:href="@{/account}" th:unless="${required}">&larr; My account</a>
+
+    <div class="page__header">
+        <h1>Set up two-step sign-in</h1>
+        <p class="page__subtitle" th:if="${required}">
+            <span th:text="${user.role.label}">Admin</span> accounts must use two-step sign-in.
+            Set it up now to continue; it takes a minute.
+        </p>
+        <p class="page__subtitle" th:unless="${required}">
+            After your password, signing in will also ask for a code from your phone.
+        </p>
+    </div>
+
+    <section class="card twostep">
+        <ol class="twostep__steps">
+            <li>
+                <strong>Install an authenticator app</strong> on your phone if you don't have one:
+                Google Authenticator, Microsoft Authenticator, 1Password and Authy all work.
+            </li>
+            <li>
+                <strong>Scan this code</strong> with the app.
+                <div class="twostep__qr" data-otpauth th:attr="data-otpauth=${setup.uri()}" role="img"
+                     aria-label="QR code for your authenticator app"></div>
+                <p class="twostep__manual">
+                    Can't scan? Choose "enter a setup key" in the app and type:
+                    <code class="twostep__key" th:text="${setup.key()}">ABCD EFGH</code>
+                </p>
+            </li>
+            <li>
+                <strong>Enter the 6-digit code</strong> the app shows for CredCloud.
+                <form th:action="@{/account/two-step/setup}" method="post" class="twostep__confirm">
+                    <label class="field">
+                        <span class="field__label">Code</span>
+                        <input class="field__input twostep__code" type="text" name="code" inputmode="numeric"
+                               autocomplete="one-time-code" maxlength="7" required
+                               th:classappend="${error} ? 'field__input--invalid'">
+                        <span class="field__error" th:if="${error}" th:text="${error}"></span>
+                    </label>
+                    <div class="form-actions">
+                        <button class="button" type="submit">Turn on two-step sign-in</button>
+                        <a class="button button--quiet" th:href="@{/account}" th:unless="${required}">Cancel</a>
+                    </div>
+                </form>
+            </li>
+        </ol>
+    </section>
+
+    <form th:if="${required}" th:action="@{/logout}" method="post">
+        <button class="button button--quiet" type="submit">Sign out instead</button>
+    </form>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+<script th:src="@{/js/vendor/qrcode.js}"></script>
+<script th:src="@{/js/two-step-setup.js}"></script>
+</body>
+</html>

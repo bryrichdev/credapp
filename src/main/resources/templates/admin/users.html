@@ -210,6 +210,10 @@
                         <span class="badge"
                               th:classappend="${account.enabled} ? 'badge--active' : 'badge--alert'"
                               th:text="${account.pendingApproval} ? 'Pending approval' : (${account.membershipStatus.name() == 'REJECTED'} ? 'Rejected' : (${account.enabled} ? 'Enabled' : 'Disabled'))">Enabled</span>
+                        <span class="badge badge--alert" th:if="${account.locked}"
+                              title="Too many wrong passwords or codes; unlocks by itself after 15 minutes">Locked</span>
+                        <span class="badge badge--inactive" th:if="${twoStepIds.contains(account.id)}"
+                              title="Signs in with a code from an authenticator app">Two-step</span>
                     </td>
                     <td class="table__actions">
                         <div class="row-actions">
@@ -228,6 +232,17 @@
                                 <input type="hidden" name="enabled" th:value="${!account.enabled}">
                                 <button class="button button--quiet button--small" type="submit"
                                         th:text="${account.enabled} ? 'Disable' : 'Enable'">Disable</button>
+                            </form>
+
+                            <form th:if="${manageable and account.locked}"
+                                  th:action="@{/admin/users/{id}/unlock(id=${account.id})}" method="post">
+                                <button class="button button--quiet button--small" type="submit">Unlock</button>
+                            </form>
+
+                            <form th:if="${manageable and twoStepIds.contains(account.id)}"
+                                  th:action="@{/admin/users/{id}/two-step/reset(id=${account.id})}" method="post"
+                                  data-confirm="Reset two-step sign-in for this account? Do this only when you're sure it's them asking, for example after a phone call.">
+                                <button class="button button--quiet button--small" type="submit">Reset two-step</button>
                             </form>
 
                             <form th:if="${manageable}"

@@ -66,6 +66,43 @@ public class AccountEmails {
                         + "If this wasn't you, tell your admin right away.");
     }
 
+    public void accountLocked(User account, int failures, Duration lock) {
+        mailer.send(account.getEmail(), "Your CredCloud account was locked",
+                greeting(account)
+                        + "Someone got your password or two-step code wrong " + failures + " times in a row, "
+                        + "so your account is locked for " + describe(lock) + ".\n\n"
+                        + "If that was you, wait and try again, or ask your admin to unlock it now. "
+                        + "If it wasn't you, someone may be guessing your password: change it once you're back in, "
+                        + "and tell your admin.");
+    }
+
+    public void twoStepTurnedOn(User account) {
+        mailer.send(account.getEmail(), "Two-step sign-in is on for your CredCloud account",
+                greeting(account)
+                        + "Two-step sign-in is now on. From now on, signing in asks for a code from your "
+                        + "authenticator app after your password.\n\n"
+                        + "Keep your recovery codes somewhere safe: each one gets you in once without your phone.\n\n"
+                        + "If this wasn't you, tell your admin right away.");
+    }
+
+    public void twoStepTurnedOff(User account, User byAdmin) {
+        String who = byAdmin == null ? "You turned off" : name(byAdmin) + " reset";
+        mailer.send(account.getEmail(), "Two-step sign-in was turned off for your CredCloud account",
+                greeting(account)
+                        + who + " two-step sign-in for your account, so signing in no longer asks for a code"
+                        + (byAdmin == null ? "." : " until you set it up again.") + "\n\n"
+                        + "If you didn't expect this, tell your admin right away.");
+    }
+
+    public void recoveryCodeUsed(User account, int left) {
+        mailer.send(account.getEmail(), "A CredCloud recovery code was used",
+                greeting(account)
+                        + "Someone just signed in to your account with one of your recovery codes. "
+                        + (left == 0 ? "That was your last one: make new codes on your account page."
+                                     : "You have " + left + " left.") + "\n\n"
+                        + "If this wasn't you, tell your admin right away.");
+    }
+
     private String groupName(User account) {
         return userGroups.findById(account.getUserGroupId()).map(UserGroup::getName).orElse("your group");
     }

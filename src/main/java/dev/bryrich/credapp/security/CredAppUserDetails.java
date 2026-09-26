@@ -35,6 +35,11 @@ public class CredAppUserDetails implements UserDetails, Serializable {
     }
 
     @Override
+    public boolean isAccountNonLocked() {
+        return !user.isLocked();
+    }
+
+    @Override
     public boolean isEnabled() {
         return user.isEnabled();
     }

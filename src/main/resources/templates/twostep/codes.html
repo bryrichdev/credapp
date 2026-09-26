@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Recovery codes &middot; CredCloud</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any">
+    <link rel="icon" th:href="@{/favicon.svg}" type="image/svg+xml">
+    <link rel="apple-touch-icon" th:href="@{/apple-touch-icon.png}">
+</head>
+<body>
+
+<div th:replace="~{fragments/layout :: topbar(${user}, 'account')}"></div>
+
+<main class="page page--narrow">
+
+    <div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
+
+    <div class="page__header">
+        <h1>Save your recovery codes</h1>
+        <p class="page__subtitle">
+            If you lose your phone, each of these gets you in once instead of a code from the app.
+            This is the only time they're shown: save them in your password manager or print them.
+        </p>
+    </div>
+
+    <section class="card twostep">
+        <ul class="twostep__codes">
+            <li th:each="code : ${codes}"><code th:text="${code}">abcde-fghjk</code></li>
+        </ul>
+        <div class="form-actions">
+            <button class="button button--quiet" type="button" data-copy-codes
+                    th:attr="data-copy-codes=${#strings.listJoin(codes, '&#10;')}">Copy codes</button>
+            <a class="button" th:href="@{/}">I've saved them</a>
+        </div>
+    </section>
+
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+
+<script th:src="@{/js/two-step-setup.js}"></script>
+</body>
+</html>

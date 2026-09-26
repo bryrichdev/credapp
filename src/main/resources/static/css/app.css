@@ -2617,3 +2617,63 @@ body:has(.modal[open]) {
     color: var(--slate-500);
     font-size: 0.85rem;
 }
+
+/* ---------- two-step sign-in ---------- */
+
+.twostep__steps {
+    margin: 0;
+    padding-left: 1.25rem;
+    display: grid;
+    gap: 1.25rem;
+}
+
+.twostep__qr {
+    width: 200px;
+    max-width: 100%;
+    margin: 0.75rem 0 0.5rem;
+}
+
+.twostep__qr svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.twostep__manual {
+    margin: 0;
+    color: var(--slate-500);
+    font-size: 0.9rem;
+}
+
+.twostep__key {
+    display: inline-block;
+    margin-top: 0.25rem;
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+    color: var(--slate-900);
+    overflow-wrap: anywhere;
+}
+
+.twostep__confirm {
+    margin-top: 0.75rem;
+    max-width: 20rem;
+}
+
+.twostep__code {
+    font-size: 1.25rem;
+    letter-spacing: 0.2em;
+}
+
+.twostep__codes {
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem 1.5rem;
+    font-size: 1.05rem;
+}
+
+.twostep__manage {
+    max-width: 24rem;
+}

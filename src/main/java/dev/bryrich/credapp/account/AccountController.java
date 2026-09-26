@@ -1,5 +1,6 @@
 package dev.bryrich.credapp.account;
 
+import dev.bryrich.credapp.twostep.TwoStepService;
 import dev.bryrich.credapp.security.CredAppUserDetails;
 import dev.bryrich.credapp.user.EmailAlreadyExistsException;
 import dev.bryrich.credapp.user.User;
@@ -41,14 +42,17 @@ import java.util.List;
 public class AccountController {
 
     private final UserService userService;
+    private final TwoStepService twoStep;
     private final UserGroupRepository userGroups;
     private final ObjectProvider<FindByIndexNameSessionRepository<? extends Session>> sessions;
     private final HttpSessionSecurityContextRepository contextRepository = new HttpSessionSecurityContextRepository();
 
     public AccountController(UserService userService,
                              UserGroupRepository userGroups,
-                             ObjectProvider<FindByIndexNameSessionRepository<? extends Session>> sessions) {
+                             ObjectProvider<FindByIndexNameSessionRepository<? extends Session>> sessions,
+                             TwoStepService twoStep) {
         this.userService = userService;
+        this.twoStep = twoStep;
         this.userGroups = userGroups;
         this.sessions = sessions;
     }
@@ -138,6 +142,8 @@ public class AccountController {
 
     private void addContext(User account, Model model) {
         model.addAttribute("account", account);
+        model.addAttribute("twoStep", twoStep.status(account.getId()));
+        model.addAttribute("twoStepRequired", twoStep.requiredFor(account.getRole()));
         model.addAttribute("accountGroup", userGroups.findById(account.getUserGroupId())
                 .map(UserGroup::getName).orElse(null));
     }

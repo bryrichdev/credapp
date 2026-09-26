@@ -91,6 +91,42 @@
         </section>
     </form>
 
+    <section class="card" id="two-step">
+        <h2>Two-step sign-in</h2>
+        <div class="alert alert--error" th:if="${twoStepError}" th:text="${twoStepError}"></div>
+        <th:block th:if="${twoStep.enabled()}">
+            <p>
+                <span class="badge badge--active">On</span>
+                Signing in asks for a code from your authenticator app.
+                <span th:text="${twoStep.recoveryCodesLeft()} == 1 ? '1 recovery code left.' : ${twoStep.recoveryCodesLeft()} + ' recovery codes left.'">10 recovery codes left.</span>
+            </p>
+            <form method="post" th:action="@{/account/two-step/recovery-codes}" class="twostep__manage">
+                <label class="field">
+                    <span class="field__label">Current password</span>
+                    <input class="field__input" type="password" name="currentPassword" autocomplete="current-password" required>
+                </label>
+                <div class="form-actions">
+                    <button class="button button--quiet" type="submit">Make new recovery codes</button>
+                    <button class="button button--danger" type="submit" th:unless="${twoStepRequired}"
+                            th:formaction="@{/account/two-step/off}">Turn off</button>
+                </div>
+                <p class="account-form__note" th:if="${twoStepRequired}">
+                    <span th:text="${account.role.label}">Admin</span> accounts can't turn it off. If you lose your
+                    phone and your recovery codes,
+                    <span th:text="${account.role.name() == 'SUPERUSER'} ? 'another superuser' : 'a superuser'">a superuser</span>
+                    can reset it for you.
+                </p>
+            </form>
+        </th:block>
+        <th:block th:unless="${twoStep.enabled()}">
+            <p>
+                <span class="badge badge--inactive">Off</span>
+                Add a code from your phone to signing in, so a stolen password alone isn't enough.
+            </p>
+            <a class="button" th:href="@{/account/two-step/setup}">Set up two-step sign-in</a>
+        </th:block>
+    </section>
+
 </main>
 
 <div th:replace="~{fragments/layout :: footer}"></div>
