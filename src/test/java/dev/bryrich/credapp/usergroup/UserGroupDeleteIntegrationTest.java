@@ -281,6 +281,15 @@ class UserGroupDeleteIntegrationTest {
                                        content, uploaded_by)
                 SELECT user_group_id, min(id), 'cv', 'cv.pdf', 'application/pdf', 3, '\\x010203'::bytea, 'test'
                 FROM providers WHERE user_group_id = ? GROUP BY user_group_id""", account.getUserGroupId());
+        // Nor training or work history.
+        jdbc.update("""
+                INSERT INTO provider_training (user_group_id, provider_id, training_type, institution, start_date)
+                SELECT user_group_id, min(id), 'RESIDENCY', 'General Hospital', DATE '2012-07-01'
+                FROM providers WHERE user_group_id = ? GROUP BY user_group_id""", account.getUserGroupId());
+        jdbc.update("""
+                INSERT INTO provider_work_history (user_group_id, provider_id, entry_type, employer, start_date)
+                SELECT user_group_id, min(id), 'JOB', 'Lakeside Clinic', DATE '2015-08-01'
+                FROM providers WHERE user_group_id = ? GROUP BY user_group_id""", account.getUserGroupId());
     }
 
     private User register(String groupName) {

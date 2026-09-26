@@ -51,11 +51,15 @@ public class UserGroupWipeService {
             "payer_contacts", "Payer contacts",
             "group_payers", "Group enrollments",
             "provider_payers", "Provider enrollments",
-            "documents", "Documents");
+            "documents", "Documents",
+            "provider_training", "Training",
+            "provider_work_history", "Work history");
 
     /** Children before parents, so no foreign key ever blocks a delete. */
     static final List<String> DELETE_ORDER = List.of(
             "documents",
+            "provider_training",
+            "provider_work_history",
             "malpractice_claims",
             "criminal_charges",
             "hospital_privileges",

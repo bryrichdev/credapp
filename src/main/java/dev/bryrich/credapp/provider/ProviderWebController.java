@@ -6,6 +6,12 @@ import dev.bryrich.credapp.payer.PayerService;
 import dev.bryrich.credapp.payer.enrollment.EnrollmentStatus;
 import dev.bryrich.credapp.payer.enrollment.PayerEnrollmentService;
 import dev.bryrich.credapp.document.DocumentService;
+import dev.bryrich.credapp.provider.history.ProviderHistoryService;
+import dev.bryrich.credapp.provider.history.ProviderTraining;
+import dev.bryrich.credapp.provider.history.TrainingType;
+import dev.bryrich.credapp.provider.history.WorkEntryType;
+import dev.bryrich.credapp.provider.history.WorkHistoryEntry;
+import dev.bryrich.credapp.provider.history.WorkHistoryGaps;
 import dev.bryrich.credapp.document.DocumentType;
 import dev.bryrich.credapp.tracking.TrackingService;
 import dev.bryrich.credapp.payer.enrollment.ProviderPayerForm;
@@ -50,6 +56,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.beans.PropertyEditorSupport;
 
@@ -78,6 +85,7 @@ public class ProviderWebController {
     private final TrackingService trackingService;
     private final CaqhPasswordService caqhPasswords;
     private final DocumentService documentService;
+    private final ProviderHistoryService historyService;
 
     public ProviderWebController(ProviderService providerService,
                                  ProviderProfileService profileService,
@@ -99,7 +107,8 @@ public class ProviderWebController {
                                  PayerEnrollmentService enrollmentService,
                                  TrackingService trackingService,
                                  CaqhPasswordService caqhPasswords,
-                                 DocumentService documentService) {
+                                 DocumentService documentService,
+                                 ProviderHistoryService historyService) {
         this.providerService = providerService;
         this.profileService = profileService;
         this.licenseService = licenseService;
@@ -121,6 +130,7 @@ public class ProviderWebController {
         this.trackingService = trackingService;
         this.caqhPasswords = caqhPasswords;
         this.documentService = documentService;
+        this.historyService = historyService;
     }
 
     /**
@@ -189,6 +199,11 @@ public class ProviderWebController {
         model.addAttribute("practiceLocations", providerLocationService.findByProviderId(id));
         model.addAttribute("certifications", certificationService.findByProviderId(id));
         model.addAttribute("references", referenceService.findByProviderId(id));
+        List<ProviderTraining> training = historyService.findTraining(id);
+        List<WorkHistoryEntry> work = historyService.findWork(id);
+        model.addAttribute("training", training);
+        model.addAttribute("work", work);
+        model.addAttribute("workGaps", WorkHistoryGaps.find(work, training, java.time.LocalDate.now()));
         model.addAttribute("privileges", privilegeService.findByProviderId(id));
         model.addAttribute("charges", chargeService.findByProviderId(id));
         model.addAttribute("policies", policyService.findByProviderId(id));
@@ -284,6 +299,8 @@ public class ProviderWebController {
         model.addAttribute("chargeStatuses", ChargeStatus.values());
         model.addAttribute("payerOptions", payerService.findAllForSelect());
         model.addAttribute("enrollmentStatuses", EnrollmentStatus.values());
+        model.addAttribute("trainingTypes", TrainingType.values());
+        model.addAttribute("workEntryTypes", WorkEntryType.values());
 
         Map<String, Object> blank = new HashMap<>();
         blank.put("group", new ProviderGroupForm());
@@ -296,6 +313,8 @@ public class ProviderWebController {
         blank.put("policy", new ProviderProfileForm.PolicyRow());
         blank.put("claim", new ProviderProfileForm.ClaimRow());
         blank.put("reference", new ProviderProfileForm.ReferenceRow());
+        blank.put("training", new ProviderProfileForm.TrainingRow());
+        blank.put("work", new ProviderProfileForm.WorkRow());
         blank.put("charge", new ProviderProfileForm.ChargeRow());
         model.addAttribute("blank", blank);
     }

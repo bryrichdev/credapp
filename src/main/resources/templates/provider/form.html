@@ -37,6 +37,8 @@
         <a class="section-nav__link" href="#privileges">Hospital privileges</a>
         <a class="section-nav__link" href="#policies">Malpractice policies</a>
         <a class="section-nav__link" href="#claims">Malpractice claims</a>
+        <a class="section-nav__link" href="#training">Training</a>
+        <a class="section-nav__link" href="#work">Work history</a>
         <a class="section-nav__link" href="#references">References</a>
         <a class="section-nav__link" href="#disclosures">Disclosures</a>
     </nav>
@@ -417,6 +419,46 @@
             </div>
             <template data-row-template>
                 <div th:replace="~{provider/rows :: claim('claims[0]', ${blank.claim}, false)}"></div>
+            </template>
+        </section>
+
+        <!-- ============ training ============ -->
+        <section class="card card--flush form-section" id="training" data-section="training">
+            <div class="card__header">
+                <h2>Training</h2>
+                <span class="count-pill" data-count>0</span>
+                <button class="button button--quiet toolbar__end" type="button" data-add-row>Add training</button>
+            </div>
+            <div class="form-section__body">
+                <div data-rows>
+                    <th:block th:each="r, st : *{training}" th:if="${r != null}">
+                        <div th:replace="~{provider/rows :: training(${'training[' + st.index + ']'}, ${r}, true)}"></div>
+                    </th:block>
+                </div>
+                <p class="form-section__empty" data-empty>No internships, residencies or fellowships yet.</p>
+            </div>
+            <template data-row-template>
+                <div th:replace="~{provider/rows :: training('training[0]', ${blank.training}, false)}"></div>
+            </template>
+        </section>
+
+        <!-- ============ work history ============ -->
+        <section class="card card--flush form-section" id="work" data-section="work">
+            <div class="card__header">
+                <h2>Work history</h2>
+                <span class="count-pill" data-count>0</span>
+                <button class="button button--quiet toolbar__end" type="button" data-add-row>Add entry</button>
+            </div>
+            <div class="form-section__body">
+                <div data-rows>
+                    <th:block th:each="r, st : *{work}" th:if="${r != null}">
+                        <div th:replace="~{provider/rows :: work(${'work[' + st.index + ']'}, ${r}, true)}"></div>
+                    </th:block>
+                </div>
+                <p class="form-section__empty" data-empty>No work history yet. Most applications ask for at least five years.</p>
+            </div>
+            <template data-row-template>
+                <div th:replace="~{provider/rows :: work('work[0]', ${blank.work}, false)}"></div>
             </template>
         </section>
 

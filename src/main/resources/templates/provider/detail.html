@@ -490,6 +490,93 @@
         </div>
     </section>
 
+    <!-- ============ training ============ -->
+    <section class="card card--flush" id="training">
+        <div class="card__header">
+            <h2>Training</h2>
+            <span class="count-pill" th:text="${training.size()}">0</span>
+        </div>
+        <div class="table-scroll" role="region" tabindex="0" aria-label="Training" th:unless="${training.isEmpty()}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Kind</th>
+                    <th>Institution</th>
+                    <th>Specialty</th>
+                    <th>Dates</th>
+                    <th>Completed</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${training}">
+                    <td th:text="${item.trainingType.label}"></td>
+                    <td>
+                        <span th:text="${item.institution}"></span>
+                        <span class="documents__meta" th:if="${item.city != null or item.state != null}"
+                              th:text="${(item.city ?: '') + (item.city != null and item.state != null ? ', ' : '') + (item.state ?: '')}"></span>
+                    </td>
+                    <td th:text="${item.specialty} ?: '—'"></td>
+                    <td th:text="${item.startDate} + ' to ' + (${item.endDate} ?: 'now')"></td>
+                    <td>
+                        <span class="badge badge--active" th:if="${item.completed}">Yes</span>
+                        <span class="badge badge--pending" th:unless="${item.completed}"
+                              th:title="${item.incompleteReason}">No</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="empty" th:if="${training.isEmpty()}">
+            <p class="empty__title">No training on file</p>
+            <p class="empty__hint">Internships, residencies and fellowships, as applications and CAQH ask for them.</p>
+        </div>
+    </section>
+
+    <!-- ============ work history ============ -->
+    <section class="card card--flush" id="work">
+        <div class="card__header">
+            <h2>Work history</h2>
+            <span class="count-pill" th:text="${work.size()}">0</span>
+        </div>
+        <div class="alert alert--error documents__alert" th:unless="${workGaps.isEmpty()}">
+            <strong>Gaps to explain.</strong> Applications ask about any six months or more with no job, training
+            or explained time away:
+            <ul class="work-gaps">
+                <li th:each="gap : ${workGaps}" th:text="${gap.describe()}">Jan 2020 to Aug 2020 (7 months)</li>
+            </ul>
+            <a th:if="${canEdit}" th:href="@{/providers/{id}/edit(id=${provider.id})} + '#work'">Add time away with an explanation</a>
+        </div>
+        <div class="table-scroll" role="region" tabindex="0" aria-label="Work history" th:unless="${work.isEmpty()}">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Employer</th>
+                    <th>Position</th>
+                    <th>Dates</th>
+                    <th>Notes</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${work}">
+                    <td>
+                        <span th:if="${item.gap}" class="badge badge--inactive">Time away</span>
+                        <span th:unless="${item.gap}" th:text="${item.employer}"></span>
+                        <span class="documents__meta" th:if="${!item.gap and (item.city != null or item.state != null)}"
+                              th:text="${(item.city ?: '') + (item.city != null and item.state != null ? ', ' : '') + (item.state ?: '')}"></span>
+                    </td>
+                    <td th:text="${item.position} ?: '—'"></td>
+                    <td th:text="${item.startDate} + ' to ' + (${item.endDate} ?: 'now')"></td>
+                    <td th:text="${item.gap} ? ${item.gapExplanation} : (${item.reasonForLeaving} ?: '—')"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="empty" th:if="${work.isEmpty()}">
+            <p class="empty__title">No work history on file</p>
+            <p class="empty__hint">Most applications ask for at least the last five years, with gaps explained.</p>
+        </div>
+    </section>
+
     <!-- ============ references ============ -->
     <section class="card card--flush">
         <div class="card__header">
