@@ -337,6 +337,9 @@
         </div>
     </section>
 
+    <!-- ============ documents ============ -->
+    <section th:replace="~{fragments/documents :: card('/groups/' + ${group.id} + '/documents', ${documents}, ${documentTypes})}"></section>
+
     <section class="card danger-zone"  th:if="${canEdit}">
         <div>
             <h2>Delete group</h2>

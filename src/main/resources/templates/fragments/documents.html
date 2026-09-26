@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<body>
+
+<!-- Documents on a provider or practice group. uploadPath is where the upload form posts. -->
+<section th:fragment="card(uploadPath, documents, types)" class="card card--flush" id="documents">
+    <div class="card__header">
+        <h2>Documents</h2>
+        <span class="count-pill" th:text="${documents.size()}">0</span>
+    </div>
+
+    <div class="alert alert--error documents__alert" role="alert" th:if="${documentError}" th:text="${documentError}"></div>
+
+    <div class="table-scroll" role="region" tabindex="0" aria-label="Documents" th:unless="${documents.isEmpty()}">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Document</th>
+                <th>File</th>
+                <th>Expires</th>
+                <th>Uploaded</th>
+                <th class="table__actions"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="doc : ${documents}">
+                <td>
+                    <strong th:text="${doc.type().label}">DEA certificate</strong>
+                    <span class="documents__title" th:if="${doc.title() != null}" th:text="${doc.title()}">Utah</span>
+                </td>
+                <td>
+                    <span class="documents__file" th:text="${doc.fileName()}">dea.pdf</span>
+                    <span class="documents__meta" th:text="${doc.size()}">240 KB</span>
+                </td>
+                <td>
+                    <span th:text="${doc.expirationDate()} ?: '—'">2027-01-31</span>
+                    <span class="badge badge--alert" th:if="${doc.expired()}">Expired</span>
+                    <span class="badge badge--pending" th:if="${doc.expiringSoon()}">Soon</span>
+                </td>
+                <td>
+                    <span th:text="${doc.uploadedOn()}">2026-09-26</span>
+                    <span class="documents__meta" th:text="${doc.uploadedBy()}">you@example.com</span>
+                </td>
+                <td class="table__actions">
+                    <div class="row-actions">
+                        <a class="button button--quiet button--small" th:href="@{/documents/{id}(id=${doc.id()})}">Download</a>
+                        <form th:if="${canEdit}" method="post" th:action="@{/documents/{id}/delete(id=${doc.id()})}"
+                              data-confirm="Delete this document? This can't be undone.">
+                            <button class="button button--danger button--small" type="submit">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="empty" th:if="${documents.isEmpty()}">
+        <p class="empty__title">No documents yet</p>
+        <p class="empty__hint">License copies, certificates, insurance face sheets and the like.</p>
+    </div>
+
+    <form class="documents__upload" th:if="${canEdit}" method="post" th:action="@{${uploadPath}}"
+          enctype="multipart/form-data">
+        <h3>Upload a document</h3>
+        <div class="form-grid">
+            <label class="field">
+                <span class="field__label">What is it</span>
+                <select class="field__input" name="type" required>
+                    <option value="">Choose…</option>
+                    <option th:each="type : ${types}" th:value="${type.value}" th:text="${type.label}">DEA certificate</option>
+                </select>
+            </label>
+            <label class="field">
+                <span class="field__label">File</span>
+                <input class="field__input" type="file" name="file" required
+                       accept=".pdf,.png,.jpg,.jpeg,.heic,.heif,.tif,.tiff,.doc,.docx">
+                <span class="field__hint">PDF, image or Word file, up to 10 MB.</span>
+            </label>
+            <label class="field">
+                <span class="field__label">Expires <span class="field__optional">(optional)</span></span>
+                <input class="field__input" type="date" name="expirationDate">
+                <span class="field__hint">Shows up in Tracking as it gets close.</span>
+            </label>
+            <label class="field">
+                <span class="field__label">Description <span class="field__optional">(optional)</span></span>
+                <input class="field__input" type="text" name="title" maxlength="200" placeholder="e.g. Utah, renewed 2026">
+            </label>
+        </div>
+        <div class="form-actions">
+            <button class="button" type="submit">Upload</button>
+        </div>
+    </form>
+</section>
+
+</body>
+</html>

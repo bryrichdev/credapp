@@ -2028,6 +2028,46 @@ a.topbar__user:hover,
     overflow-wrap: anywhere;
 }
 
+/* ============ documents ============ */
+
+.documents__alert {
+    margin: 1rem 1.25rem 0;
+}
+
+.documents__title,
+.documents__meta {
+    display: block;
+    color: var(--slate-500);
+    font-size: 0.8rem;
+}
+
+.documents__file {
+    display: block;
+    max-width: 22rem;
+    overflow-wrap: anywhere;
+}
+
+.documents__upload {
+    padding: 1.1rem 1.25rem 1.25rem;
+    border-top: 1px solid var(--slate-200);
+}
+
+.documents__upload h3 {
+    margin: 0 0 0.75rem;
+    font-size: 0.95rem;
+}
+
+.documents__upload .form-actions {
+    margin-top: 0.5rem;
+    padding-top: 0;
+    border-top: 0;
+}
+
+.field__optional {
+    color: var(--slate-500);
+    font-weight: 400;
+}
+
 /* ============ dialogs (modal.js) ============ */
 
 .modal {

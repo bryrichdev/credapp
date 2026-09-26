@@ -3,6 +3,8 @@ package dev.bryrich.credapp.group;
 import dev.bryrich.credapp.payer.PayerService;
 import dev.bryrich.credapp.payer.enrollment.EnrollmentStatus;
 import dev.bryrich.credapp.payer.enrollment.PayerEnrollmentService;
+import dev.bryrich.credapp.document.DocumentService;
+import dev.bryrich.credapp.document.DocumentType;
 import dev.bryrich.credapp.tracking.TrackingService;
 import dev.bryrich.credapp.payer.enrollment.GroupPayerForm;
 import dev.bryrich.credapp.group.location.GroupLocationService;
@@ -49,6 +51,7 @@ public class GroupWebController {
     private final PayerService payerService;
     private final PayerEnrollmentService enrollmentService;
     private final TrackingService trackingService;
+    private final DocumentService documentService;
 
     public GroupWebController(GroupService groupService,
                               GroupProfileService profileService,
@@ -62,7 +65,8 @@ public class GroupWebController {
                               MalpracticePolicyService policyService,
                               PayerService payerService,
                               PayerEnrollmentService enrollmentService,
-                                 TrackingService trackingService) {
+                                 TrackingService trackingService,
+                                 DocumentService documentService) {
         this.groupService = groupService;
         this.profileService = profileService;
         this.locationService = locationService;
@@ -76,6 +80,7 @@ public class GroupWebController {
         this.payerService = payerService;
         this.enrollmentService = enrollmentService;
         this.trackingService = trackingService;
+        this.documentService = documentService;
     }
 
     /** Blank text inputs submit "" — store null instead. */
@@ -110,6 +115,9 @@ public class GroupWebController {
         model.addAttribute("taxonomies", groupTaxonomyService.findByGroupId(id));
         model.addAttribute("policies", policyService.findByGroupId(id));
         model.addAttribute("payerEnrollments", enrollmentService.findForGroup(id));
+        model.addAttribute("documents", documentService.list(TrackingService.currentGroup(),
+                DocumentService.Owner.GROUP, id));
+        model.addAttribute("documentTypes", DocumentType.forGroups());
         return "group/detail";
     }
 

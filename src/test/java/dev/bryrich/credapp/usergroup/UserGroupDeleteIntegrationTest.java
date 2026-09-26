@@ -88,6 +88,9 @@ class UserGroupDeleteIntegrationTest {
                     INSERT INTO caqh_password_access_log (user_group_id, provider_id, provider_name, user_id, user_email)
                     VALUES (?, 1, 'Shah, Priya', 1, 'someone@example.com')""", group);
             jdbc.update("INSERT INTO tracking_settings (user_group_id) VALUES (?) ON CONFLICT DO NOTHING", group);
+            jdbc.update("""
+                    INSERT INTO document_access_log (user_group_id, document_id, file_name, user_id, user_email)
+                    VALUES (?, 1, 'cv.pdf', 1, 'someone@example.com')""", group);
         }
         jdbc.update("INSERT INTO password_reset_requests (user_group_id, user_id, status) VALUES (?, ?, 'PENDING')",
                 otherGroup, otherCoordinator.getId());
@@ -272,6 +275,12 @@ class UserGroupDeleteIntegrationTest {
     private void fill(User account) {
         ImportReport report = as(account, () -> imports.importFile(TestWorkbook.fullPractice().bytes()));
         assertThat(report.problems()).isEmpty();
+        // Imports don't bring documents, so add one directly; the wipe has to reach every table.
+        jdbc.update("""
+                INSERT INTO documents (user_group_id, provider_id, doc_type, file_name, content_type, size_bytes,
+                                       content, uploaded_by)
+                SELECT user_group_id, min(id), 'cv', 'cv.pdf', 'application/pdf', 3, '\\x010203'::bytea, 'test'
+                FROM providers WHERE user_group_id = ? GROUP BY user_group_id""", account.getUserGroupId());
     }
 
     private User register(String groupName) {

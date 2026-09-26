@@ -9,6 +9,7 @@ public enum TrackedKind {
     LICENSE("License", TrackedCategory.LICENSES, Timing.EXPIRES, "licenses"),
     CERTIFICATION("Board certification", TrackedCategory.CERTIFICATIONS, Timing.EXPIRES, "certifications"),
     MALPRACTICE_POLICY("Malpractice policy", TrackedCategory.MALPRACTICE, Timing.EXPIRES, "policies"),
+    DOCUMENT("Document", TrackedCategory.DOCUMENTS, Timing.EXPIRES, "documents"),
     REAPPOINTMENT("Hospital reappointment", TrackedCategory.HOSPITAL, Timing.DUE, "privileges"),
     FLU_SHOT("Flu shot", TrackedCategory.HEALTH, Timing.DUE, "caqh"),
     TB_TEST("TB test", TrackedCategory.HEALTH, Timing.DUE, "caqh"),
