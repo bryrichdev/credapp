@@ -97,7 +97,13 @@ public class PasswordResetService {
             return;
         }
         Optional<User> found = users.findByEmail(User.normalizeEmail(email));
-        if (found.isEmpty() || !canSignIn(found.get())) {
+        if (found.isEmpty()) {
+            log.info("Password reset asked for an email with no account; nothing sent");
+            return;
+        }
+        if (!canSignIn(found.get())) {
+            log.info("Password reset asked for {}, who can't sign in (disabled or not approved); nothing sent",
+                    found.get().getEmail());
             return;
         }
         User user = found.get();
@@ -106,6 +112,8 @@ public class PasswordResetService {
 
         if (user.getRole() == Role.ADMIN || user.getRole() == Role.SUPERUSER) {
             if (exists("status = 'SENT' AND decided_at > ?", user.getId(), ago(RESEND_AFTER))) {
+                log.info("Password reset asked for {} again within {} minutes of the last link; not resent",
+                        user.getEmail(), RESEND_AFTER.toMinutes());
                 return;
             }
             cancelOpenRequests(user.getId());
@@ -120,6 +128,8 @@ public class PasswordResetService {
         }
 
         if (exists("status = 'PENDING' AND requested_at > ?", user.getId(), ago(PENDING_FOR))) {
+            log.info("Password reset asked for {}, whose earlier request is still waiting for an admin; admins not emailed again",
+                    user.getEmail());
             return;
         }
         jdbc.update("""
@@ -129,6 +139,7 @@ public class PasswordResetService {
         if (approvers.isEmpty()) {
             log.warn("Password reset for {} has nobody to approve it", user.getEmail());
         }
+        log.info("Password reset for {} is waiting for an admin to approve it", user.getEmail());
         emails.resetRequested(approvers, user);
     }
 
