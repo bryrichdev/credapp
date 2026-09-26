@@ -24,7 +24,7 @@
         </div>
         <div class="row-actions">
             <a class="button button--quiet" th:if="${isAdmin and viewingGroupName == null}"
-               th:href="@{/admin/tracking-settings}">Settings</a>
+               th:href="@{/admin/tracking-settings}" data-modal>Settings</a>
             <a class="button" th:href="@{/tracking/export(state=${filter.state}, category=${filter.category}, group=${filter.group})}"
                download>Export to Excel</a>
         </div>

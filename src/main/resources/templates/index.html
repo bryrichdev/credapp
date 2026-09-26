@@ -62,7 +62,7 @@
             </li>
             <li th:if="${isAdmin and viewingGroupName == null}">
                 <strong>Choose your warning windows.</strong>
-                Tracking flags what's expiring or stalled; <a th:href="@{/admin/tracking-settings}">set how far ahead</a>.
+                Tracking flags what's expiring or stalled; <a th:href="@{/admin/tracking-settings}" data-modal>set how far ahead</a>.
             </li>
             <li th:if="${isAdmin and viewingGroupName == null}">
                 <strong>Bring in your team.</strong>

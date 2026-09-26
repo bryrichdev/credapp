@@ -120,7 +120,7 @@
                     <td class="table__actions" th:if="${canEdit}">
                         <div class="row-actions" th:if="${canEdit}">
                             <a class="button button--quiet button--small"
-                               th:href="@{/payers/{pid}/contacts/{cid}/edit(pid=${payer.id}, cid=${contact.id})}" th:if="${canEdit}">Edit</a>
+                               th:href="@{/payers/{pid}/contacts/{cid}/edit(pid=${payer.id}, cid=${contact.id})}" th:if="${canEdit}" data-modal>Edit</a>
                             <form th:action="@{/payers/{pid}/contacts/{cid}/delete(pid=${payer.id}, cid=${contact.id})}"
                                   method="post"
                                   data-confirm="Delete this contact?">

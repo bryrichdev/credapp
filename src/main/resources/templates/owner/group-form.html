@@ -18,11 +18,11 @@
     <a class="backlink" th:href="@{/owners/{id}(id=${owner.id})}">&larr; Back to owner</a>
 
     <div class="page__header">
-        <h1>Add group</h1>
+        <h1 data-modal-title>Add group</h1>
         <p class="page__subtitle">The same person can hold a different share in each group they own.</p>
     </div>
 
-    <section class="card">
+    <section class="card" data-modal-content>
         <p class="context-line">
             For
             <strong th:text="${owner.firstName} + ' ' + ${owner.lastName}"></strong>
@@ -61,7 +61,7 @@
 
             <div class="form-actions">
                 <button class="button" type="submit">Save group</button>
-                <a class="button button--quiet" th:href="@{/owners/{id}(id=${owner.id})}">Cancel</a>
+                <a class="button button--quiet" th:href="@{/owners/{id}(id=${owner.id})}" data-modal-cancel>Cancel</a>
             </div>
         </form>
     </section>

@@ -155,7 +155,7 @@
             <h2>Groups owned</h2>
             <span class="count-pill" th:text="${stakes.size()}">0</span>
             <a class="button toolbar__end"
-               th:href="@{/owners/{id}/groups/new(id=${owner.id})}" th:if="${canEdit}">Add group</a>
+               th:href="@{/owners/{id}/groups/new(id=${owner.id})}" th:if="${canEdit}" data-modal>Add group</a>
         </div>
 
         <div class="table-scroll" role="region" tabindex="0" aria-label="Groups owned" th:unless="${stakes.isEmpty()}">
