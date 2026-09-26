@@ -64,6 +64,7 @@ public class TrackingService {
         licenses(userGroupId, window, items);
         certifications(userGroupId, window, items);
         policies(userGroupId, window, items);
+        documents(userGroupId, window, items);
         reappointments(userGroupId, window, items);
         providerDates(userGroupId, window, settings, items);
         enrollments(userGroupId, window, settings, items);
@@ -243,6 +244,36 @@ public class TrackingService {
                                 "Last attested " + caqh, subject, null);
                     }
                 }, group, window.horizon(), window.horizon(), window.horizon(), settings.getCaqhDays());
+    }
+
+    /**
+     * Documents with an expiration date. A newer document of the same kind for the same
+     * provider or group that expires later counts as its renewal.
+     */
+    private void documents(Long group, Window window, List<TrackedItem> items) {
+        jdbc.query("""
+                SELECT d.expiration_date AS due, d.doc_type, d.title,
+                       p.id AS provider_id, p.first_name, p.last_name, g.id AS group_id, g.lbn
+                FROM documents d
+                LEFT JOIN providers p ON p.id = d.provider_id
+                LEFT JOIN groups g ON g.id = d.group_id
+                WHERE d.user_group_id = ? AND d.expiration_date IS NOT NULL AND d.expiration_date <= ?
+                  AND NOT EXISTS (
+                      SELECT 1 FROM documents r
+                      WHERE r.user_group_id = d.user_group_id AND r.doc_type = d.doc_type AND r.id <> d.id
+                        AND r.provider_id IS NOT DISTINCT FROM d.provider_id
+                        AND r.group_id IS NOT DISTINCT FROM d.group_id
+                        AND (r.expiration_date IS NULL OR r.expiration_date > d.expiration_date))
+                """, rs -> {
+            rs.getLong("provider_id");
+            Subject subject = rs.wasNull()
+                    ? new Subject(SubjectType.GROUP, rs.getLong("group_id"), rs.getString("lbn"))
+                    : provider(rs);
+            String title = rs.getString("title");
+            String what = dev.bryrich.credapp.document.DocumentType.fromValue(rs.getString("doc_type")).getLabel()
+                    + (title == null ? "" : " (" + title + ")");
+            add(items, window, TrackedKind.DOCUMENT, date(rs, "due"), what, subject, null);
+        }, group, window.horizon());
     }
 
     private void enrollments(Long group, Window window, TrackingSettings settings, List<TrackedItem> items) {

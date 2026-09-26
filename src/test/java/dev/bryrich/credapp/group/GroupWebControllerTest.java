@@ -47,6 +47,7 @@ class GroupWebControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @MockitoBean private dev.bryrich.credapp.document.DocumentService documentService;
     @MockitoBean private GroupService groupService;
     @MockitoBean private GroupProfileService profileService;
     @MockitoBean private GroupLocationService locationService;

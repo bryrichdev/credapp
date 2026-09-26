@@ -5,6 +5,8 @@ import dev.bryrich.credapp.caqh.CaqhPasswordService;
 import dev.bryrich.credapp.payer.PayerService;
 import dev.bryrich.credapp.payer.enrollment.EnrollmentStatus;
 import dev.bryrich.credapp.payer.enrollment.PayerEnrollmentService;
+import dev.bryrich.credapp.document.DocumentService;
+import dev.bryrich.credapp.document.DocumentType;
 import dev.bryrich.credapp.tracking.TrackingService;
 import dev.bryrich.credapp.payer.enrollment.ProviderPayerForm;
 import dev.bryrich.credapp.group.GroupService;
@@ -75,6 +77,7 @@ public class ProviderWebController {
     private final PayerEnrollmentService enrollmentService;
     private final TrackingService trackingService;
     private final CaqhPasswordService caqhPasswords;
+    private final DocumentService documentService;
 
     public ProviderWebController(ProviderService providerService,
                                  ProviderProfileService profileService,
@@ -95,7 +98,8 @@ public class ProviderWebController {
                                  PayerService payerService,
                                  PayerEnrollmentService enrollmentService,
                                  TrackingService trackingService,
-                                 CaqhPasswordService caqhPasswords) {
+                                 CaqhPasswordService caqhPasswords,
+                                 DocumentService documentService) {
         this.providerService = providerService;
         this.profileService = profileService;
         this.licenseService = licenseService;
@@ -116,6 +120,7 @@ public class ProviderWebController {
         this.enrollmentService = enrollmentService;
         this.trackingService = trackingService;
         this.caqhPasswords = caqhPasswords;
+        this.documentService = documentService;
     }
 
     /**
@@ -176,6 +181,9 @@ public class ProviderWebController {
         model.addAttribute("caqhPasswordOnFile", caqhPasswords.onFile(id));
         model.addAttribute("caqhPasswordAccess", caqhPasswords.recentAccess(id));
         model.addAttribute("licenses", licenseService.findByProviderId(id));
+        model.addAttribute("documents", documentService.list(TrackingService.currentGroup(),
+                DocumentService.Owner.PROVIDER, id));
+        model.addAttribute("documentTypes", DocumentType.forProviders());
         model.addAttribute("groups", groupProviderService.findGroups(id));
         model.addAttribute("taxonomies", providerTaxonomyService.findByProviderId(id));
         model.addAttribute("practiceLocations", providerLocationService.findByProviderId(id));

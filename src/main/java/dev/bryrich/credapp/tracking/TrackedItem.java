@@ -43,6 +43,10 @@ public record TrackedItem(TrackedKind kind, TrackedState state, LocalDate date, 
 
     /** The form section where it's fixed. */
     public String editPath() {
+        if (kind == TrackedKind.DOCUMENT) {
+            // Documents are managed on the provider's or group's own page, not the edit form.
+            return subject.path() + "#documents";
+        }
         return subject.path() + "/edit#" + kind.getSection();
     }
 

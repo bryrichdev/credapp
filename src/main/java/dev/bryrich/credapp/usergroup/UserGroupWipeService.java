@@ -50,10 +50,12 @@ public class UserGroupWipeService {
             "payers", "Payers",
             "payer_contacts", "Payer contacts",
             "group_payers", "Group enrollments",
-            "provider_payers", "Provider enrollments");
+            "provider_payers", "Provider enrollments",
+            "documents", "Documents");
 
     /** Children before parents, so no foreign key ever blocks a delete. */
     static final List<String> DELETE_ORDER = List.of(
+            "documents",
             "malpractice_claims",
             "criminal_charges",
             "hospital_privileges",
@@ -82,7 +84,7 @@ public class UserGroupWipeService {
      * and the group's tracking settings, which are how the group works, not what it holds.
      */
     static final Set<String> KEPT = Set.of("users", "password_reset_requests", "ssn_access_log",
-            "caqh_password_access_log", "tracking_settings");
+            "caqh_password_access_log", "document_access_log", "tracking_settings");
 
     /** Rows in one table, labelled for the page. */
     public record Count(String label, long rows) {

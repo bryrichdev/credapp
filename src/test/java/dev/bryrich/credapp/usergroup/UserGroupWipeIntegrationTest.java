@@ -132,7 +132,7 @@ class UserGroupWipeIntegrationTest {
         perform(get("/providers").with(signedIn(otherAdmin)))
                 .andExpect(status().isOk())
                 .andExpect(content().string(not(containsString("Shah"))));
-        as(otherAdmin, () -> imports.importFile(TestWorkbook.fullPractice().bytes()));
+        fill(otherAdmin);
         assertThat(rows(otherGroup)).isEqualTo(otherBefore);
 
         perform(get("/admin/user-groups/" + otherGroup + "/wipe").with(signedIn(superuser)));
@@ -217,6 +217,12 @@ class UserGroupWipeIntegrationTest {
     private void fill(User account) {
         ImportReport report = as(account, () -> imports.importFile(TestWorkbook.fullPractice().bytes()));
         assertThat(report.problems()).isEmpty();
+        // Imports don't bring documents, so add one directly; the wipe has to reach every table.
+        jdbc.update("""
+                INSERT INTO documents (user_group_id, provider_id, doc_type, file_name, content_type, size_bytes,
+                                       content, uploaded_by)
+                SELECT user_group_id, min(id), 'cv', 'cv.pdf', 'application/pdf', 3, '\\x010203'::bytea, 'test'
+                FROM providers WHERE user_group_id = ? GROUP BY user_group_id""", account.getUserGroupId());
     }
 
     private User register(String groupName) {

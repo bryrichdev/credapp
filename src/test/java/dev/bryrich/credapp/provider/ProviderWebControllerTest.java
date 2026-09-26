@@ -58,6 +58,7 @@ class ProviderWebControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @MockitoBean private dev.bryrich.credapp.document.DocumentService documentService;
     @MockitoBean private ProviderService providerService;
     @MockitoBean private ProviderProfileService profileService;
     @MockitoBean private LicenseService licenseService;

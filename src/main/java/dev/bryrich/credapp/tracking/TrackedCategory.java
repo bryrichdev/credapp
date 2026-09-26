@@ -5,6 +5,7 @@ public enum TrackedCategory {
     LICENSES("Licenses"),
     CERTIFICATIONS("Board certifications"),
     MALPRACTICE("Malpractice"),
+    DOCUMENTS("Documents"),
     HOSPITAL("Hospital reappointment"),
     HEALTH("Flu shots & TB tests"),
     CAQH("CAQH attestation"),
