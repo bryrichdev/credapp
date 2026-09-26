@@ -67,6 +67,7 @@ public class Mailer {
     private void deliver(Email email) {
         try {
             sender.send(email);
+            log.info("Sent '{}' to {}", email.subject(), email.to());
         } catch (Exception ex) {
             log.warn("Couldn't send '{}' to {}: {}", email.subject(), email.to(), ex.toString());
         }
