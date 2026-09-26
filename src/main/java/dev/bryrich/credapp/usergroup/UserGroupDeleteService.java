@@ -89,6 +89,7 @@ public class UserGroupDeleteService {
             throw new RefusedException(refusal);
         }
         Preview before = new Preview(wipes.count(userGroupId), accounts, null);
+        UserGroupWipeService.stopChangeHistory(jdbc);
 
         for (String table : UserGroupWipeService.DELETE_ORDER) {
             jdbc.update("DELETE FROM " + table + " WHERE user_group_id = ?", userGroupId);
