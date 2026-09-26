@@ -16,8 +16,8 @@ resource "cloudflare_ruleset" "firewall" {
   rules = [
     {
       ref         = "block_internal_endpoints"
-      description = "The JSON API (HTTP Basic, no lockout) and actuator aren't used by the browser; keep them off the internet"
-      expression  = "starts_with(http.request.uri.path, \"/api/\") or starts_with(http.request.uri.path, \"/actuator\")"
+      description = "The JSON API (HTTP Basic, no lockout) and actuator aren't used by the browser; keep them off the internet. The bare health check stays open for the uptime monitor"
+      expression  = "starts_with(http.request.uri.path, \"/api/\") or (starts_with(http.request.uri.path, \"/actuator\") and http.request.uri.path ne \"/actuator/health\")"
       action      = "block"
     },
     {
@@ -41,8 +41,8 @@ resource "cloudflare_ruleset" "firewall" {
     },
     {
       ref         = "block_crawlers"
-      description = "Search engines and other verified bots: there's no public content to index"
-      expression  = "cf.client.bot"
+      description = "Search engines and other verified bots: there's no public content to index. Uptime monitors (verified bots too) may check health"
+      expression  = "cf.client.bot and http.request.uri.path ne \"/actuator/health\""
       action      = "block"
     },
     {
