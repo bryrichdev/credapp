@@ -97,12 +97,27 @@ class ChangeHistoryIntegrationTest {
 
     @Test
     void secretsAreRecordedAsChangedButNeverStored() {
-        jdbc.update("UPDATE providers SET ssn = 'encrypted-bytes', caqh_secret_ref = 'ref' WHERE id = ?", provider);
+        jdbc.update("UPDATE providers SET ssn = 'encrypted-bytes', caqh_secret_ref = 'ref', caqh_password_ciphertext = 'encrypted-password' WHERE id = ?", provider);
         assertThat(jdbc.queryForObject("""
                 SELECT changes::text || row_data::text FROM change_log
                 WHERE table_name = 'providers' AND operation = 'U' AND provider_id = ?""", String.class, provider))
                 .contains("\"ssn\": {\"masked\": true}", "\"caqh_secret_ref\": {\"masked\": true}")
-                .doesNotContain("encrypted-bytes", "\"ref\"");
+                .contains("\"caqh_password_ciphertext\": {\"masked\": true}")
+                .doesNotContain("encrypted-bytes", "encrypted-password", "\"ref\"");
+    }
+
+    @Test
+    void maskingMigrationScrubsPreviouslyStoredCiphertext() throws Exception {
+        jdbc.update("""
+                INSERT INTO change_log (user_group_id, table_name, operation, provider_id, row_data, changes)
+                VALUES (?, 'providers', 'U', ?, '{"caqh_password_ciphertext":"old-secret","first_name":"Priya"}',
+                        '{"caqh_password_ciphertext":{"from":"older-secret","to":"old-secret"}}')
+                """, admin.getUserGroupId(), provider);
+        String migration = new org.springframework.core.io.ClassPathResource("db/migration/V16__mask_caqh_password_history.sql")
+                .getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        jdbc.execute(migration);
+        String history = jdbc.queryForObject("SELECT row_data::text || changes::text FROM change_log WHERE provider_id = ? ORDER BY id DESC LIMIT 1", String.class, provider);
+        assertThat(history).contains("masked", "Priya").doesNotContain("old-secret", "older-secret");
     }
 
     @Test

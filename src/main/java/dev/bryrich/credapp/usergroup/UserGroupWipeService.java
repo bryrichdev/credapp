@@ -54,11 +54,15 @@ public class UserGroupWipeService {
             "documents", "Documents",
             "provider_training", "Training",
             "provider_work_history", "Work history",
-            "change_log", "Change history");
+            "change_log", "Change history",
+            "application_runs", "PDF applications",
+            "application_templates", "Payer PDF templates");
 
     /** Children before parents, so no foreign key ever blocks a delete. */
     static final List<String> DELETE_ORDER = List.of(
             "change_log",
+            "application_runs",
+            "application_templates",
             "documents",
             "provider_training",
             "provider_work_history",
@@ -90,7 +94,7 @@ public class UserGroupWipeService {
      * and the group's tracking settings, which are how the group works, not what it holds.
      */
     static final Set<String> KEPT = Set.of("users", "password_reset_requests", "ssn_access_log",
-            "caqh_password_access_log", "document_access_log", "tracking_settings");
+            "caqh_password_access_log", "document_access_log", "application_access_log", "tracking_settings");
 
     /** Rows in one table, labelled for the page. */
     public record Count(String label, long rows) {

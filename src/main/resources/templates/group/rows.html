@@ -34,6 +34,28 @@
                     th:classappend="${live and #fields.hasErrors(p + '.address')} ? 'field__input--invalid'">
             <span th:replace="~{fragments/rows :: err(${p + '.address'}, ${live})}"></span>
         </label>
+        <div class="field field--wide"><span class="field__hint">For automated applications, enter the address components below. These replace the full address when all required components are present.</span>
+            <span th:replace="~{fragments/rows :: err(${p + '.addressComplete'}, ${live})}"></span></div>
+        <label class="field"><span class="field__label">Street</span>
+            <input class="field__input" type="text" th:name="${p + '.street1'}" th:value="${row.street1}">
+            <span th:replace="~{fragments/rows :: err(${p + '.street1'}, ${live})}"></span>
+        </label>
+        <label class="field"><span class="field__label">Street 2</span>
+            <input class="field__input" type="text" th:name="${p + '.street2'}" th:value="${row.street2}">
+            <span th:replace="~{fragments/rows :: err(${p + '.street2'}, ${live})}"></span>
+        </label>
+        <label class="field"><span class="field__label">City</span>
+            <input class="field__input" type="text" th:name="${p + '.city'}" th:value="${row.city}">
+            <span th:replace="~{fragments/rows :: err(${p + '.city'}, ${live})}"></span>
+        </label>
+        <label class="field"><span class="field__label">State</span>
+            <input class="field__input" type="text" th:name="${p + '.state'}" th:value="${row.state}">
+            <span th:replace="~{fragments/rows :: err(${p + '.state'}, ${live})}"></span>
+        </label>
+        <label class="field"><span class="field__label">ZIP</span>
+            <input class="field__input" type="text" th:name="${p + '.zipCode'}" th:value="${row.zipCode}">
+            <span th:replace="~{fragments/rows :: err(${p + '.zipCode'}, ${live})}"></span>
+        </label>
         <label class="field">
             <span class="field__label">Fax</span>
             <input class="field__input" type="tel" th:name="${p + '.faxNumber'}" th:value="${row.faxNumber}"

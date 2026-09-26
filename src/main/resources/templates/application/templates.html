@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF applications · CredCloud</title><link rel="stylesheet" th:href="@{/css/app.css}"><link rel="icon" th:href="@{/favicon.ico}"></head>
+<body><div th:replace="~{fragments/layout :: topbar(${user}, 'payers')}"></div>
+<main class="page">
+<div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
+<div class="alert alert--error" role="alert" th:if="${error}" th:text="${error}"></div>
+
+<a class="backlink" th:href="@{/payers/{id}(id=${payerId})}">&larr; Back to payer</a>
+<div class="page__header"><h1 th:text="${payerName} + ' · PDF templates'"></h1>
+<p class="page__subtitle">Build reusable templates for this payer. Upload a blank fillable PDF, then choose where each answer comes from.</p></div>
+<section class="card"><h2>Templates</h2>
+<p th:if="${#lists.isEmpty(templates)}">No templates yet. Add the payer's blank application below.</p>
+<div class="application-template" th:each="t : ${templates}">
+<div><strong th:text="${t.name}"></strong> <span class="badge" th:classappend="${t.configured} ? 'badge--active' : 'badge--pending'" th:text="${t.configured} ? 'Ready' : 'Needs mapping'"></span>
+<p class="field__hint" th:text="'Revision ' + ${t.revision}"></p></div>
+<a class="button button--quiet" th:if="${canEdit}" th:href="@{/application-templates/{id}/edit(id=${t.id})}">Edit field mapping</a>
+</div>
+<p class="field__hint">Start an application from a provider's PDF applications page. Upload a new template when the payer changes its PDF; existing drafts keep their original form and mapping.</p>
+</section>
+<section class="card" th:if="${canEdit}"><h2>Add a template</h2>
+<form method="post" enctype="multipart/form-data" th:action="@{/payers/{id}/templates(id=${payerId})}">
+<div class="form-grid"><label class="field"><span class="field__label">Template name</span>
+<input class="field__input" name="name" required maxlength="150" th:value="${name}" placeholder="Provider application · September 2026"></label>
+<label class="field"><span class="field__label">Blank PDF</span><input class="field__input" type="file" name="file" accept=".pdf,application/pdf" required>
+<span class="field__hint">Up to 10 MB and 40 pages. Standard fillable fields; unsigned and without password protection. Scans and flat PDFs are not supported yet.</span></label></div>
+<div class="form-actions"><button class="button" type="submit">Upload and map fields</button></div></form></section>
+</main><div th:replace="~{fragments/layout :: footer}"></div></body></html>

@@ -70,6 +70,14 @@
                 </label>
 
                 <label class="field">
+                    <span class="field__label">SSN</span>
+                    <input class="field__input" type="password" name="details.ssn" autocomplete="new-password"
+                           inputmode="numeric" maxlength="11" placeholder="123-45-6789">
+                    <span class="field__hint">Stored encrypted. Leave blank to keep the SSN on file.</span>
+                    <span class="field__error" th:if="${#fields.hasErrors('details.ssn')}" th:errors="*{details.ssn}"></span>
+                </label>
+
+                <label class="field">
                     <span class="field__label">Date of birth</span>
                     <input class="field__input" type="date" th:field="*{details.dob}">
                 </label>
