@@ -16,10 +16,14 @@
 <div class="application-template" th:each="t : ${templates}">
 <div><strong th:text="${t.name}"></strong> <span class="badge" th:classappend="${t.ready()} ? 'badge--active' : 'badge--pending'" th:text="${t.ready()} ? 'Ready' : 'Not taught yet'"></span>
 <p class="field__hint"><span th:text="${t.startUrl}"></span> · <span th:text="${t.fieldCount} + ' boxes, version ' + ${t.revision}"></span></p></div>
-<form th:if="${canEdit}" method="post" th:action="@{/portal-templates/{id}/teach(id=${t.id})}">
+<div class="application-template__actions" th:if="${canEdit}">
+<form method="post" th:action="@{/portal-templates/{id}/live(id=${t.id})}">
+<button class="button button--quiet" type="submit">Open in CredCloud</button></form>
+<form method="post" th:action="@{/portal-templates/{id}/teach(id=${t.id})}">
 <button class="button button--quiet" type="submit" th:text="${t.ready()} ? 'Teach again' : 'Teach CredCloud'"></button></form>
 </div>
-<p class="field__hint">Teaching opens the portal in a new tab, with CredCloud for Chrome.</p>
+</div>
+<p class="field__hint">Open in CredCloud opens the portal in a browser CredCloud runs for you, right in this window. Teaching still opens the portal in a new tab, with CredCloud for Chrome.</p>
 </section>
 <section class="card" th:if="${canEdit}"><h2>Add a portal</h2>
 <form method="post" th:action="@{/payers/{id}/portals(id=${payerId})}">

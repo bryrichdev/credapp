@@ -110,6 +110,13 @@ public class PortalTemplateService {
         learn(user, templateId, current(templateId).summary().revision());
     }
 
+    /** A template to open in CredCloud's own browser, for someone who can edit. */
+    @Transactional(readOnly = true)
+    public TemplateSummary openable(long id) {
+        actor(true);
+        return current(id).summary();
+    }
+
     @Transactional(readOnly = true)
     public Template template(long id) {
         actor(false);
