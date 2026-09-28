@@ -28,8 +28,8 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 /**
  * Payer portal templates and the jobs that use them, from the app's pages. Every query names
- * the signed-in user's workspace. A job waits for one of its creator's runners; see
- * {@link RunnerService} for the runner's side.
+ * the signed-in user's workspace. A job waits for one of its creator's connected browsers; see
+ * {@link RunnerService} for the browser's side.
  */
 @Service
 public class PortalTemplateService {
@@ -44,7 +44,7 @@ public class PortalTemplateService {
     public record Template(TemplateSummary summary, List<PortalField> fields) {
     }
 
-    /** What the runner types into one box. The value is formatted already. */
+    /** What the extension types into one box. The value is formatted already. */
     public record Answer(int field, String value) {
     }
 
@@ -83,7 +83,7 @@ public class PortalTemplateService {
                 payerId == null ? new Object[]{workspace()} : new Object[]{workspace(), payerId});
     }
 
-    /** Adds a template and asks the user's runner to open it in learn mode. */
+    /** Adds a template and asks the user's browser to open it in learn mode. */
     @Transactional
     public long create(long payerId, String name, String startUrl) {
         User user = actor(true);
@@ -103,7 +103,7 @@ public class PortalTemplateService {
         return id;
     }
 
-    /** Asks the user's runner to open the template in learn mode, starting from its current boxes. */
+    /** Asks the user's browser to open the template in learn mode, starting from its current boxes. */
     @Transactional
     public void teach(long templateId) {
         User user = actor(true);
@@ -116,17 +116,46 @@ public class PortalTemplateService {
         return current(id);
     }
 
+    /** A template's boxes with one provider's answers, for copying by hand. */
+    public record CopyView(TemplateSummary template, List<PortalField> fields, List<Answer> answers) {
+    }
+
     /**
-     * Captures one provider's answers for a portal and queues them for the user's runner. An
+     * Captures one provider's answers for a portal and queues them for the user's browser. An
      * SSN is read, and logged, only when the template uses it.
      */
     @Transactional
     public long startFill(long providerId, long templateId, Long groupId, Long locationId, String ip) {
         User user = actor(true);
+        Template template = ready(templateId);
+        List<Answer> answers = answers(user, template, providerId, groupId, locationId, ip);
+        return jdbc.queryForObject("""
+                        INSERT INTO runner_jobs (user_group_id, user_id, kind, template_id, template_revision,
+                                                 provider_id, answers, created_by)
+                        VALUES (?, ?, 'fill', ?, ?, ?, ?, ?) RETURNING id""",
+                Long.class, workspace(), user.getId(), templateId, template.summary().revision(), providerId,
+                cipher.encrypt(JSON.writeValueAsBytes(answers)), user.getEmail());
+    }
+
+    /** The same answers a fill would type, shown to copy by hand. Nothing is kept. */
+    @Transactional
+    public CopyView copy(long providerId, long templateId, Long groupId, Long locationId, String ip) {
+        User user = actor(true);
+        Template template = ready(templateId);
+        return new CopyView(template.summary(), template.fields(),
+                answers(user, template, providerId, groupId, locationId, ip));
+    }
+
+    private Template ready(long templateId) {
         Template template = current(templateId);
         if (!template.summary().ready()) {
-            throw new IllegalArgumentException("Teach the runner this portal before filling it");
+            throw new IllegalArgumentException("Teach CredCloud this portal before filling it");
         }
+        return template;
+    }
+
+    private List<Answer> answers(User user, Template template, long providerId, Long groupId, Long locationId,
+                                 String ip) {
         var snapshot = data.load(workspace(), providerId, groupId, locationId);
         Map<String, String> values = new LinkedHashMap<>(snapshot.values());
         if (template.fields().stream().anyMatch(f -> f.source().equals("provider.ssn"))) {
@@ -139,12 +168,7 @@ public class PortalTemplateService {
             String value = field.source().isEmpty() ? "" : field.answerFormat().apply(values.getOrDefault(field.source(), ""));
             answers.add(new Answer(i, value.isEmpty() ? field.defaultValue() : value));
         }
-        return jdbc.queryForObject("""
-                        INSERT INTO runner_jobs (user_group_id, user_id, kind, template_id, template_revision,
-                                                 provider_id, answers, created_by)
-                        VALUES (?, ?, 'fill', ?, ?, ?, ?, ?) RETURNING id""",
-                Long.class, workspace(), user.getId(), templateId, template.summary().revision(), providerId,
-                cipher.encrypt(JSON.writeValueAsBytes(answers)), user.getEmail());
+        return answers;
     }
 
     @Transactional(readOnly = true)
@@ -173,7 +197,7 @@ public class PortalTemplateService {
                 workspace(), jobId, user.getId());
     }
 
-    /** Saves a new version of a template's boxes. Called for a runner's learn job. */
+    /** Saves a new version of a template's boxes. Called for a browser's learn job. */
     void saveVersion(long workspace, long templateId, String startUrl, List<PortalField> fields, String savedBy) {
         Set<String> sources = data.sources().stream().map(ApplicationDataService.Source::key).collect(Collectors.toSet());
         PortalField.check(fields, sources);

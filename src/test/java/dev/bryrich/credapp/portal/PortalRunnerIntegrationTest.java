@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Pairing a runner, teaching it a portal, and filling a provider into it, end to end. */
+/** Connecting a browser, teaching it a portal, filling a provider into it, and copying by hand. */
 @SpringBootTest(properties = {
         "spring.docker.compose.enabled=false",
         "credapp.security.ssn-key=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="
@@ -47,7 +47,7 @@ class PortalRunnerIntegrationTest {
 
     private static final String PASSWORD = "test-password-1234";
     private static final JsonMapper JSON = JsonMapper.builder().build();
-    private static final Pattern CODE = Pattern.compile("[A-HJ-NP-Z2-9]{5}-[A-HJ-NP-Z2-9]{5}");
+    private static final Pattern TOKEN = Pattern.compile("data-token=\"([A-Za-z0-9_-]{43})\"");
 
     @Autowired MockMvc mvc;
     @Autowired RegistrationService registration;
@@ -65,7 +65,7 @@ class PortalRunnerIntegrationTest {
         long workspace = admin.getUserGroupId();
         long payer = jdbc.queryForObject("SELECT min(id) FROM payers WHERE user_group_id = ?", Long.class, workspace);
         long provider = jdbc.queryForObject("SELECT min(id) FROM providers WHERE user_group_id = ?", Long.class, workspace);
-        String token = pairedRunner(admin);
+        String token = connected(admin);
 
         mvc.perform(get("/runner/api/jobs/next").with(bearer(token))).andExpect(status().isNoContent());
 
@@ -125,32 +125,60 @@ class PortalRunnerIntegrationTest {
     }
 
     @Test
-    void codesWorkOnce_tokensStopWhenRevoked_andRunnersOnlySeeTheirOwnersJobs() throws Exception {
+    void tokensStopWhenDisconnected_andBrowsersOnlySeeTheirOwnersJobs() throws Exception {
         User admin = practice();
-        String code = code(admin);
-        String token = pair(code);
-        mvc.perform(post("/runner/api/pair").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"code\":\"" + code + "\"}"))
-                .andExpect(status().isUnauthorized());
+        String token = connected(admin);
         mvc.perform(get("/runner/api/jobs/next")).andExpect(status().isUnauthorized());
         mvc.perform(get("/runner/api/jobs/next").with(bearer("not-a-token"))).andExpect(status().isUnauthorized());
-        // The runner's own tab loads without signing in; it holds no data.
-        mvc.perform(get("/runner/home.html")).andExpect(status().isOk());
         // A token opens none of the app's pages: they still send you to sign in.
         mvc.perform(get("/providers").with(bearer(token))).andExpect(status().is3xxRedirection());
+        // Connecting needs a signed-in page, with its CSRF token, and without them no browser is
+        // connected. Signed out, it's an expired form: back to sign in. Signed in without the
+        // token, it looks like a forged request: 403 (ExpiredFormHandler).
+        long connectedBefore = jdbc.queryForObject("SELECT count(*) FROM runners", Long.class);
+        mvc.perform(post("/extension/connect")).andExpect(status().is3xxRedirection());
+        mvc.perform(post("/extension/connect").with(signedIn(admin))).andExpect(status().isForbidden());
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM runners", Long.class)).isEqualTo(connectedBefore);
 
         User stranger = practice();
-        String strangersToken = pairedRunner(stranger);
+        String strangersToken = connected(stranger);
         long payer = jdbc.queryForObject("SELECT min(id) FROM payers WHERE user_group_id = ?", Long.class, admin.getUserGroupId());
         mvc.perform(post("/payers/" + payer + "/portals").with(signedIn(admin)).with(csrf())
                         .param("name", "Enrollment").param("startUrl", "https://portal.example.com/enroll"))
                 .andExpect(status().is3xxRedirection());
         mvc.perform(get("/runner/api/jobs/next").with(bearer(strangersToken))).andExpect(status().isNoContent());
 
-        long runner = jdbc.queryForObject("SELECT id FROM runners WHERE user_id = ?", Long.class, admin.getId());
-        mvc.perform(post("/account/runners/" + runner + "/revoke").with(signedIn(admin)).with(csrf()))
+        long browser = jdbc.queryForObject("SELECT id FROM runners WHERE user_id = ?", Long.class, admin.getId());
+        mvc.perform(post("/account/browsers/" + browser + "/revoke").with(signedIn(admin)).with(csrf()))
                 .andExpect(status().is3xxRedirection());
         mvc.perform(get("/runner/api/jobs/next").with(bearer(token))).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void answersCanBeCopiedByHand_withoutQueueingAnything() throws Exception {
+        User admin = practice();
+        long workspace = admin.getUserGroupId();
+        long payer = jdbc.queryForObject("SELECT min(id) FROM payers WHERE user_group_id = ?", Long.class, workspace);
+        long provider = jdbc.queryForObject("SELECT min(id) FROM providers WHERE user_group_id = ?", Long.class, workspace);
+        String token = connected(admin);
+        mvc.perform(post("/payers/" + payer + "/portals").with(signedIn(admin)).with(csrf())
+                        .param("name", "Enrollment").param("startUrl", "https://portal.example.com/enroll"))
+                .andExpect(status().is3xxRedirection());
+        long learnJob = next(token).path("id").asLong();
+        mvc.perform(post("/runner/api/jobs/" + learnJob + "/learned").with(bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON).content(JSON.writeValueAsString(Map.of("fields", List.of(
+                                field("First name", "label", "First name", "text", "provider.first_name", "UPPER", ""))))))
+                .andExpect(status().isOk());
+        long template = jdbc.queryForObject("SELECT id FROM portal_templates WHERE user_group_id = ?", Long.class, workspace);
+        String firstName = jdbc.queryForObject("SELECT first_name FROM providers WHERE id = ?", String.class, provider);
+
+        String page = mvc.perform(post("/providers/" + provider + "/portal-fills/copy").with(signedIn(admin)).with(csrf())
+                        .param("templateId", Long.toString(template)))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+        assertThat(page).contains(firstName.toUpperCase()).contains("data-copy");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM runner_jobs WHERE kind = 'fill' AND user_group_id = ?",
+                Long.class, workspace)).isZero();
     }
 
     private JsonNode next(String token) throws Exception {
@@ -159,23 +187,14 @@ class PortalRunnerIntegrationTest {
         return JSON.readTree(body);
     }
 
-    private String pairedRunner(User owner) throws Exception {
-        return pair(code(owner));
-    }
-
-    private String code(User owner) throws Exception {
-        String page = mvc.perform(post("/account/runners").with(signedIn(owner)).with(csrf()).param("name", "Laptop"))
+    /** Connects a browser the way the extension does, and returns the token the page hands it. */
+    private String connected(User owner) throws Exception {
+        String page = mvc.perform(post("/extension/connect").with(signedIn(owner)).with(csrf())
+                        .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) Chrome/141.0"))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        Matcher matcher = CODE.matcher(page);
-        assertThat(matcher.find()).as("the page shows the code").isTrue();
-        return matcher.group();
-    }
-
-    private String pair(String code) throws Exception {
-        String body = mvc.perform(post("/runner/api/pair").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"code\":\"" + code.toLowerCase() + "\"}"))
-                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        return JSON.readTree(body).path("token").asString();
+        Matcher matcher = TOKEN.matcher(page);
+        assertThat(matcher.find()).as("the page carries the token for the extension").isTrue();
+        return matcher.group(1);
     }
 
     private long count(String table, long workspace) {

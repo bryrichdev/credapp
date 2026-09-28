@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connected browsers · CredCloud</title><link rel="stylesheet" th:href="@{/css/app.css}"><link rel="icon" th:href="@{/favicon.ico}"></head>
+<body><div th:replace="~{fragments/layout :: topbar(${user}, 'account')}"></div>
+<main class="page">
+<div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
+
+<a class="backlink" th:href="@{/account}">&larr; Back to my account</a>
+<div class="page__header"><h1>Connected browsers</h1>
+<p class="page__subtitle">Browsers where CredCloud for Chrome fills payer portals for you. Your portal sign-ins stay in each browser; CredCloud never sees them.</p></div>
+
+<section class="card">
+<p th:if="${#lists.isEmpty(browsers)}">None yet. The first time you fill a portal, CredCloud asks to connect the browser you're using.</p>
+<div class="application-template" th:each="b : ${browsers}"><div><strong th:text="${b.name}"></strong>
+<span class="badge" th:classappend="${b.revokedAt != null} ? 'badge--pending' : 'badge--active'" th:text="${b.state()}"></span>
+<p class="field__hint">Connected <time data-local-time th:datetime="${b.createdAt}" th:text="${b.createdAt}"></time><th:block th:if="${b.lastSeenAt != null}"> · last used <time data-local-time th:datetime="${b.lastSeenAt}" th:text="${b.lastSeenAt}"></time></th:block></p></div>
+<form th:if="${b.revokedAt == null}" method="post" th:action="@{/account/browsers/{id}/revoke(id=${b.id})}">
+<button class="button button--quiet" type="submit">Disconnect</button></form></div></section>
+</main><div th:replace="~{fragments/layout :: footer}"></div>
+<script th:src="@{/js/local-time.js}"></script></body></html>

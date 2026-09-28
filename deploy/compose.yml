@@ -27,6 +27,10 @@ services:
       CREDAPP_STORAGE_BUCKET_PREFIX: ${CREDAPP_STORAGE_BUCKET_PREFIX:-}
       CREDAPP_STORAGE_DATA_ROLE_ARN: ${CREDAPP_STORAGE_DATA_ROLE_ARN:-}
       AWS_REGION: ${AWS_REGION:-us-east-1}
+      # The Chrome Web Store page for CredCloud for Chrome, once it's published.
+      CREDAPP_EXTENSION_INSTALL_URL: ${CREDAPP_EXTENSION_INSTALL_URL:-}
+      # Shown on /privacy for questions and data requests.
+      CREDAPP_CONTACT_EMAIL: ${CREDAPP_CONTACT_EMAIL:-}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
       interval: 10s

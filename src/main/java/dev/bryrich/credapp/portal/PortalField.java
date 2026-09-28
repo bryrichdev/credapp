@@ -6,13 +6,13 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * One box on a payer portal and the answer it gets. The runner records these in learn mode.
+ * One box on a payer portal and the answer it gets. The extension records these in learn mode.
  *
  * @param label        what the box is called on the page, for people and for fill reports
- * @param by           how the runner finds the box: {@code label} (its visible label text, which
+ * @param by           how the extension finds the box: {@code label} (its visible label text, which
  *                     survives most redesigns) or {@code css} (a selector, the fallback)
  * @param locator      the label text or the selector
- * @param kind         {@code text}, {@code select}, {@code checkbox} or {@code radio}; the runner
+ * @param kind         {@code text}, {@code select}, {@code checkbox} or {@code radio}; the extension
  *                     types, picks an option or ticks a box. It never clicks anything else.
  * @param source       an {@link dev.bryrich.credapp.application.ApplicationDataService} key, or
  *                     empty to always use {@code defaultValue}
@@ -43,13 +43,13 @@ public record PortalField(String label, String by, String locator, String kind, 
     }
 
     /**
-     * Checks a set of fields as the runner sends them.
+     * Checks a set of fields as the extension sends them.
      *
      * @throws IllegalArgumentException with a message for the coordinator
      */
     public static void check(List<PortalField> fields, Set<String> sources) {
         if (fields == null || fields.isEmpty()) {
-            throw new IllegalArgumentException("Show the runner at least one box before saving");
+            throw new IllegalArgumentException("Pick at least one box before saving");
         }
         if (fields.size() > MAX_FIELDS) {
             throw new IllegalArgumentException("A portal template can have up to " + MAX_FIELDS + " boxes");
@@ -60,10 +60,10 @@ public record PortalField(String label, String by, String locator, String kind, 
                 throw new IllegalArgumentException("The name of " + name + " is too long");
             }
             if (!BY.contains(field.by()) || field.locator().isEmpty() || field.locator().length() > 500) {
-                throw new IllegalArgumentException("The runner couldn't describe where " + name + " is. Show it again.");
+                throw new IllegalArgumentException("CredCloud couldn't describe where " + name + " is. Show it again.");
             }
             if (!KINDS.contains(field.kind())) {
-                throw new IllegalArgumentException(name + " isn't a box the runner can fill");
+                throw new IllegalArgumentException(name + " isn't a box CredCloud can fill");
             }
             if (!field.source().isEmpty() && !sources.contains(field.source())) {
                 throw new IllegalArgumentException("Choose listed data for " + name);

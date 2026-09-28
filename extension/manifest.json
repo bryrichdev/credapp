@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "CredCloud",
+  "version": "0.1.0",
+  "description": "Fills payer portals with provider data from CredCloud, in your own browser. It never submits.",
+  "icons": { "16": "icons/icon-16.png", "32": "icons/icon-32.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png" },
+  "action": { "default_title": "CredCloud", "default_icon": { "16": "icons/icon-16.png", "32": "icons/icon-32.png" } },
+  "background": { "service_worker": "background.js" },
+  "permissions": ["storage", "scripting"],
+  "host_permissions": ["https://credcloud.app/*", "https://staging.credcloud.app/*"],
+  "optional_host_permissions": ["https://*/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://credcloud.app/*", "https://staging.credcloud.app/*"],
+      "js": ["credcloud.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

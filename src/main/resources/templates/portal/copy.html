@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Answers to copy · CredCloud</title><link rel="stylesheet" th:href="@{/css/app.css}"><link rel="icon" th:href="@{/favicon.ico}"></head>
+<body><div th:replace="~{fragments/layout :: topbar(${user}, 'providers')}"></div>
+<main class="page">
+<a class="backlink" th:href="@{/providers/{id}/portal-fills(id=${provider.id})}">&larr; Back to portal fills</a>
+<div class="page__header"><h1 th:text="${copy.template.payerName} + ' / ' + ${copy.template.name}"></h1>
+<p class="page__subtitle"><span th:text="${provider.firstName} + ' ' + ${provider.lastName}"></span> · in the portal's order, formatted as it expects. Nothing here is saved; leave the page when you're done.</p></div>
+<section class="card">
+<div class="table-scroll" role="region" tabindex="0" aria-label="Answers to copy">
+<table class="table copy-answers">
+    <thead><tr><th>Box</th><th>Page</th><th>Answer</th><th></th></tr></thead>
+    <tbody>
+    <tr th:each="f, i : ${copy.fields}" th:with="value=${copy.answers[i.index].value}">
+        <td th:text="${f.label}"></td>
+        <td class="field__hint" th:text="${f.page}"></td>
+        <td><code th:text="${value}" th:if="${value != ''}"></code><span class="field__hint" th:if="${value == ''}">No answer</span></td>
+        <td><button class="button button--quiet button--small" type="button" th:if="${value != ''}"
+                    th:attr="data-copy=${value}">Copy</button></td>
+    </tr>
+    </tbody>
+</table>
+</div>
+<p class="field__hint">For a checkbox or radio button, Yes means tick it.</p>
+</section>
+</main><div th:replace="~{fragments/layout :: footer}"></div>
+<script th:src="@{/js/copy-answers.js}"></script></body></html>

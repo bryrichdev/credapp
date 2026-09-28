@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Privacy &middot; CredCloud</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" th:href="@{/favicon.ico}" sizes="any">
+    <link rel="icon" th:href="@{/favicon.svg}" type="image/svg+xml">
+</head>
+<body>
+<header class="privacy__brand">
+    <a th:href="@{/}"><img th:src="@{/favicon.svg}" alt="" width="28" height="28"> <strong>CredCloud</strong></a>
+</header>
+<main class="page privacy">
+    <div class="page__header">
+        <h1>Privacy</h1>
+        <p class="page__subtitle">For CredCloud (credcloud.app) and CredCloud for Chrome. Effective September 28, 2026.</p>
+    </div>
+
+    <section class="card">
+        <h2>In short</h2>
+        <ul>
+            <li>CredCloud stores the credentialing records your workspace enters, so your team can keep them up to date and fill applications with them.</li>
+            <li>We don't sell your data, show ads, or use tracking or analytics.</li>
+            <li>SSNs, CAQH passwords, two-step secrets and uploaded documents are encrypted before they're stored.</li>
+            <li>CredCloud for Chrome fills payer portal forms in your own browser. It never sees your portal passwords and never submits a form.</li>
+        </ul>
+    </section>
+
+    <section class="card">
+        <h2>What CredCloud stores</h2>
+        <ul>
+            <li><strong>Your account.</strong> Name, email, role and workspace. Your password is stored only as a one-way hash. If you use two-step sign-in, its secret is encrypted and its recovery codes are hashed. We record failed sign-ins to lock out guessing.</li>
+            <li><strong>What your workspace enters.</strong> Provider and practice records: names, contact details, NPIs, dates of birth, licenses, certifications, education, work and training history, malpractice coverage and claims, disclosures, hospital privileges, references and payer enrollments. SSNs and CAQH passwords are encrypted and shown only through a logged action.</li>
+            <li><strong>Documents you upload.</strong> Encrypted by CredCloud, then stored in a storage bucket used only by your workspace. A deleted document can be recovered for 30 days, then it's gone.</li>
+            <li><strong>Applications and portal fills.</strong> PDF templates and the applications made from them. Portal templates, meaning which box on a portal gets which answer. The answers for a portal fill are encrypted while the fill is open and cleared when it ends; we keep only which boxes were filled.</li>
+            <li><strong>Activity records.</strong> Who viewed an SSN, a CAQH password, a document or an application, and when. A history of changes to records, so your team can see who changed what.</li>
+            <li><strong>Technical data.</strong> A session cookie that keeps you signed in, and a security token for forms. IP addresses in the activity records above and in security logs. Cloudflare, which protects the site, may set its own security cookies.</li>
+        </ul>
+        <p>CredCloud is for credentialing records about providers and practices. Don't enter patient health information.</p>
+    </section>
+
+    <section class="card">
+        <h2>CredCloud for Chrome</h2>
+        <ul>
+            <li><strong>On your computer</strong> it keeps a token that connects your browser to your CredCloud account, and the progress of a fill that's open in a tab.</li>
+            <li><strong>On a portal site you've allowed,</strong> it adds a CredCloud panel. When you press Fill this page, it types that provider's answers into the boxes on the page. It doesn't read what's on the page, and it doesn't read or store your portal password.</li>
+            <li><strong>When you teach it a portal,</strong> it reads the label of each box you click and the page's address path, and sends them to CredCloud as the portal template.</li>
+            <li><strong>It sends CredCloud</strong> only the portal templates you save, and which boxes a fill filled. It doesn't collect your browsing history, and it has no access to sites you haven't allowed.</li>
+            <li><strong>To stop it,</strong> disconnect the browser under My account &gt; Connected browsers, or remove the extension, which deletes what it kept.</li>
+        </ul>
+    </section>
+
+    <section class="card">
+        <h2>How we use it</h2>
+        <p>Only to run CredCloud for your workspace: to store and show your records, fill applications and portal forms, keep your account secure, and send account email such as join approvals, password resets and security notices. We don't use it for advertising, and we don't use it to decide anyone's credit or eligibility for anything.</p>
+    </section>
+
+    <section class="card">
+        <h2>Who else handles it</h2>
+        <p>These services run CredCloud for us, and handle data only to do that:</p>
+        <ul>
+            <li><strong>Amazon Web Services</strong> hosts the app, its database, document storage and backups, in the United States.</li>
+            <li><strong>Cloudflare</strong> carries traffic to the site and protects it from attacks.</li>
+            <li><strong>Google</strong> delivers CredCloud's email, through Gmail. The Chrome Web Store distributes CredCloud for Chrome.</li>
+        </ul>
+        <p>We don't share data with anyone else, unless the law requires it.</p>
+    </section>
+
+    <section class="card">
+        <h2>How it's protected</h2>
+        <ul>
+            <li>Every connection uses HTTPS.</li>
+            <li>Each workspace's data is kept apart from every other workspace's, and each workspace's documents are in their own bucket.</li>
+            <li>Admins must use two-step sign-in, and repeated wrong passwords lock an account for a while.</li>
+            <li>Backups are encrypted before they leave the server, with a key that isn't kept on it.</li>
+        </ul>
+    </section>
+
+    <section class="card">
+        <h2>How long we keep it, and deleting it</h2>
+        <p>We keep your workspace's data while the workspace is in use. Your workspace's admins can delete records, documents and accounts at any time, and a whole workspace can be deleted on request.</p>
+        <p>Nightly encrypted backups are kept for 30 days, and one backup from each month for about 13 months. Deleted data can remain in those backups until they expire. They're used only to recover from a failure.</p>
+    </section>
+
+    <section class="card">
+        <h2>Your choices</h2>
+        <p>You can see and correct most of what CredCloud holds about you in the app, or ask your workspace's admin. To ask for a copy of your data or to have it deleted, contact us below. If your workspace's admin added you, we may need their agreement, since the records belong to the workspace.</p>
+    </section>
+
+    <section class="card">
+        <h2>Changes and contact</h2>
+        <p>If this policy changes, we'll update it here and change the date at the top.</p>
+        <p th:if="${contactEmail != ''}">Questions or requests: <a th:href="'mailto:' + ${contactEmail}" th:text="${contactEmail}">privacy@example.com</a></p>
+        <p th:if="${contactEmail == ''}">Questions or requests: ask your workspace's admin, who can reach us.</p>
+    </section>
+</main>
+<div th:replace="~{fragments/layout :: footer}"></div>
+</body>
+</html>

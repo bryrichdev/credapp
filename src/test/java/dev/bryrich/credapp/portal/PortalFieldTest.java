@@ -38,7 +38,7 @@ class PortalFieldTest {
         assertThatThrownBy(() -> PortalField.check(List.of(field("label", " ", "text", "provider.npi", "", "")), SOURCES))
                 .hasMessageContaining("Show it again");
         assertThatThrownBy(() -> PortalField.check(List.of(field("css", "button[type=submit]", "button", "", "", "x")), SOURCES))
-                .as("there is no kind of field that clicks").hasMessageContaining("isn't a box the runner can fill");
+                .as("there is no kind of field that clicks").hasMessageContaining("isn't a box CredCloud can fill");
         assertThatThrownBy(() -> PortalField.check(List.of(field("label", "SSN", "text", "provider.password", "", "")), SOURCES))
                 .hasMessageContaining("Choose listed data");
         assertThatThrownBy(() -> PortalField.check(List.of(field("label", "Plan", "text", "", "", "")), SOURCES))
@@ -56,12 +56,5 @@ class PortalFieldTest {
         assertThatThrownBy(() -> PortalTemplateService.checkUrl("http://portal.example.com")).hasMessageContaining("https://");
         assertThatThrownBy(() -> PortalTemplateService.checkUrl("javascript:alert(1)")).hasMessageContaining("https://");
         assertThatThrownBy(() -> PortalTemplateService.checkUrl("")).hasMessageContaining("https://");
-    }
-
-    @Test
-    void pairingCodesMatchHoweverTheyAreTyped() {
-        assertThat(RunnerService.normalize(" abcde-fgh23 ")).isEqualTo("ABCDEFGH23");
-        assertThat(RunnerService.hash(RunnerService.normalize("abcde fgh23")))
-                .isEqualTo(RunnerService.hash("ABCDEFGH23"));
     }
 }

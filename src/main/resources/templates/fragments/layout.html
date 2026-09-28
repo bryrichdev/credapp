@@ -87,8 +87,11 @@
             <span aria-hidden="true" class="sitefoot__sep">&middot;</span>
             <span class="sitefoot__note">Provider credentialing and license tracking</span>
         </div>
-        <span class="sitefoot__meta"
-              th:text="'&copy; ' + ${#dates.year(#dates.createNow())} + ' CredCloud'">&copy; 2026 CredCloud</span>
+        <span class="sitefoot__meta">
+            <a th:href="@{/privacy}">Privacy</a>
+            <span aria-hidden="true" class="sitefoot__sep">&middot;</span>
+            <span th:text="'&copy; ' + ${#dates.year(#dates.createNow())} + ' CredCloud'">&copy; 2026 CredCloud</span>
+        </span>
     </div>
 </footer>
 

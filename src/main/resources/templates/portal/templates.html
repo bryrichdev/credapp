@@ -6,19 +6,20 @@
 <main class="page">
 <div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
 <div class="alert alert--error" role="alert" th:if="${error}" th:text="${error}"></div>
+<th:block th:replace="~{portal/extension :: jobReady(${jobReady})}"></th:block>
 
 <a class="backlink" th:href="@{/payers/{id}(id=${payerId})}">&larr; Back to payer</a>
 <div class="page__header"><h1 th:text="${payerName} + ' · Portal templates'"></h1>
-<p class="page__subtitle">Show the runner which box on this payer's portal gets which answer. When the portal changes, teach it again; earlier fills keep the version they used.</p></div>
+<p class="page__subtitle">Show CredCloud which box on this payer's portal gets which answer. When the portal changes, teach it again; earlier fills keep the version they used.</p></div>
 <section class="card"><h2>Templates</h2>
 <p th:if="${#lists.isEmpty(templates)}">No portal templates yet.</p>
 <div class="application-template" th:each="t : ${templates}">
 <div><strong th:text="${t.name}"></strong> <span class="badge" th:classappend="${t.ready()} ? 'badge--active' : 'badge--pending'" th:text="${t.ready()} ? 'Ready' : 'Not taught yet'"></span>
 <p class="field__hint"><span th:text="${t.startUrl}"></span> · <span th:text="${t.fieldCount} + ' boxes, version ' + ${t.revision}"></span></p></div>
 <form th:if="${canEdit}" method="post" th:action="@{/portal-templates/{id}/teach(id=${t.id})}">
-<button class="button button--quiet" type="submit" th:text="${t.ready()} ? 'Teach again' : 'Teach the runner'"></button></form>
+<button class="button button--quiet" type="submit" th:text="${t.ready()} ? 'Teach again' : 'Teach CredCloud'"></button></form>
 </div>
-<p class="field__hint">Teaching opens the portal through the runner on your computer. <a th:href="@{/account/runners}">Connect a runner</a> first.</p>
+<p class="field__hint">Teaching opens the portal in a new tab, with CredCloud for Chrome.</p>
 </section>
 <section class="card" th:if="${canEdit}"><h2>Add a portal</h2>
 <form method="post" th:action="@{/payers/{id}/portals(id=${payerId})}">
@@ -26,6 +27,6 @@
 <input class="field__input" name="name" required maxlength="150" th:value="${name}" placeholder="Provider enrollment form"></label>
 <label class="field field--wide"><span class="field__label">Portal address</span>
 <input class="field__input" name="startUrl" type="url" required maxlength="2000" th:value="${startUrl}" placeholder="https://portal.example-payer.com/enroll">
-<span class="field__hint">Where the runner opens the portal. It can be the sign-in page.</span></label></div>
-<div class="form-actions"><button class="button" type="submit">Add and teach the runner</button></div></form></section>
+<span class="field__hint">Where the portal opens. It can be the sign-in page.</span></label></div>
+<div class="form-actions"><button class="button" type="submit">Add and teach CredCloud</button></div></form></section>
 </main><div th:replace="~{fragments/layout :: footer}"></div></body></html>

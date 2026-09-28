@@ -15,7 +15,6 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -23,9 +22,10 @@ import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 /**
- * Runners and their side of the jobs. A runner is paired with a one-time code shown to its
- * owner, then authenticates with a device token. Only hashes of both are stored. A runner
- * only ever sees its own owner's jobs in its own workspace.
+ * Connected browsers and their side of the jobs. The CredCloud extension connects with one
+ * click on a page its owner is signed in to, and gets a device token for the runner API. Only
+ * a hash of the token is stored. A browser only ever sees its own owner's jobs in its own
+ * workspace. (The table is still called runners, after the first design.)
  */
 @Service
 public class RunnerService {
@@ -37,11 +37,8 @@ public class RunnerService {
     public record Runner(long id, String name, Instant createdAt, Instant pairedAt, Instant lastSeenAt,
                          Instant revokedAt) {
         public String state() {
-            return revokedAt != null ? "Revoked" : pairedAt != null ? "Connected" : "Waiting for its code";
+            return revokedAt != null ? "Revoked" : "Connected";
         }
-    }
-
-    public record Pairing(long runnerId, String code) {
     }
 
     /** A job as the runner gets it. answers is empty for learn jobs; sources and formats for fill jobs. */
@@ -50,10 +47,6 @@ public class RunnerService {
                                List<PortalTemplateService.Answer> answers,
                                List<ApplicationDataService.Source> sources, Map<String, String> formats) {
     }
-
-    /** No 0/O or 1/I, so a code read aloud or retyped comes out right. */
-    private static final char[] CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".toCharArray();
-    static final int PAIRING_MINUTES = 10;
 
     private final JdbcTemplate jdbc;
     private final PortalTemplateService templates;
@@ -78,45 +71,33 @@ public class RunnerService {
                 owner.getUserGroupId(), owner.getId());
     }
 
-    /** A new runner for this user, and the code to type into it. The code is shown once. */
+    /**
+     * Connects a browser for this user and returns its token, which the page hands straight
+     * to the extension. It's shown nowhere else and can't be looked up again.
+     */
     @Transactional
-    public Pairing create(User owner, String name) {
-        String cleaned = name == null ? "" : name.trim();
-        if (cleaned.isEmpty() || cleaned.length() > 100) {
-            throw new IllegalArgumentException("Name the computer the runner is on, in up to 100 characters");
+    public String connect(User owner, String name) {
+        String cleaned = name == null || name.isBlank() ? "Chrome" : name.trim();
+        if (cleaned.length() > 100) {
+            cleaned = cleaned.substring(0, 100);
         }
-        String code = code();
-        long id = jdbc.queryForObject("""
-                        INSERT INTO runners (user_group_id, user_id, name, pairing_code_hash, pairing_expires_at)
-                        VALUES (?, ?, ?, ?, now() + make_interval(mins => ?)) RETURNING id""",
-                Long.class, owner.getUserGroupId(), owner.getId(), cleaned, hash(normalize(code)), PAIRING_MINUTES);
-        return new Pairing(id, code);
+        String token = token();
+        jdbc.update("""
+                        INSERT INTO runners (user_group_id, user_id, name, token_hash, paired_at)
+                        VALUES (?, ?, ?, ?, now())""",
+                owner.getUserGroupId(), owner.getId(), cleaned, hash(token));
+        return token;
     }
 
     @Transactional
     public void revoke(User owner, long runnerId) {
         jdbc.update("""
-                UPDATE runners SET revoked_at = coalesce(revoked_at, now()), token_hash = NULL, pairing_code_hash = NULL
+                UPDATE runners SET revoked_at = coalesce(revoked_at, now()), token_hash = NULL
                 WHERE user_group_id = ? AND user_id = ? AND id = ?""",
                 owner.getUserGroupId(), owner.getId(), runnerId);
     }
 
-    // --- From the runner ---
-
-    /**
-     * Trades a pairing code for a device token. Each code works once, for 10 minutes.
-     *
-     * @return the token, or empty if the code is wrong, used or expired
-     */
-    @Transactional
-    public Optional<String> pair(String code) {
-        String token = token();
-        int paired = jdbc.update("""
-                        UPDATE runners SET token_hash = ?, pairing_code_hash = NULL, pairing_expires_at = NULL, paired_at = now()
-                        WHERE pairing_code_hash = ? AND pairing_expires_at > now() AND revoked_at IS NULL""",
-                hash(token), hash(normalize(code)));
-        return paired == 1 ? Optional.of(token) : Optional.empty();
-    }
+    // --- From the browser ---
 
     /** The runner a token belongs to, if the token is live and its owner can still sign in. */
     @Transactional
@@ -232,22 +213,10 @@ public class RunnerService {
         return formats;
     }
 
-    private String code() {
-        char[] chars = new char[10];
-        for (int i = 0; i < chars.length; i++) {
-            chars[i] = CODE_ALPHABET[random.nextInt(CODE_ALPHABET.length)];
-        }
-        return new String(chars, 0, 5) + "-" + new String(chars, 5, 5);
-    }
-
     private String token() {
         byte[] bytes = new byte[32];
         random.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-    }
-
-    static String normalize(String code) {
-        return code == null ? "" : code.replaceAll("[^A-Za-z0-9]", "").toUpperCase(Locale.ROOT);
     }
 
     static byte[] hash(String value) {

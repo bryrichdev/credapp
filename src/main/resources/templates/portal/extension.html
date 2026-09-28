@@ -1,0 +1,11 @@
+<!-- Pieces the portal pages share with the CredCloud extension. -->
+<th:block th:fragment="jobReady(jobReady)">
+    <!-- The extension sees this and opens the job at once. -->
+    <div th:if="${jobReady}" data-credcloud-job-ready hidden></div>
+    <div class="alert alert--error" role="alert" th:if="${jobReady}" data-credcloud-missing hidden>
+        CredCloud for Chrome isn't in this browser, so nothing opened.
+        <a th:if="${installUrl != ''}" th:href="${installUrl}">Add it to Chrome</a><span th:if="${installUrl == ''}">Ask your admin for the extension</span>,
+        then press the button again. Or use <strong>Show answers to copy</strong> instead.
+    </div>
+    <script th:src="@{/js/extension-check.js}"></script>
+</th:block>
