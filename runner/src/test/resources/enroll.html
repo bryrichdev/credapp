@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Example Payer · Provider enrollment</title></head>
+<body>
+<h1>Provider enrollment</h1>
+<form id="enroll" action="/submitted" method="post">
+  <p><label for="first">First name *</label> <input id="first" name="first"></p>
+  <p>NPI <input id="npi" name="npi"></p>
+  <p><label for="state">State</label>
+    <select id="state" name="state"><option value="">Choose</option><option value="UT">Utah</option><option value="ID">Idaho</option></select></p>
+  <p><label><input type="checkbox" name="accepting"> Accepting new patients</label></p>
+  <p><label><input type="radio" name="sex" value="F"> Female</label> <label><input type="radio" name="sex" value="M"> Male</label></p>
+  <p><input aria-label="Tax ID" name="tin"></p>
+  <p><button type="submit">Submit application</button></p>
+</form>
+<script src="/count-submits.js"></script>
+</body>
+</html>

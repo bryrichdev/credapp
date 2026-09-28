@@ -134,6 +134,8 @@ class PortalRunnerIntegrationTest {
                 .andExpect(status().isUnauthorized());
         mvc.perform(get("/runner/api/jobs/next")).andExpect(status().isUnauthorized());
         mvc.perform(get("/runner/api/jobs/next").with(bearer("not-a-token"))).andExpect(status().isUnauthorized());
+        // The runner's own tab loads without signing in; it holds no data.
+        mvc.perform(get("/runner/home.html")).andExpect(status().isOk());
         // A token opens none of the app's pages: they still send you to sign in.
         mvc.perform(get("/providers").with(bearer(token))).andExpect(status().is3xxRedirection());
 

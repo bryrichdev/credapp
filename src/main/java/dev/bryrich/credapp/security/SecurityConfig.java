@@ -103,6 +103,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/login", "/register", "/css/**", "/js/**",
                                 "/favicon.ico", "/favicon.svg", "/apple-touch-icon.png").permitAll()
+                        // The runner's own tab. Static, holds no data; the runner calls the API from it.
+                        .requestMatchers(HttpMethod.GET, "/runner/home.html").permitAll()
                         // Open to everyone, signed in or not: signing in again switches accounts,
                         // and registering never touches the account you're signed in with.
                         .requestMatchers(HttpMethod.POST, "/login", "/register").permitAll()
