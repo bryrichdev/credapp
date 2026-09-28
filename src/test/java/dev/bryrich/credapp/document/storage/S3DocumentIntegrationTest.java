@@ -10,6 +10,7 @@ import dev.bryrich.credapp.registration.RegistrationService;
 import dev.bryrich.credapp.security.CredAppUserDetails;
 import dev.bryrich.credapp.user.Role;
 import dev.bryrich.credapp.user.User;
+import dev.bryrich.credapp.usergroup.UserGroupWipeService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Documents in a workspace's own bucket, against S3Mock. LocalStack now needs an account token,
+ * Documents in a workspace's own bucket, and their cleanup, against S3Mock. LocalStack now needs an account token,
  * so it isn't used. S3Mock doesn't check IAM, so the data role's tag rule is covered by the
  * policy in aws/storage.tf, not here.
  */
@@ -75,6 +76,8 @@ class S3DocumentIntegrationTest {
     @Autowired RegistrationService registration;
     @Autowired OnboardingImportService imports;
     @Autowired JdbcTemplate jdbc;
+    @Autowired DocumentFileCleanup cleanup;
+    @Autowired UserGroupWipeService wipes;
 
     @AfterEach
     void clear() {
@@ -102,8 +105,39 @@ class S3DocumentIntegrationTest {
         assertThat(download.content()).isEqualTo(PDF);
 
         assertThat(documents.delete(workspace, id)).isPresent();
+        assertThat(queued(workspace)).as("queued by the trigger").isEqualTo(1);
+        cleanup.run();
+        assertThat(queued(workspace)).isZero();
         assertThatThrownBy(() -> s3Client().getObject(r -> r.bucket(bucket).key("documents/" + id)))
                 .isInstanceOf(NoSuchKeyException.class);
+    }
+
+    @Test
+    void wipingAWorkspaceDeletesItsFilesToo() {
+        User admin = register();
+        as(admin);
+        imports.importFile(TestWorkbook.fullPractice().bytes());
+        long workspace = admin.getUserGroupId();
+        long provider = jdbc.queryForObject("SELECT min(id) FROM providers WHERE user_group_id = ?", Long.class, workspace);
+        long group = jdbc.queryForObject("SELECT min(id) FROM groups WHERE user_group_id = ?", Long.class, workspace);
+        long first = documents.upload(workspace, DocumentService.Owner.PROVIDER, provider, DocumentType.OTHER,
+                null, "a.pdf", PDF, null, admin.getEmail());
+        long second = documents.upload(workspace, DocumentService.Owner.GROUP, group, DocumentType.OTHER,
+                null, "b.pdf", PDF, null, admin.getEmail());
+        SecurityContextHolder.clearContext();
+
+        wipes.wipe(workspace, "test");
+
+        assertThat(queued(workspace)).isEqualTo(2);
+        cleanup.run();
+        String bucket = "credcloud-test-ws-" + workspace;
+        assertThat(s3Client().listObjectsV2(r -> r.bucket(bucket)).contents()).isEmpty();
+        assertThat(queued(workspace)).isZero();
+        assertThat(first).isNotEqualTo(second);
+    }
+
+    private long queued(long workspace) {
+        return jdbc.queryForObject("SELECT count(*) FROM document_file_deletions WHERE workspace_id = ?", Long.class, workspace);
     }
 
     private static String endpoint() {

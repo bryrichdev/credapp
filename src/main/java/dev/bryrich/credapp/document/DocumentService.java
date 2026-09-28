@@ -126,23 +126,21 @@ public class DocumentService {
         return Optional.of(found.getFirst());
     }
 
-    /** Deletes a document. Its access log stays. A file in S3 can be recovered for 30 days. */
+    /**
+     * Deletes a document. Its access log stays. A file in S3 is queued for deletion by a
+     * trigger and removed by DocumentFileCleanup, like files deleted with their provider.
+     */
     @Transactional
     public Optional<Location> delete(long userGroupId, long documentId) {
-        record Deleted(Location location, boolean inS3) {
-        }
-        Optional<Deleted> deleted = jdbc.query("""
+        return jdbc.query("""
                         DELETE FROM documents WHERE id = ? AND user_group_id = ?
-                        RETURNING provider_id, group_id, stored_in""",
+                        RETURNING provider_id, group_id""",
                 (row, i) -> {
                     long providerId = row.getLong("provider_id");
-                    Location location = row.wasNull() ? new Location(Owner.GROUP, row.getLong("group_id"))
+                    return row.wasNull() ? new Location(Owner.GROUP, row.getLong("group_id"))
                             : new Location(Owner.PROVIDER, providerId);
-                    return new Deleted(location, "s3".equals(row.getString("stored_in")));
                 },
                 documentId, userGroupId).stream().findFirst();
-        deleted.filter(Deleted::inS3).ifPresent(d -> files.delete(userGroupId, documentId));
-        return deleted.map(Deleted::location);
     }
 
     private boolean ownerExists(long userGroupId, Owner owner, long ownerId) {

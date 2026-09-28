@@ -18,8 +18,9 @@ Terraform or OpenTofu; the scripts it relies on are in `deploy/aws/`.
 - **Document files** (`workspace-files.tf`): one bucket per workspace, made by the app on the
   workspace's first upload, versioned so a deleted file can be recovered for 30 days. The
   instance can set buckets up but can't read them; it reads files through a data role whose
-  session is tagged with the workspace, and the role only opens the matching bucket. Off
-  until `document_storage = "s3"`.
+  session is tagged with the workspace, and the role only opens the matching bucket. A
+  trigger queues the files of deleted documents, providers and workspaces, and the app
+  deletes them within a minute. `document_storage = "database"` turns it off.
 - **SSM Parameter Store** holds the app's settings (`/credcloud/prod/env/*`, SecureStrings
   written by `put-secrets.sh`, never in Terraform state) and what the scripts need to find
   things (`/credcloud/deploy/*`).

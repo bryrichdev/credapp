@@ -66,7 +66,7 @@ public class WorkspaceFiles {
         URI endpointUri = endpoint.isBlank() ? null : URI.create(endpoint);
         AwsCredentialsProvider base = DefaultCredentialsProvider.builder().build();
         this.adminFactory = () -> build(base, endpointUri);
-        StsClient sts = enabled && !dataRoleArn.isBlank()
+        StsClient sts = !dataRoleArn.isBlank()
                 ? StsClient.builder().region(this.region).credentialsProvider(base).build() : null;
         this.workspaceClients = workspace -> build(
                 sts == null ? base : assumeDataRole(sts, dataRoleArn, workspace), endpointUri);
@@ -103,7 +103,11 @@ public class WorkspaceFiles {
         return client(workspace).getObjectAsBytes(r -> r.bucket(bucket(workspace)).key(key(documentId))).asByteArray();
     }
 
-    /** With versioning on, this leaves a delete marker; the file itself goes after 30 days. */
+    /**
+     * With versioning on, this leaves a delete marker; the file itself goes after 30 days.
+     * Works whether or not uploads currently go to S3, so files left from an earlier setting
+     * still get cleaned up.
+     */
     public void delete(long workspace, long documentId) {
         client(workspace).deleteObject(r -> r.bucket(bucket(workspace)).key(key(documentId)));
     }
