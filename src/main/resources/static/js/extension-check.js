@@ -9,9 +9,11 @@
     show('[data-credcloud-present]', present);
     show('[data-credcloud-absent]', !present);
     show('[data-credcloud-missing]', !present);
+    // The extension takes the token off the page and writes its own message; only say
+    // something here when it never came.
     const status = document.getElementById('credcloud-extension-status');
-    if (status && document.getElementById('credcloud-extension-token')) {
-      status.textContent = present ? 'Connecting…' : 'CredCloud for Chrome isn’t in this browser, so it wasn’t connected.';
+    if (status && !present && document.getElementById('credcloud-extension-token')) {
+      status.textContent = 'CredCloud for Chrome isn\u2019t in this browser, so it wasn\u2019t connected.';
     }
   };
   // The content script runs once the page has loaded; give it a moment.
