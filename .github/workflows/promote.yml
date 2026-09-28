@@ -9,15 +9,27 @@ on:
 
 concurrency: deploy-prod
 
+# id-token lets the job trade GitHub's OIDC token for the credcloud-deploy role, which only
+# trusts runs from main. No AWS keys are stored in GitHub.
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   deploy-prod:
+    # The Mac already has the arm64 image staging tested; promote.sh pushes that same image.
     runs-on: [self-hosted, credcloud]
     steps:
       - uses: actions/checkout@v5
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Deploy to production
         env:
           TAG: ${{ inputs.tag }}
         run: |
           TAG="${TAG:-$(cat "$HOME/credcloud/staging/deployed")}"
-          bash deploy/deploy.sh prod "$TAG"
+          bash deploy/aws/promote.sh "$TAG"
