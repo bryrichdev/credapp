@@ -100,7 +100,7 @@ public class SecurityConfig {
                                                       TwoStepService twoStep) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/login", "/register", "/css/**", "/js/**",
+                        .requestMatchers(HttpMethod.GET, "/login", "/register", "/privacy", "/css/**", "/js/**",
                                 "/favicon.ico", "/favicon.svg", "/apple-touch-icon.png").permitAll()
                         // Open to everyone, signed in or not: signing in again switches accounts,
                         // and registering never touches the account you're signed in with.
