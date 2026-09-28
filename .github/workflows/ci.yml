@@ -16,9 +16,13 @@ jobs:
           distribution: temurin
           java-version: '25'
           cache: maven
+      # Chromium for the remote browser tests: the same headless shell the image uses, from the
+      # same Playwright version as the pom. The tests then skip Playwright's own download.
+      - run: npx -y playwright@1.62.0 install --with-deps --only-shell chromium
       - run: ./mvnw -B verify
         env:
           CREDAPP_SSN_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 
   extension:
     if: github.event_name == 'pull_request'

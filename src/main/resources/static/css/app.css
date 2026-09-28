@@ -2734,3 +2734,30 @@ body:has(.modal[open]) {
 .privacy li + li {
     margin-top: 0.5rem;
 }
+
+.application-template__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+/* ============ CredCloud's browser (portal/live.html) ============ */
+.page--live { max-width: 1360px; padding-top: 1.25rem; }
+.live__header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 0.75rem; }
+.live__title { margin: 0; font-size: 1.25rem; min-width: 0; overflow-wrap: anywhere; }
+.live__bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: #ffffff;
+    border: 1px solid var(--slate-200); border-bottom: none; border-radius: var(--radius) var(--radius) 0 0; }
+.live__nav { min-width: 2.25rem; padding: 0.25rem 0.6rem; }
+.live__address { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    padding: 0.3rem 0.8rem; border-radius: 999px; background: var(--slate-100); color: var(--slate-700); font-size: 0.85rem; }
+.live__message { margin: 0; padding: 0.5rem 0.75rem; background: var(--amber-50); color: var(--amber-700);
+    border: 1px solid var(--slate-200); border-bottom: none; font-size: 0.9rem; }
+.live__message[hidden] { display: none; }
+.live__screen { position: relative; overflow: hidden; line-height: 0; background: #ffffff;
+    border: 1px solid var(--slate-200); border-radius: 0 0 var(--radius) var(--radius); }
+.live__screen canvas { display: block; width: 100%; height: auto; }
+/* Takes her clicks and keys over the picture: see-through, no caret, no scrolling of its own. */
+.live__keys { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; resize: none;
+    overflow: hidden; background: transparent; color: transparent; caret-color: transparent; font-size: 16px;
+    cursor: default; touch-action: none; outline: none; }
+.live__keys:focus-visible { box-shadow: inset 0 0 0 2px var(--teal-600); }
+.live__cover { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 1rem;
+    background: rgba(247, 249, 251, 0.94); color: var(--slate-700); font-size: 1rem; line-height: 1.5; text-align: center; }
+.live__cover[hidden] { display: none; }
+.live__hint { margin-top: 0.75rem; line-height: 1.5; }

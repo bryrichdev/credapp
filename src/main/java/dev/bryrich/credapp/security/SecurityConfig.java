@@ -100,6 +100,9 @@ public class SecurityConfig {
                                                       TwoStepService twoStep) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
+                        // The second half of a request that was already let in, such as the live
+                        // picture of CredCloud's browser (an SseEmitter) finishing.
+                        .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ASYNC).permitAll()
                         .requestMatchers(HttpMethod.GET, "/login", "/register", "/privacy", "/css/**", "/js/**",
                                 "/favicon.ico", "/favicon.svg", "/apple-touch-icon.png").permitAll()
                         // Open to everyone, signed in or not: signing in again switches accounts,
