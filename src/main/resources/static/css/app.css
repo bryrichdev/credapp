@@ -2761,3 +2761,18 @@ body:has(.modal[open]) {
     background: rgba(247, 249, 251, 0.94); color: var(--slate-700); font-size: 1rem; line-height: 1.5; text-align: center; }
 .live__cover[hidden] { display: none; }
 .live__hint { margin-top: 0.75rem; line-height: 1.5; }
+.live__fill { margin-bottom: 0.75rem; padding: 0.75rem 1rem; background: #ffffff; border: 1px solid var(--slate-200);
+    border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+.live__fill-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.live__progress { margin-left: 0.5rem; color: var(--slate-500); font-size: 0.9rem; }
+.live__fill-message { margin: 0.5rem 0 0; color: var(--slate-700); font-size: 0.9rem; }
+.live__fill-message.is-problem { color: var(--amber-700); }
+.live__answers { margin-top: 0.5rem; font-size: 0.9rem; }
+.live__answers summary { cursor: pointer; color: var(--teal-700); }
+.live__answers ol { margin: 0.5rem 0 0; padding-left: 1.5rem; columns: 2 22rem; column-gap: 2rem; }
+.live__answers li { break-inside: avoid; padding: 0.15rem 0; }
+.live__answer-label { color: var(--slate-500); }
+.live__answer-label::after { content: ": "; }
+.live__answer { overflow-wrap: anywhere; }
+.live__answer.is-empty { color: var(--slate-500); font-style: italic; }
+.live__answers li.is-filled .live__answer::after { content: " \2713"; color: var(--green-700); font-weight: 600; }

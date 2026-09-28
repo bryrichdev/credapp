@@ -10,8 +10,24 @@
      th:data-width="${width}" th:data-height="${height}">
 <div class="live__header">
 <h1 class="live__title" th:text="${label}"></h1>
-<form method="post" th:action="@{/live/{id}/close(id=${sessionId})}"><button class="button" type="submit">Done</button></form>
+<form method="post" id="live-done" th:action="@{/live/{id}/close(id=${sessionId})}"
+      th:data-confirm="${fill} ? 'Close CredCloud\'s browser? Anything you haven\'t submitted in the portal is lost.'">
+<button class="button" type="submit">Done</button></form>
 </div>
+<section class="live__fill" id="live-fill" th:if="${fill}" th:data-fill="@{/live/{id}/fill(id=${sessionId})}">
+<div class="live__fill-head">
+<div><strong th:text="'Filling ' + ${fill.providerName()}"></strong>
+<span class="live__progress" id="live-progress" th:text="${fill.filledCount()} + ' of ' + ${fill.total()} + ' boxes filled'"></span></div>
+<button class="button" type="button" id="live-fill-page">Fill this page</button>
+</div>
+<p class="live__fill-message" id="live-fill-message" role="status" aria-live="polite">Sign in, open the form, then press Fill this page on each page of it.
+CredCloud never submits: check every page, submit it in the portal yourself, then press Done.</p>
+<details class="live__answers"><summary>Answers</summary>
+<ol><li th:each="b : ${fill.boxes()}" th:data-index="${b.index()}" th:classappend="${b.filled()} ? 'is-filled'">
+<span class="live__answer-label" th:text="${b.label()}"></span>
+<span class="live__answer" th:text="${b.value().isEmpty()} ? 'No answer' : ${b.value()}" th:classappend="${b.value().isEmpty()} ? 'is-empty'"></span></li></ol>
+</details>
+</section>
 <div class="live__bar">
 <button class="button button--quiet live__nav" type="button" id="live-back" title="Back" aria-label="Back">&larr;</button>
 <button class="button button--quiet live__nav" type="button" id="live-reload" title="Reload" aria-label="Reload">&#x21bb;</button>
