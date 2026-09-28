@@ -56,13 +56,19 @@ public class UserGroupWipeService {
             "provider_work_history", "Work history",
             "change_log", "Change history",
             "application_runs", "PDF applications",
-            "application_templates", "Payer PDF templates");
+            "application_templates", "Payer PDF templates",
+            "runner_jobs", "Portal fills",
+            "portal_template_versions", "Portal template versions",
+            "portal_templates", "Payer portal templates");
 
     /** Children before parents, so no foreign key ever blocks a delete. */
     static final List<String> DELETE_ORDER = List.of(
             "change_log",
             "application_runs",
             "application_templates",
+            "runner_jobs",
+            "portal_template_versions",
+            "portal_templates",
             "documents",
             "provider_training",
             "provider_work_history",
@@ -91,10 +97,12 @@ public class UserGroupWipeService {
     /**
      * Group-scoped tables a wipe leaves alone: the accounts; the record of who looked at
      * which SSN or CAQH password, an audit trail of what people did rather than the practice's data;
-     * and the group's tracking settings, which are how the group works, not what it holds.
+     * the group's tracking settings, which are how the group works, not what it holds; and the
+     * runners paired to its accounts.
      */
     static final Set<String> KEPT = Set.of("users", "password_reset_requests", "ssn_access_log",
-            "caqh_password_access_log", "document_access_log", "application_access_log", "tracking_settings");
+            "caqh_password_access_log", "document_access_log", "application_access_log", "tracking_settings",
+            "runners");
 
     /** Rows in one table, labelled for the page. */
     public record Count(String label, long rows) {

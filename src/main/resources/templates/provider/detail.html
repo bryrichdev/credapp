@@ -30,6 +30,7 @@
         </div>
         <div class="page__actions">
             <a class="button button--quiet" th:href="@{/providers/{id}/applications(id=${provider.id})}">PDF applications</a>
+            <a class="button button--quiet" th:href="@{/providers/{id}/portal-fills(id=${provider.id})}">Portal fills</a>
             <a class="button button--quiet" th:href="@{/providers/{id}/history(id=${provider.id})}">History</a>
             <a class="button" th:href="@{/providers/{id}/edit(id=${provider.id})}" th:if="${canEdit}">Edit provider</a>
         </div>
