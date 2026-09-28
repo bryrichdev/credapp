@@ -102,6 +102,9 @@ before(async () => {
   const extension = testCopyOfExtension();
   context = await chromium.launchPersistentContext(fs.mkdtempSync(path.join(os.tmpdir(), 'credcloud-profile-')), {
     headless: true,
+    // Full Chromium in its new headless mode: the lighter headless shell Playwright uses by
+    // default can't load extensions.
+    channel: process.env.CHROMIUM_PATH ? undefined : 'chromium',
     executablePath: process.env.CHROMIUM_PATH || undefined,
     args: [`--disable-extensions-except=${extension}`, `--load-extension=${extension}`]
   });
