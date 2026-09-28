@@ -21,6 +21,11 @@ click it, choose its data, and **Save template**.
 
 - It types into text boxes, picks dropdown options and ticks checkboxes and radio buttons.
   Before touching an element it checks what the element is, so it never presses a button.
+- A radio button or checkbox is ticked when its answer is Yes or names that option. Teach every
+  option of a question with the same data: Female and Male both get Provider / Sex, and only
+  the one the data names is ticked ("F" is enough). A Yes/No pair follows a yes/no answer, a
+  list like "English, Spanish" ticks each checkbox it names, and a list box that takes several
+  picks each option named.
 - It only types into the site a job was sent for, and only on sites she has allowed.
 - Its scripts run apart from the portal's, so a portal page can't read the panel or press it.
 - It never sees her portal password. CredCloud only knows which boxes were filled.

@@ -192,6 +192,49 @@ test('connects from the CredCloud page, then fills a job and reports it, without
   assert.equal(tab.url(), portalUrl, 'still on the form, left for her to check and submit');
 });
 
+test('radio buttons, checkboxes and list boxes follow the data', async () => {
+  await connect();
+  const choices = [
+    field('Female', 'label', 'Female', 'radio'), field('Male', 'label', 'Male', 'radio'),
+    field('US citizen: yes', 'css', 'input[name=citizen][value=Y]', 'radio'),
+    field('US citizen: no', 'css', 'input[name=citizen][value=N]', 'radio'),
+    field('English', 'label', 'English', 'checkbox'), field('Spanish', 'label', 'Spanish', 'checkbox'),
+    field('French', 'label', 'French', 'checkbox'), field('Specialties', 'label', 'Specialties', 'select')
+  ];
+  // Every option of a question shares one piece of data, as she'd teach it.
+  const answers = (sex, citizen) => [sex, sex, citizen, citizen, 'English, Spanish', 'English, Spanish',
+    'English, Spanish', 'Cardiology; Internal medicine'].map((value, index) => ({ field: index, value }));
+  const checked = (tab, selector) => tab.isChecked(selector);
+
+  jobs.push(job(13, 'fill', choices, answers('F', 'Yes')));
+  let tab = await startJob(portalUrl);
+  await tab.locator('credcloud-panel').getByText('Jane Doe').waitFor();
+  await button(tab, 'Fill this page').click();
+  await tab.locator('credcloud-panel').getByText('Filled 8 boxes on this page').waitFor();
+  assert.equal(await checked(tab, 'input[value=F]'), true, '"F" names Female');
+  assert.equal(await checked(tab, 'input[value=M]'), false);
+  assert.equal(await checked(tab, 'input[name=citizen][value=Y]'), true);
+  assert.equal(await checked(tab, 'input[name=citizen][value=N]'), false);
+  assert.equal(await checked(tab, 'input[value=en]'), true);
+  assert.equal(await checked(tab, 'input[value=es]'), true);
+  assert.equal(await checked(tab, 'input[value=fr]'), false, 'French was ticked on the page, and the data says otherwise');
+  assert.deepEqual(await tab.$eval('#specialties', s => [...s.selectedOptions].map(o => o.text)),
+    ['Cardiology', 'Internal medicine']);
+  await button(tab, 'Done').click();
+  await tab.locator('credcloud-panel').getByText('submit it yourself').waitFor();
+
+  jobs.push(job(14, 'fill', choices, answers('Male', 'No')));
+  tab = await startJob(portalUrl);
+  await tab.locator('credcloud-panel').getByText('Jane Doe').waitFor();
+  await button(tab, 'Fill this page').click();
+  await tab.locator('credcloud-panel').getByText('Filled 8 boxes on this page').waitFor();
+  assert.equal(await checked(tab, 'input[value=M]'), true);
+  assert.equal(await checked(tab, 'input[value=F]'), false);
+  assert.equal(await checked(tab, 'input[name=citizen][value=N]'), true, 'a No answer ticks the No option');
+  assert.equal(await checked(tab, 'input[name=citizen][value=Y]'), false);
+  assert.equal(await tab.evaluate(() => window.submitted), 0);
+});
+
 test('learns the boxes she clicks and saves them as a new version', async () => {
   await connect();
   jobs.push(job(8, 'learn', [field('Old box', 'css', '#gone', 'text')], []));

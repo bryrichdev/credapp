@@ -1,7 +1,9 @@
 // Runs on a portal page next to panel.js. It passes the panel's presses to the background,
 // draws what comes back, and does the typing, since only a script on the page can.
 //
-// It types into text boxes, picks dropdown options, and ticks checkboxes and radio buttons.
+// It types into text boxes, picks dropdown options, and ticks checkboxes and radio buttons:
+// a radio button or checkbox is ticked when the answer is Yes or names that option, so all the
+// options of one question can share one piece of data.
 // Before touching an element it checks what the element really is, so a template that points
 // at a button, or a page that changed, can't make it press anything. It never submits.
 (() => {
@@ -10,7 +12,38 @@
   const panel = window.__credcloud;
 
   const YES = new Set(['yes', 'y', 'true', '1', 'x', 'checked', 'on']);
-  const yes = value => YES.has(String(value).trim().toLowerCase());
+  const NO = new Set(['no', 'n', 'false', '0', 'unchecked', 'off']);
+  const clean = text => String(text ?? '').replace(/\s+/g, ' ').replace(/[\s:*]+$/, '').trim().toLowerCase();
+
+  /** An answer as a list: "English, Spanish" or "Cardiology; Internal medicine". */
+  const parts = value => String(value).split(/[,;|\n]/).map(clean).filter(Boolean);
+
+  /** What an option is called: its label, and its value. */
+  function names(element) {
+    return [panel.labelTextOf(element), element.getAttribute('value'), element.getAttribute('aria-label')]
+      .map(clean).filter(Boolean);
+  }
+
+  /** Whether an answer names this option: "Female", or just "F" for it. */
+  function namesMatch(optionNames, value) {
+    return parts(value).some(part => optionNames.some(name =>
+      name === part || (part.length === 1 && name.startsWith(part))));
+  }
+
+  /**
+   * Whether a radio button or checkbox should be ticked. A Yes or No option follows a yes/no
+   * answer. Any option is ticked by a plain Yes, as a fixed answer, and otherwise when the
+   * answer names it, so every option of a question can share one piece of data.
+   */
+  function shouldTick(element, value) {
+    const answer = clean(value);
+    const own = names(element);
+    if (own.some(n => YES.has(n))) return YES.has(answer);
+    if (own.some(n => NO.has(n))) return NO.has(answer);
+    if (YES.has(answer)) return true;
+    if (NO.has(answer)) return false;
+    return namesMatch(own, value);
+  }
 
   function locate(field) {
     if (field.by === 'label') {
@@ -38,12 +71,19 @@
     element.blur();
   }
 
+  /** Picks the option the answer names. A list box that takes several picks every one named. */
   function choose(select, value) {
-    const wanted = String(value).trim().toLowerCase();
-    const option = Array.from(select.options).find(o => o.text.trim().toLowerCase() === wanted)
-      || Array.from(select.options).find(o => o.value.trim().toLowerCase() === wanted);
-    if (!option) return false;
-    Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(select, option.value);
+    const options = Array.from(select.options);
+    const matches = option => namesMatch([clean(option.text), clean(option.value)], value);
+    if (select.multiple) {
+      if (!options.some(matches)) return false;
+      options.forEach(option => { option.selected = matches(option); });
+    } else {
+      const wanted = clean(value);
+      const option = options.find(o => clean(o.text) === wanted) || options.find(o => clean(o.value) === wanted);
+      if (!option) return false;
+      Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(select, option.value);
+    }
     select.dispatchEvent(new Event('input', { bubbles: true }));
     select.dispatchEvent(new Event('change', { bubbles: true }));
     return true;
@@ -73,9 +113,10 @@
           continue;
         }
       } else if (actual === 'checkbox') {
-        if (checked(element) !== yes(value)) element.click();
+        if (checked(element) !== shouldTick(element, value)) element.click();
       } else if (actual === 'radio') {
-        if (yes(value) && !checked(element)) element.click();
+        // A radio button can't be unticked; ticking another option of the question does that.
+        if (shouldTick(element, value) && !checked(element)) element.click();
       }
       element.style.outline = '2px solid #2f855a';
       element.style.outlineOffset = '1px';

@@ -11,6 +11,10 @@
   <p><label><input type="checkbox" name="accepting"> Accepting new patients</label></p>
   <p><label><input type="radio" name="sex" value="F"> Female</label> <label><input type="radio" name="sex" value="M"> Male</label></p>
   <p><input aria-label="Tax ID" name="tin"></p>
+  <p>US citizen <label><input type="radio" name="citizen" value="Y"> Yes</label> <label><input type="radio" name="citizen" value="N"> No</label></p>
+  <p>Languages <label><input type="checkbox" name="lang" value="en"> English</label> <label><input type="checkbox" name="lang" value="es"> Spanish</label> <label><input type="checkbox" name="lang" value="fr" checked> French</label></p>
+  <p><label for="specialties">Specialties</label>
+    <select id="specialties" name="specialties" multiple><option>Cardiology</option><option>Family medicine</option><option>Internal medicine</option></select></p>
   <p><button type="submit">Submit application</button></p>
 </form>
 <script src="/count-submits.js"></script>

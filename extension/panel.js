@@ -221,6 +221,7 @@
     const format = el('select');
     for (const [name, label] of Object.entries(state.formats)) format.append(el('option', { value: name, text: label }));
     const fixed = el('input', { type: 'text', placeholder: pending.kind === 'text' ? '' : 'Yes, No, or the option' });
+    const choice = pending.kind === 'radio' || pending.kind === 'checkbox';
     const name = el('input', { type: 'text', value: pending.label });
     return el('div', { class: 'body' },
       el('div', { text: 'What goes in this ' + (pending.kind === 'text' ? 'box' : pending.kind) + '?' }),
@@ -228,6 +229,8 @@
       el('label', {}, 'Data', filter, source),
       el('label', {}, 'Format', format),
       el('label', {}, 'Fixed answer, used when the data is empty', fixed),
+      choice ? el('div', { class: 'muted', text: 'Ticked when the answer is Yes, or names this option. '
+        + 'Give every option of a question the same data: only the ones that match get ticked.' }) : null,
       el('div', { class: 'row' },
         button('Add', () => send('add', { label: name.value, source: source.value, format: format.value, defaultValue: fixed.value })),
         button('Skip', () => send('discard'), true)));
@@ -239,6 +242,6 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attach);
   else attach();
 
-  const api = { render: s => { attach(); render(s); }, describe, findByLabel, kindOf, BOXES, onAction: null };
+  const api = { render: s => { attach(); render(s); }, describe, findByLabel, kindOf, labelTextOf, BOXES, onAction: null };
   window.__credcloud = api;
 })();
