@@ -15,6 +15,11 @@ Terraform or OpenTofu; the scripts it relies on are in `deploy/aws/`.
 - **An S3 bucket for backups** (`storage.tf`). Backups are age-encrypted on the instance before
   upload. The instance can write backups but can't delete them; lifecycle rules expire
   `daily/` and `pre-deploy/` after 30 days and `monthly/` after 400.
+- **Document files** (`workspace-files.tf`): one bucket per workspace, made by the app on the
+  workspace's first upload, versioned so a deleted file can be recovered for 30 days. The
+  instance can set buckets up but can't read them; it reads files through a data role whose
+  session is tagged with the workspace, and the role only opens the matching bucket. Off
+  until `document_storage = "s3"`.
 - **SSM Parameter Store** holds the app's settings (`/credcloud/prod/env/*`, SecureStrings
   written by `put-secrets.sh`, never in Terraform state) and what the scripts need to find
   things (`/credcloud/deploy/*`).

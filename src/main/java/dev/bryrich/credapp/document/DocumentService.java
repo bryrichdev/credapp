@@ -1,9 +1,12 @@
 package dev.bryrich.credapp.document;
 
+import dev.bryrich.credapp.document.storage.WorkspaceFiles;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Types;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -12,7 +15,8 @@ import java.util.Optional;
  * Documents for providers and practice groups. Works in plain SQL with the user group always
  * in the WHERE clause, so a document from another group can't be listed, opened or deleted
  * even by guessing its id. The file is encrypted before it's stored and decrypted only to be
- * downloaded, and every download is logged.
+ * downloaded, and every download is logged. The encrypted file goes in the row or, when
+ * {@link WorkspaceFiles} is on, in the workspace's own S3 bucket; stored_in says which.
  */
 @Service
 public class DocumentService {
@@ -35,10 +39,12 @@ public class DocumentService {
 
     private final JdbcTemplate jdbc;
     private final DocumentCipher cipher;
+    private final WorkspaceFiles files;
 
-    public DocumentService(JdbcTemplate jdbc, DocumentCipher cipher) {
+    public DocumentService(JdbcTemplate jdbc, DocumentCipher cipher, WorkspaceFiles files) {
         this.jdbc = jdbc;
         this.cipher = cipher;
+        this.files = files;
     }
 
     @Transactional(readOnly = true)
@@ -78,25 +84,35 @@ public class DocumentService {
         if (type == null) {
             throw new IllegalArgumentException("Choose what kind of document this is");
         }
-        return jdbc.queryForObject("""
+        byte[] encrypted = cipher.encrypt(content);
+        boolean toS3 = files.enabled();
+        Long id = jdbc.queryForObject("""
                         INSERT INTO documents (user_group_id, %s, doc_type, title, file_name, content_type,
-                                               size_bytes, content, expiration_date, uploaded_by)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id""".formatted(column(owner)),
+                                               size_bytes, content, stored_in, expiration_date, uploaded_by)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id""".formatted(column(owner)),
                 Long.class, userGroupId, ownerId, type.getValue(), blankToNull(title), name, kind.contentType(),
-                (long) content.length, cipher.encrypt(content), expirationDate, uploadedBy);
+                (long) content.length, new SqlParameterValue(Types.BINARY, toS3 ? null : encrypted),
+                toS3 ? "s3" : "database", expirationDate, uploadedBy);
+        // Inside the transaction: if S3 refuses the file, the row goes too.
+        if (toS3) {
+            files.put(userGroupId, id, encrypted);
+        }
+        return id;
     }
 
     /** Decrypts a document for download and logs who opened it. */
     @Transactional
     public Optional<Download> open(long userGroupId, long documentId, long userId, String userEmail, String ipAddress) {
         List<Download> found = jdbc.query("""
-                        SELECT file_name, content_type, content, provider_id, group_id
+                        SELECT file_name, content_type, content, stored_in, provider_id, group_id
                         FROM documents WHERE id = ? AND user_group_id = ?""",
                 (row, i) -> {
                     long providerId = row.getLong("provider_id");
                     boolean forProvider = !row.wasNull();
+                    byte[] encrypted = "s3".equals(row.getString("stored_in"))
+                            ? files.get(userGroupId, documentId) : row.getBytes("content");
                     return new Download(row.getString("file_name"), row.getString("content_type"),
-                            cipher.decrypt(row.getBytes("content")),
+                            cipher.decrypt(encrypted),
                             forProvider ? Owner.PROVIDER : Owner.GROUP,
                             forProvider ? providerId : row.getLong("group_id"));
                 },
@@ -110,18 +126,23 @@ public class DocumentService {
         return Optional.of(found.getFirst());
     }
 
-    /** Deletes a document. Its access log stays. */
+    /** Deletes a document. Its access log stays. A file in S3 can be recovered for 30 days. */
     @Transactional
     public Optional<Location> delete(long userGroupId, long documentId) {
-        return jdbc.query("""
+        record Deleted(Location location, boolean inS3) {
+        }
+        Optional<Deleted> deleted = jdbc.query("""
                         DELETE FROM documents WHERE id = ? AND user_group_id = ?
-                        RETURNING provider_id, group_id""",
+                        RETURNING provider_id, group_id, stored_in""",
                 (row, i) -> {
                     long providerId = row.getLong("provider_id");
-                    return row.wasNull() ? new Location(Owner.GROUP, row.getLong("group_id"))
+                    Location location = row.wasNull() ? new Location(Owner.GROUP, row.getLong("group_id"))
                             : new Location(Owner.PROVIDER, providerId);
+                    return new Deleted(location, "s3".equals(row.getString("stored_in")));
                 },
                 documentId, userGroupId).stream().findFirst();
+        deleted.filter(Deleted::inS3).ifPresent(d -> files.delete(userGroupId, documentId));
+        return deleted.map(Deleted::location);
     }
 
     private boolean ownerExists(long userGroupId, Owner owner, long ownerId) {

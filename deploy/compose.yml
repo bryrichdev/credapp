@@ -22,6 +22,11 @@ services:
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       MAIL_FROM: ${MAIL_FROM:-}
+      # Document files. Empty means Postgres; EC2 sets these from Parameter Store (aws/workspace-files.tf).
+      CREDAPP_STORAGE: ${CREDAPP_STORAGE:-database}
+      CREDAPP_STORAGE_BUCKET_PREFIX: ${CREDAPP_STORAGE_BUCKET_PREFIX:-}
+      CREDAPP_STORAGE_DATA_ROLE_ARN: ${CREDAPP_STORAGE_DATA_ROLE_ARN:-}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
       interval: 10s
