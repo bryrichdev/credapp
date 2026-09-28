@@ -12,3 +12,8 @@ check_tag "$tag"
 instance_online
 push_image "$tag"
 run_deploy "$tag"
+
+# The runner is this Mac, so keep the local record current for anything that reads it,
+# such as a promote() shell function comparing staging with production.
+mkdir -p "$HOME/credcloud/prod"
+echo "$tag" > "$HOME/credcloud/prod/deployed"
