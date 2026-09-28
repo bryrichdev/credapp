@@ -145,6 +145,61 @@ public class PortalTemplateService {
     }
 
     /** The same answers a fill would type, shown to copy by hand. Nothing is kept. */
+    /**
+     * A fill that runs in CredCloud's own browser. The answers go to the browser in memory and
+     * are never stored; the job row only records that the fill happened and, later, which boxes
+     * it filled.
+     */
+    public record LiveFillStart(long jobId, long workspace, TemplateSummary template, List<PortalField> fields,
+                                List<Answer> answers, String providerName) {
+    }
+
+    @Transactional
+    public LiveFillStart startLiveFill(long providerId, long templateId, Long groupId, Long locationId, String ip) {
+        User user = actor(true);
+        Template template = ready(templateId);
+        List<Answer> answers = answers(user, template, providerId, groupId, locationId, ip);
+        // Claimed from the start, by no connected browser, so the extension never picks it up.
+        long jobId = jdbc.queryForObject("""
+                        INSERT INTO runner_jobs (user_group_id, user_id, kind, template_id, template_revision,
+                                                 provider_id, status, claimed_at, created_by)
+                        VALUES (?, ?, 'fill', ?, ?, ?, 'claimed', now(), ?) RETURNING id""",
+                Long.class, workspace(), user.getId(), templateId, template.summary().revision(), providerId,
+                user.getEmail());
+        String providerName = jdbc.queryForObject(
+                "SELECT first_name || ' ' || last_name FROM providers WHERE user_group_id = ? AND id = ?",
+                String.class, workspace(), providerId);
+        return new LiveFillStart(jobId, workspace(), template.summary(), template.fields(), answers, providerName);
+    }
+
+    /**
+     * Records how a fill in CredCloud's browser ended: done if it filled anything, cancelled if
+     * not. Runs when the browser closes, which can be on a timer with nobody signed in.
+     */
+    @Transactional
+    public void endLiveFill(long workspace, long jobId, List<String> filled, List<String> missed) {
+        if (filled.isEmpty()) {
+            jdbc.update("""
+                    UPDATE runner_jobs SET status = 'cancelled', finished_at = now()
+                    WHERE user_group_id = ? AND id = ? AND status = 'claimed' AND runner_id IS NULL""",
+                    workspace, jobId);
+            return;
+        }
+        jdbc.update("""
+                        UPDATE runner_jobs SET status = 'done', result = ?::jsonb, finished_at = now()
+                        WHERE user_group_id = ? AND id = ? AND status = 'claimed' AND runner_id IS NULL""",
+                JSON.writeValueAsString(Map.of("filled", filled, "missed", missed)), workspace, jobId);
+    }
+
+    /** Fills that were open in CredCloud's browser when the app last stopped; their browsers are gone. */
+    @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
+    @Transactional
+    public void closeLeftoverLiveFills() {
+        jdbc.update("""
+                UPDATE runner_jobs SET status = 'cancelled', finished_at = now()
+                WHERE kind = 'fill' AND status = 'claimed' AND runner_id IS NULL""");
+    }
+
     @Transactional
     public CopyView copy(long providerId, long templateId, Long groupId, Long locationId, String ip) {
         User user = actor(true);

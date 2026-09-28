@@ -37,7 +37,8 @@ public class RemoteBrowsers {
      * @param label    what it's for, such as "Aetna / Provider enrollment"
      * @param returnTo the CredCloud page to go back to when she's done
      */
-    public record Live(RemoteSession session, Owner owner, String label, String returnTo, Instant openedAt) {
+    public record Live(RemoteSession session, Owner owner, String label, String returnTo, Instant openedAt,
+                       LiveFill fill) {
     }
 
     /** No room for another browser right now. */
@@ -76,10 +77,11 @@ public class RemoteBrowsers {
     /**
      * Starts a browser on the given https page. Anything she already had open closes first.
      *
+     * @param fill the provider's answers for this portal, or null just to open it
      * @return the new browser's id, which only she can use
      * @throws BusyException when every browser is taken by someone else
      */
-    public synchronized String open(Owner owner, String startUrl, String label, String returnTo) {
+    public synchronized String open(Owner owner, String startUrl, String label, String returnTo, LiveFill fill) {
         open.values().stream().filter(live -> live.owner().equals(owner)).toList()
                 .forEach(live -> end(live.session().id()));
         if (open.size() >= maxSessions) {
@@ -89,7 +91,7 @@ public class RemoteBrowsers {
         String id = newId();
         RemoteSession session = new RemoteSession(id, startUrl,
                 new RemoteSession.Options(1280, 800, timezone, chromium, direct ? null : proxy()));
-        open.put(id, new Live(session, owner, label, returnTo, Instant.now()));
+        open.put(id, new Live(session, owner, label, returnTo, Instant.now(), fill));
         session.start();
         log.info("Opened a remote browser for user {} in workspace {}", owner.userId(), owner.workspace());
         return id;
@@ -130,6 +132,13 @@ public class RemoteBrowsers {
         Live live = open.remove(id);
         if (live != null) {
             live.session().close();
+            if (live.fill() != null) {
+                try {
+                    live.fill().end();
+                } catch (RuntimeException e) {
+                    log.warn("Couldn't record how a portal fill ended", e);
+                }
+            }
         }
     }
 

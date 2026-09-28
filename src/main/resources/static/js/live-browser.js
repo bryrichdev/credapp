@@ -219,6 +219,8 @@
     cover.textContent = text;
     cover.hidden = false;
     keys.disabled = true;
+    const fillButton = document.getElementById('live-fill-page');
+    if (fillButton) fillButton.disabled = true;
     stream.close();
   }
 
@@ -245,6 +247,52 @@
   stream.addEventListener('open', () => {
     if (!over && message.textContent.startsWith('Reconnecting')) say('');
   });
+
+  // --- Filling a provider's answers ---
+
+  const fillSection = document.getElementById('live-fill');
+  if (fillSection) {
+    const button = document.getElementById('live-fill-page');
+    const progress = document.getElementById('live-progress');
+    const note = document.getElementById('live-fill-message');
+    button.addEventListener('click', async () => {
+      button.disabled = true;
+      note.classList.remove('is-problem');
+      note.textContent = 'Filling…';
+      try {
+        const response = await fetch(fillSection.dataset.fill, {
+          method: 'POST', credentials: 'same-origin', headers: headers({})
+        });
+        if (response.status === 404) {
+          ended('This browser has closed.');
+          note.textContent = '';
+          return;
+        }
+        if (!response.ok) throw new Error(String(response.status));
+        const result = await response.json();
+        note.textContent = result.message;
+        note.classList.toggle('is-problem', result.problem);
+        progress.textContent = `${result.done} of ${result.total} boxes filled`;
+        result.filled.forEach(index => {
+          const row = fillSection.querySelector(`[data-index="${index}"]`);
+          if (row) row.classList.add('is-filled');
+        });
+      } catch (e) {
+        note.textContent = 'That didn’t go through. Press Fill this page again.';
+        note.classList.add('is-problem');
+      } finally {
+        button.disabled = over;
+        keys.focus({ preventScroll: true });
+      }
+    });
+  }
+
+  const done = document.getElementById('live-done');
+  if (done && done.dataset.confirm) {
+    done.addEventListener('submit', e => {
+      if (!over && !window.confirm(done.dataset.confirm)) e.preventDefault();
+    });
+  }
 
   keys.focus({ preventScroll: true });
 })();

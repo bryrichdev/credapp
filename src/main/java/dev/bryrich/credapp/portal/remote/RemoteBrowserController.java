@@ -3,6 +3,7 @@ package dev.bryrich.credapp.portal.remote;
 import dev.bryrich.credapp.application.PdfApplicationService;
 import dev.bryrich.credapp.portal.PortalTemplateService;
 import dev.bryrich.credapp.security.CredAppUserDetails;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,13 +16,20 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.PAYLOAD_TOO_LARGE;
@@ -52,12 +60,75 @@ public class RemoteBrowserController {
         String back = "/payers/" + template.payerId() + "/portals";
         try {
             String session = browsers.open(owner(principal), template.startUrl(),
-                    template.payerName() + " / " + template.name(), back);
+                    template.payerName() + " / " + template.name(), back, null);
             return "redirect:/live/" + session;
         } catch (RemoteBrowsers.BusyException e) {
             redirect.addFlashAttribute("error", e.getMessage());
             return "redirect:" + back;
         }
+    }
+
+    /**
+     * Opens a portal in CredCloud's browser with one provider's answers, ready for Fill this
+     * page. The answers stay in memory with the browser; the job only records the fill.
+     */
+    @PostMapping("/providers/{providerId}/portal-fills/live")
+    public String startFill(@AuthenticationPrincipal CredAppUserDetails principal, @PathVariable long providerId,
+                            @RequestParam long templateId, @RequestParam(required = false) Long groupId,
+                            @RequestParam(required = false) Long locationId, HttpServletRequest request,
+                            RedirectAttributes redirect) {
+        String back = "/providers/" + providerId + "/portal-fills";
+        PortalTemplateService.LiveFillStart start;
+        try {
+            start = portals.startLiveFill(providerId, templateId, groupId, locationId, request.getRemoteAddr());
+        } catch (IllegalArgumentException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+            return "redirect:" + back;
+        }
+        Map<Integer, String> answers = new HashMap<>();
+        for (PortalTemplateService.Answer answer : start.answers()) {
+            answers.put(answer.field(), answer.value() == null ? "" : answer.value());
+        }
+        long workspace = start.workspace();
+        long job = start.jobId();
+        var template = start.template();
+        LiveFill fill = new LiveFill(template.startUrl(), start.providerName(), start.fields(), answers,
+                (filled, missed) -> portals.endLiveFill(workspace, job, filled, missed));
+        try {
+            String session = browsers.open(owner(principal), template.startUrl(),
+                    template.payerName() + " / " + template.name(), back, fill);
+            return "redirect:/live/" + session;
+        } catch (RemoteBrowsers.BusyException e) {
+            fill.end();
+            redirect.addFlashAttribute("error", e.getMessage());
+            return "redirect:" + back;
+        }
+    }
+
+    /** Fills what it can of the page she's on, and says what it did. */
+    @PostMapping("/live/{id}/fill")
+    @ResponseBody
+    public Map<String, Object> fillPage(@AuthenticationPrincipal CredAppUserDetails principal,
+                                        @PathVariable String id) throws InterruptedException {
+        RemoteBrowsers.Live live = live(principal, id);
+        LiveFill fill = live.fill();
+        if (fill == null) {
+            throw new ResponseStatusException(NOT_FOUND);
+        }
+        live.session().touch();
+        LiveFill.Outcome outcome;
+        try {
+            outcome = live.session().call(fill::fillOn).get(30, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            outcome = new LiveFill.Outcome("The portal is slow to answer. Let the page finish loading, then press "
+                    + "Fill this page again.", true);
+        } catch (ExecutionException e) {
+            log.info("A portal fill didn't go through", e.getCause());
+            outcome = new LiveFill.Outcome("CredCloud couldn't fill this page. Let it finish loading, then press "
+                    + "Fill this page again.", true);
+        }
+        return Map.of("message", outcome.message(), "problem", outcome.problem(),
+                "filled", fill.filledIndexes(), "done", fill.filledCount(), "total", fill.total());
     }
 
     @GetMapping("/live/{id}")
@@ -72,6 +143,7 @@ public class RemoteBrowserController {
         model.addAttribute("sessionId", id);
         model.addAttribute("label", live.get().label());
         model.addAttribute("returnTo", live.get().returnTo());
+        model.addAttribute("fill", live.get().fill());
         model.addAttribute("width", 1280);
         model.addAttribute("height", 800);
         return "portal/live";
@@ -155,7 +227,11 @@ public class RemoteBrowserController {
                         RedirectAttributes redirect) {
         var live = browsers.find(owner(principal), id);
         browsers.close(owner(principal), id);
-        redirect.addFlashAttribute("message", "Closed CredCloud's browser. It kept nothing from the portal.");
+        LiveFill fill = live.map(RemoteBrowsers.Live::fill).orElse(null);
+        redirect.addFlashAttribute("message", fill == null
+                ? "Closed CredCloud's browser. It kept nothing from the portal."
+                : "Closed CredCloud's browser. It filled " + fill.filledCount() + " of " + fill.total()
+                + " boxes for " + fill.providerName() + ", and kept nothing from the portal.");
         return "redirect:" + live.map(RemoteBrowsers.Live::returnTo).orElse("/");
     }
 
