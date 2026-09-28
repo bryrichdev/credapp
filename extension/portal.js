@@ -97,9 +97,14 @@
   function fill(items) {
     const filled = [];
     const problems = [];
+    // One box, one answer per press: if two boxes of the template find the same element, the
+    // first gets it and the other waits for a later page.
+    const used = new Set();
     for (const { index, field, value } of items) {
       const element = locate(field);
       if (element === null) continue; // on another page of the form
+      if (used.has(element)) continue;
+      if (element !== 'forbidden') used.add(element);
       const actual = element === 'forbidden' ? null : panel.kindOf(element);
       if (actual !== field.kind) {
         problems.push(`${field.label}: the page has ${actual ? 'a ' + actual : 'a button or something else that isn’t a box'} there now`);

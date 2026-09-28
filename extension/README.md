@@ -17,6 +17,12 @@ her own portal sign-ins. It fills and stops. She checks each page and submits it
 Teaching a portal works the same way from the payer's Portal templates page: **Pick a box**,
 click it, choose its data, and **Save template**.
 
+One template covers a whole multi-page form. Pick page 1's boxes, press **Stop picking** so the
+portal's Next button works, go on, and pick the next page's. Each box remembers the page it was
+taught on, so a box called Address on page 3 isn't filled into page 2's Address. On a portal
+whose pages share one address, or whose address changes with each application, it fills every
+box it finds, but never puts two answers into one box.
+
 ## What it will and won't do
 
 - It types into text boxes, picks dropdown options and ticks checkboxes and radio buttons.
