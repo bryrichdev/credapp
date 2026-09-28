@@ -132,11 +132,12 @@ class PortalRunnerIntegrationTest {
         mvc.perform(get("/runner/api/jobs/next").with(bearer("not-a-token"))).andExpect(status().isUnauthorized());
         // A token opens none of the app's pages: they still send you to sign in.
         mvc.perform(get("/providers").with(bearer(token))).andExpect(status().is3xxRedirection());
-        // Connecting needs a signed-in page, with its CSRF token. Without them the app sends you
-        // back to sign in (ExpiredFormHandler), and no browser is connected.
+        // Connecting needs a signed-in page, with its CSRF token, and without them no browser is
+        // connected. Signed out, it's an expired form: back to sign in. Signed in without the
+        // token, it looks like a forged request: 403 (ExpiredFormHandler).
         long connectedBefore = jdbc.queryForObject("SELECT count(*) FROM runners", Long.class);
         mvc.perform(post("/extension/connect")).andExpect(status().is3xxRedirection());
-        mvc.perform(post("/extension/connect").with(signedIn(admin))).andExpect(status().is3xxRedirection());
+        mvc.perform(post("/extension/connect").with(signedIn(admin))).andExpect(status().isForbidden());
         assertThat(jdbc.queryForObject("SELECT count(*) FROM runners", Long.class)).isEqualTo(connectedBefore);
 
         User stranger = practice();
