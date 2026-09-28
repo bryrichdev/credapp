@@ -1,9 +1,11 @@
-# Staging and production. Each is its own compose project with its own .env:
+# Staging (on the Mac, through deploy/deploy.sh) and production (on EC2, through
+# deploy/aws/deploy.sh). Each is its own compose project with its own .env:
 #   APP_TAG=<commit> docker compose -f deploy/compose.yml -p credcloud-staging --env-file ~/credcloud/staging/.env up -d
 # No ports are published: the tunnel is the only way in.
 services:
   app:
-    image: credcloud:${APP_TAG:?set APP_TAG to the commit to run}
+    # APP_IMAGE is the ECR repository on EC2; the Mac uses its local credcloud images.
+    image: ${APP_IMAGE:-credcloud}:${APP_TAG:?set APP_TAG to the commit to run}
     environment:
       SERVER_FORWARD_HEADERS_STRATEGY: framework
       CREDAPP_CLOUDFLARE_TRUST_CLIENT_IP: "true"
