@@ -67,6 +67,10 @@ const portal = http.createServer((req, res) => {
   if (url.pathname === '/enroll') {
     res.writeHead(200, { 'Content-Type': 'text/html', 'Content-Security-Policy': STRICT_CSP });
     res.end(fs.readFileSync(path.join(here, 'enroll.html')));
+  } else if (url.pathname === '/step1' || url.pathname === '/step2') {
+    // Two pages of one form, each with a box labeled Address.
+    res.writeHead(200, { 'Content-Type': 'text/html', 'Content-Security-Policy': STRICT_CSP });
+    res.end(`<!DOCTYPE html><title>${url.pathname}</title><form><label for="a">Address</label> <input id="a"></form>`);
   } else if (url.pathname === '/count-submits.js') {
     res.writeHead(200, { 'Content-Type': 'application/javascript' });
     res.end(fs.readFileSync(path.join(here, 'count-submits.js')));
@@ -233,6 +237,49 @@ test('radio buttons, checkboxes and list boxes follow the data', async () => {
   assert.equal(await checked(tab, 'input[name=citizen][value=N]'), true, 'a No answer ticks the No option');
   assert.equal(await checked(tab, 'input[name=citizen][value=Y]'), false);
   assert.equal(await tab.evaluate(() => window.submitted), 0);
+});
+
+test('on a multi-page form, each box is filled on the page it was taught on', async () => {
+  await connect();
+  const step1 = portalUrl.replace('/enroll', '/step1');
+  const onPage = (label, page) => ({ ...field(label, 'label', 'Address', 'text'), page });
+  jobs.push(job(15, 'fill', [onPage('Practice address', '/step1'), onPage('Billing address', '/step2')],
+    [{ field: 0, value: '1 Practice Way' }, { field: 1, value: '9 Billing Blvd' }], step1));
+  const tab = await startJob(step1);
+  const panel = tab.locator('credcloud-panel');
+  await panel.getByText('Jane Doe').waitFor();
+
+  await button(tab, 'Fill this page').click();
+  await panel.getByText('Filled 1 boxes on this page. 1 not filled yet.').waitFor();
+  assert.equal(await tab.inputValue('#a'), '1 Practice Way', 'page 2\u2019s Address box waits for page 2');
+
+  await tab.goto(portalUrl.replace('/enroll', '/step2'));
+  await panel.getByText('Jane Doe').waitFor();
+  await button(tab, 'Fill this page').click();
+  await panel.getByText('Filled 1 boxes on this page. 0 not filled yet.').waitFor();
+  assert.equal(await tab.inputValue('#a'), '9 Billing Blvd');
+});
+
+test('when the addresses don\u2019t match, one box on the page still gets one answer', async () => {
+  await connect();
+  const step1 = portalUrl.replace('/enroll', '/step1');
+  // Taught on addresses this run doesn't use, as when a portal puts an application number in the address.
+  const onPage = (label, page) => ({ ...field(label, 'label', 'Address', 'text'), page });
+  jobs.push(job(16, 'fill', [onPage('Practice address', '/apps/41/step1'), onPage('Billing address', '/apps/41/step2')],
+    [{ field: 0, value: '1 Practice Way' }, { field: 1, value: '9 Billing Blvd' }], step1));
+  const tab = await startJob(step1);
+  const panel = tab.locator('credcloud-panel');
+  await panel.getByText('Jane Doe').waitFor();
+
+  await button(tab, 'Fill this page').click();
+  await panel.getByText('Filled 1 boxes on this page. 1 not filled yet.').waitFor();
+  assert.equal(await tab.inputValue('#a'), '1 Practice Way');
+
+  await tab.goto(portalUrl.replace('/enroll', '/step2'));
+  await panel.getByText('Jane Doe').waitFor();
+  await button(tab, 'Fill this page').click();
+  await panel.getByText('0 not filled yet.').waitFor();
+  assert.equal(await tab.inputValue('#a'), '9 Billing Blvd');
 });
 
 test('learns the boxes she clicks and saves them as a new version', async () => {

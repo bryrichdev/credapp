@@ -169,6 +169,25 @@ function state(session) {
   };
 }
 
+/**
+ * The answers to type on this page. Each box remembers the page it was taught on. When some
+ * boxes were taught on this page's address, only those (and any without a page) are filled,
+ * so an "Address" box taught on page 3 doesn't land in page 2's "Address". When none match,
+ * as on a portal whose steps all share one address or whose addresses change per
+ * application, every unfilled box found on the page is filled.
+ */
+function forThisPage(session, url) {
+  const open = session.job.answers.filter(a => !session.filled.includes(a.field) && a.value);
+  let path = '';
+  try {
+    path = new URL(url).pathname;
+  } catch (e) {
+    return open;
+  }
+  const page = a => session.fields[a.field].page || '';
+  return open.some(a => page(a) === path) ? open.filter(a => page(a) === path || !page(a)) : open;
+}
+
 function say(session, message, tone = '') {
   session.message = message;
   session.tone = tone;
@@ -191,12 +210,7 @@ async function panel(tabId, url, action, data = {}) {
           say(session, 'This page isn’t on the portal the fill was sent for, so CredCloud won’t type into it.', 'error');
           break;
         }
-        command = {
-          type: 'fill',
-          items: job.answers
-            .filter(a => !session.filled.includes(a.field) && a.value)
-            .map(a => ({ index: a.field, field: session.fields[a.field], value: a.value }))
-        };
+        command = { type: 'fill', items: forThisPage(session, url).map(a => ({ index: a.field, field: session.fields[a.field], value: a.value })) };
         break;
       case 'filled': {
         const report = data;
