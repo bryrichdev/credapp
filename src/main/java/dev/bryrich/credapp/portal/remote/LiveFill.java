@@ -1,17 +1,11 @@
 package dev.bryrich.credapp.portal.remote;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.microsoft.playwright.Frame;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.PlaywrightException;
 import dev.bryrich.credapp.portal.PortalField;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -46,9 +40,6 @@ public final class LiveFill {
 
     record Item(int index, PortalField field, String value) {
     }
-
-    private static final Gson GSON = new Gson();
-    private static final String SCRIPT = script();
 
     private final String startUrl;
     private final String providerName;
@@ -96,7 +87,7 @@ public final class LiveFill {
 
     /** Fills what it can of the page she's on. Runs on the session's thread. */
     public Outcome fillOn(Page page) {
-        if (!samePortal(page.url(), startUrl)) {
+        if (!PortalScript.samePortal(page.url(), startUrl)) {
             return new Outcome("This page isn't on the portal the fill is for, so CredCloud won't type into it.", true);
         }
         List<Item> open = openFor(page.url());
@@ -107,12 +98,11 @@ public final class LiveFill {
             if (left.isEmpty()) {
                 break;
             }
-            if (frame.isDetached() || !samePortal(frame.url(), startUrl)) {
+            if (frame.isDetached() || !PortalScript.samePortal(frame.url(), startUrl)) {
                 continue;
             }
             try {
-                String reply = (String) frame.evaluate(SCRIPT, GSON.toJson(left));
-                JsonObject report = GSON.fromJson(reply, JsonObject.class);
+                JsonObject report = PortalScript.run(frame, Map.of("action", "fill", "items", left));
                 report.getAsJsonArray("filled").forEach(index -> done.add(index.getAsInt()));
                 report.getAsJsonArray("problems").forEach(problem -> problems.add(problem.getAsString()));
                 left.removeIf(item -> done.contains(item.index()));
@@ -165,13 +155,7 @@ public final class LiveFill {
                 open.add(new Item(i, fields.get(i), value));
             }
         }
-        String path;
-        try {
-            path = URI.create(pageUrl).getPath();
-        } catch (IllegalArgumentException e) {
-            return open;
-        }
-        String here = path == null ? "" : path;
+        String here = PortalScript.path(pageUrl);
         boolean taughtHere = open.stream().anyMatch(item -> item.field().page().equals(here));
         return taughtHere
                 ? open.stream().filter(item -> item.field().page().equals(here) || item.field().page().isEmpty()).toList()
@@ -194,36 +178,8 @@ public final class LiveFill {
         }
     }
 
-    /** The last two labels of the host: portal.payer.com and login.payer.com are one portal. */
+    /** Same test as the fill uses, kept here for the tests that call it. */
     static boolean samePortal(String url, String startUrl) {
-        try {
-            String host = URI.create(url).getHost();
-            String start = URI.create(startUrl).getHost();
-            return host != null && start != null && site(host).equals(site(start));
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
-    }
-
-    private static String site(String host) {
-        String lower = host.toLowerCase(java.util.Locale.ROOT);
-        if (lower.matches("[\\d.]+") || lower.contains(":") || !lower.contains(".")) {
-            return lower;
-        }
-        String[] labels = lower.split("\\.");
-        return labels[labels.length - 2] + "." + labels[labels.length - 1];
-    }
-
-    private static String script() {
-        try (InputStream in = LiveFill.class.getResourceAsStream("/portal/portal-fill.js")) {
-            if (in == null) {
-                throw new IllegalStateException("portal/portal-fill.js is missing from the classpath");
-            }
-            String file = new String(in.readAllBytes(), StandardCharsets.UTF_8);
-            // Playwright needs the function itself first, without the comments above it.
-            return file.substring(file.indexOf("(input) =>"));
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        return PortalScript.samePortal(url, startUrl);
     }
 }

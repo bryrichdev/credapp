@@ -38,7 +38,7 @@ public class RemoteBrowsers {
      * @param returnTo the CredCloud page to go back to when she's done
      */
     public record Live(RemoteSession session, Owner owner, String label, String returnTo, Instant openedAt,
-                       LiveFill fill) {
+                       LiveFill fill, LiveTeach teach) {
     }
 
     /** No room for another browser right now. */
@@ -77,11 +77,13 @@ public class RemoteBrowsers {
     /**
      * Starts a browser on the given https page. Anything she already had open closes first.
      *
-     * @param fill the provider's answers for this portal, or null just to open it
+     * @param fill  the provider's answers for this portal, or null
+     * @param teach the template being taught, or null
      * @return the new browser's id, which only she can use
      * @throws BusyException when every browser is taken by someone else
      */
-    public synchronized String open(Owner owner, String startUrl, String label, String returnTo, LiveFill fill) {
+    public synchronized String open(Owner owner, String startUrl, String label, String returnTo, LiveFill fill,
+                                    LiveTeach teach) {
         open.values().stream().filter(live -> live.owner().equals(owner)).toList()
                 .forEach(live -> end(live.session().id()));
         if (open.size() >= maxSessions) {
@@ -91,7 +93,7 @@ public class RemoteBrowsers {
         String id = newId();
         RemoteSession session = new RemoteSession(id, startUrl,
                 new RemoteSession.Options(1280, 800, timezone, chromium, direct ? null : proxy()));
-        open.put(id, new Live(session, owner, label, returnTo, Instant.now(), fill));
+        open.put(id, new Live(session, owner, label, returnTo, Instant.now(), fill, teach));
         session.start();
         log.info("Opened a remote browser for user {} in workspace {}", owner.userId(), owner.workspace());
         return id;

@@ -1,6 +1,8 @@
 package dev.bryrich.credapp.portal.remote;
 
+import dev.bryrich.credapp.application.AnswerFormat;
 import dev.bryrich.credapp.application.PdfApplicationService;
+import dev.bryrich.credapp.portal.PortalField;
 import dev.bryrich.credapp.portal.PortalTemplateService;
 import dev.bryrich.credapp.security.CredAppUserDetails;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,6 +27,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -52,20 +55,122 @@ public class RemoteBrowserController {
         this.portals = portals;
     }
 
-    /** Opens a portal template's start page in CredCloud's browser. */
+    /** Opens a portal template in CredCloud's browser to teach it, starting from its current boxes. */
     @PostMapping("/portal-templates/{id}/live")
-    public String open(@AuthenticationPrincipal CredAppUserDetails principal, @PathVariable long id,
-                       RedirectAttributes redirect) {
-        var template = portals.openable(id);
-        String back = "/payers/" + template.payerId() + "/portals";
+    public String teach(@AuthenticationPrincipal CredAppUserDetails principal, @PathVariable long id,
+                        RedirectAttributes redirect) {
+        return openToTeach(principal, portals.teachable(id), redirect);
+    }
+
+    /** Adds a portal to a payer and opens it in CredCloud's browser to teach it. */
+    @PostMapping("/payers/{payerId}/portals/live")
+    public String addAndTeach(@AuthenticationPrincipal CredAppUserDetails principal, @PathVariable long payerId,
+                              @RequestParam String name, @RequestParam String startUrl, RedirectAttributes redirect) {
+        long id;
         try {
-            String session = browsers.open(owner(principal), template.startUrl(),
-                    template.payerName() + " / " + template.name(), back, null);
+            id = portals.create(payerId, name, startUrl, false);
+        } catch (IllegalArgumentException e) {
+            redirect.addFlashAttribute("error", e.getMessage());
+            redirect.addFlashAttribute("name", name);
+            redirect.addFlashAttribute("startUrl", startUrl);
+            return "redirect:/payers/" + payerId + "/portals";
+        }
+        return openToTeach(principal, portals.teachable(id), redirect);
+    }
+
+    private String openToTeach(CredAppUserDetails principal, PortalTemplateService.Template template,
+                               RedirectAttributes redirect) {
+        var summary = template.summary();
+        String back = "/payers/" + summary.payerId() + "/portals";
+        Map<String, String> sources = new LinkedHashMap<>();
+        portals.sources().forEach(source -> sources.put(source.key(), source.label()));
+        LiveTeach teach = new LiveTeach(summary.id(), summary.startUrl(), template.fields(), sources);
+        try {
+            String session = browsers.open(owner(principal), summary.startUrl(),
+                    summary.payerName() + " / " + summary.name(), back, null, teach);
             return "redirect:/live/" + session;
         } catch (RemoteBrowsers.BusyException e) {
             redirect.addFlashAttribute("error", e.getMessage());
             return "redirect:" + back;
         }
+    }
+
+    /** What a click in pick mode is on: a box and how to find it again, or why not. */
+    @PostMapping(path = "/live/{id}/pick", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public Map<String, Object> pick(@AuthenticationPrincipal CredAppUserDetails principal, @PathVariable String id,
+                                    @RequestBody RemoteInput at) throws InterruptedException {
+        RemoteBrowsers.Live live = live(principal, id);
+        LiveTeach teach = teaching(live);
+        live.session().touch();
+        try {
+            LiveTeach.Pick pick = live.session().call(page -> teach.pickAt(page, at.px(), at.py())).get(20, TimeUnit.SECONDS);
+            return pick.box() != null ? Map.of("box", pick.box()) : Map.of("problem", pick.problem());
+        } catch (TimeoutException | ExecutionException e) {
+            return Map.of("problem", "CredCloud couldn't look at that box. Let the page finish loading, then pick again.");
+        }
+    }
+
+    /** What she said goes in a box she picked. */
+    public record TaughtBox(String label, String by, String locator, String kind, String page, String source,
+                            String format, String defaultValue) {
+    }
+
+    @PostMapping(path = "/live/{id}/teach/add", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> addBox(@AuthenticationPrincipal CredAppUserDetails principal,
+                                                      @PathVariable String id, @RequestBody TaughtBox box) {
+        LiveTeach teach = teaching(live(principal, id));
+        try {
+            teach.add(new PortalField(box.label(), box.by(), box.locator(), box.kind(), box.source(), box.format(),
+                    box.defaultValue(), box.page()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+        return ResponseEntity.ok(taught(teach, "Added. Pick the next box, or save when you're done."));
+    }
+
+    @PostMapping("/live/{id}/teach/remove")
+    @ResponseBody
+    public Map<String, Object> removeBox(@AuthenticationPrincipal CredAppUserDetails principal,
+                                         @PathVariable String id, @RequestParam int index) {
+        LiveTeach teach = teaching(live(principal, id));
+        teach.remove(index);
+        return taught(teach, "Removed. Save to keep the change.");
+    }
+
+    @PostMapping("/live/{id}/teach/save")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> saveTemplate(@AuthenticationPrincipal CredAppUserDetails principal,
+                                                            @PathVariable String id) {
+        RemoteBrowsers.Live live = live(principal, id);
+        LiveTeach teach = teaching(live);
+        try {
+            int revision = portals.saveTaught(teach.templateId(), teach.fields());
+            teach.saved();
+            return ResponseEntity.ok(taught(teach, "Saved as version " + revision + ". It's ready to fill from a "
+                    + "provider's Portal fills page."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/live/{id}/teach")
+    @ResponseBody
+    public Map<String, Object> taughtBoxes(@AuthenticationPrincipal CredAppUserDetails principal,
+                                           @PathVariable String id) {
+        return taught(teaching(live(principal, id)), "");
+    }
+
+    private static LiveTeach teaching(RemoteBrowsers.Live live) {
+        if (live.teach() == null) {
+            throw new ResponseStatusException(NOT_FOUND);
+        }
+        return live.teach();
+    }
+
+    private static Map<String, Object> taught(LiveTeach teach, String message) {
+        return Map.of("boxes", teach.rows(), "unsaved", teach.unsaved(), "message", message);
     }
 
     /**
@@ -96,7 +201,7 @@ public class RemoteBrowserController {
                 (filled, missed) -> portals.endLiveFill(workspace, job, filled, missed));
         try {
             String session = browsers.open(owner(principal), template.startUrl(),
-                    template.payerName() + " / " + template.name(), back, fill);
+                    template.payerName() + " / " + template.name(), back, fill, null);
             return "redirect:/live/" + session;
         } catch (RemoteBrowsers.BusyException e) {
             fill.end();
@@ -144,6 +249,11 @@ public class RemoteBrowserController {
         model.addAttribute("label", live.get().label());
         model.addAttribute("returnTo", live.get().returnTo());
         model.addAttribute("fill", live.get().fill());
+        model.addAttribute("teach", live.get().teach());
+        if (live.get().teach() != null) {
+            model.addAttribute("sources", portals.sources());
+            model.addAttribute("formats", AnswerFormat.values());
+        }
         model.addAttribute("width", 1280);
         model.addAttribute("height", 800);
         return "portal/live";
@@ -228,10 +338,13 @@ public class RemoteBrowserController {
         var live = browsers.find(owner(principal), id);
         browsers.close(owner(principal), id);
         LiveFill fill = live.map(RemoteBrowsers.Live::fill).orElse(null);
-        redirect.addFlashAttribute("message", fill == null
-                ? "Closed CredCloud's browser. It kept nothing from the portal."
-                : "Closed CredCloud's browser. It filled " + fill.filledCount() + " of " + fill.total()
-                + " boxes for " + fill.providerName() + ", and kept nothing from the portal.");
+        LiveTeach teach = live.map(RemoteBrowsers.Live::teach).orElse(null);
+        redirect.addFlashAttribute("message", fill != null
+                ? "Closed CredCloud's browser. It filled " + fill.filledCount() + " of " + fill.total()
+                + " boxes for " + fill.providerName() + ", and kept nothing from the portal."
+                : teach != null && teach.unsaved()
+                ? "Closed CredCloud's browser without saving the boxes you changed."
+                : "Closed CredCloud's browser. It kept nothing from the portal.");
         return "redirect:" + live.map(RemoteBrowsers.Live::returnTo).orElse("/");
     }
 
