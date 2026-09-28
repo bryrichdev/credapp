@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
-# Deploys a built image to staging or production.
+# Deploys a built image to staging on this Mac. Production is on EC2: deploy/aws/promote.sh.
 #   bash deploy/deploy.sh staging 3145069
-#   bash deploy/deploy.sh prod 3145069
 set -euo pipefail
 
 env="$1"
 tag="$2"
-case "$env" in staging|prod) ;; *) echo "Environment must be staging or prod"; exit 1 ;; esac
+case "$env" in
+  staging) ;;
+  prod) echo "Production runs on EC2. Use the Promote workflow, or bash deploy/aws/promote.sh $tag"; exit 1 ;;
+  *) echo "Environment must be staging"; exit 1 ;;
+esac
 
 home="$HOME/credcloud/$env"
 dc() { APP_TAG="$tag" docker compose -f deploy/compose.yml -p "credcloud-$env" --env-file "$home/.env" "$@"; }
@@ -15,14 +18,6 @@ docker image inspect "credcloud:$tag" >/dev/null || { echo "No image credcloud:$
 
 previous=$(cat "$home/deployed" 2>/dev/null || true)
 echo "$env: ${previous:-nothing} -> $tag"
-
-# Back up production before anything changes. Staging data is disposable.
-if [ "$env" = prod ] && [ -n "$(dc ps -q db)" ]; then
-  mkdir -p "$HOME/credcloud/backups"
-  backup="$HOME/credcloud/backups/prod-$(date +%Y%m%d-%H%M%S)-before-$tag.dump"
-  dc exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB"' > "$backup"
-  echo "Backed up production to $backup"
-fi
 
 if dc up -d --wait --wait-timeout 180; then
   echo "$tag" > "$home/deployed"
@@ -35,6 +30,6 @@ dc logs app --tail 80 || true
 if [ -n "$previous" ] && [ "$previous" != "$tag" ]; then
   echo "Rolling back to $previous"
   tag="$previous"
-  dc up -d --wait --wait-timeout 180 || echo "Rollback failed too. Restore the backup."
+  dc up -d --wait --wait-timeout 180 || echo "Rollback failed too. Staging data is disposable: remove the volume and deploy again."
 fi
 exit 1

@@ -1,0 +1,76 @@
+#!/bin/bash
+# First boot of the production instance. Installs Docker, Compose and age, adds swap, and
+# schedules the nightly backup. The app itself arrives with the first deploy.
+# Log: /var/log/cloud-init-output.log
+set -euxo pipefail
+
+timedatectl set-timezone "${timezone}"
+
+dnf install -y docker
+# Lets Docker pull from ECR with the instance role, so no registry password is ever saved.
+dnf install -y amazon-ecr-credential-helper || echo "No ECR credential helper; deploys sign in with the CLI instead"
+
+mkdir -p /etc/docker
+cat > /etc/docker/daemon.json <<'EOF'
+{ "log-driver": "json-file", "log-opts": { "max-size": "10m", "max-file": "3" } }
+EOF
+systemctl enable --now docker
+
+mkdir -p /usr/local/lib/docker/cli-plugins
+curl -fsSL --retry 5 -o /usr/local/lib/docker/cli-plugins/docker-compose \
+  https://github.com/docker/compose/releases/latest/download/docker-compose-linux-aarch64
+chmod 755 /usr/local/lib/docker/cli-plugins/docker-compose
+
+curl -fsSL --retry 5 https://github.com/FiloSottile/age/releases/download/v1.2.1/age-v1.2.1-linux-arm64.tar.gz \
+  | tar -xz -C /tmp
+install -m 755 /tmp/age/age /tmp/age/age-keygen /usr/local/bin/
+
+# 2 GB of swap: headroom for the Sunday restore drill, which runs a second Postgres.
+if [ ! -f /swapfile ]; then
+  dd if=/dev/zero of=/swapfile bs=1M count=2048
+  chmod 600 /swapfile
+  mkswap /swapfile
+  echo '/swapfile none swap defaults 0 0' >> /etc/fstab
+  swapon /swapfile
+fi
+
+mkdir -p /root/.docker
+if command -v docker-credential-ecr-login >/dev/null; then
+  echo '{ "credHelpers": { "${registry}": "ecr-login" } }' > /root/.docker/config.json
+fi
+
+install -d -m 700 /opt/credcloud /opt/credcloud/bin /opt/credcloud/prod /opt/credcloud/releases
+cat > /opt/credcloud/config <<'EOF'
+REGION=${region}
+REPOSITORY=${repository}
+REGISTRY=${registry}
+BACKUP_BUCKET=${backup_bucket}
+EOF
+
+cat > /etc/systemd/system/credcloud-backup.service <<'EOF'
+[Unit]
+Description=Back up CredCloud production to S3
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/credcloud/bin/backup.sh
+EOF
+
+# Persistent: a night missed while the instance was stopped runs at the next start.
+cat > /etc/systemd/system/credcloud-backup.timer <<'EOF'
+[Unit]
+Description=Nightly CredCloud backup
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+
+systemctl daemon-reload
+systemctl enable --now credcloud-backup.timer
+echo "CredCloud bootstrap finished"
