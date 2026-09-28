@@ -6,6 +6,7 @@ import dev.bryrich.credapp.provider.ProviderService;
 import dev.bryrich.credapp.security.CredAppUserDetails;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,56 +17,65 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-/** Runners on the account page, portal templates on a payer, and portal fills on a provider. */
+/**
+ * Portal templates on a payer, portal fills on a provider, and connecting the CredCloud
+ * extension. A page that queues a job carries a data-credcloud-job-ready marker; the extension
+ * sees it and picks the job up at once.
+ */
 @Controller
 public class PortalWebController {
 
-    private final RunnerService runners;
+    private final RunnerService browsers;
     private final PortalTemplateService portals;
     private final PdfApplicationService payers;
     private final ApplicationDataService data;
     private final ProviderService providers;
+    private final String installUrl;
 
-    public PortalWebController(RunnerService runners, PortalTemplateService portals, PdfApplicationService payers,
-                               ApplicationDataService data, ProviderService providers) {
-        this.runners = runners;
+    public PortalWebController(RunnerService browsers, PortalTemplateService portals, PdfApplicationService payers,
+                               ApplicationDataService data, ProviderService providers,
+                               @Value("${credapp.extension.install-url:}") String installUrl) {
+        this.browsers = browsers;
         this.portals = portals;
         this.payers = payers;
         this.data = data;
         this.providers = providers;
+        this.installUrl = installUrl;
     }
 
     @ModelAttribute
-    public void noStore(HttpServletResponse response) {
+    public void common(HttpServletResponse response, Model model) {
         response.setHeader("Cache-Control", "no-store");
+        model.addAttribute("installUrl", installUrl);
     }
 
-    // --- Runners ---
+    // --- Connecting the extension ---
 
-    @GetMapping("/account/runners")
-    public String runners(@AuthenticationPrincipal CredAppUserDetails principal, Model model) {
-        model.addAttribute("runners", runners.runners(principal.getUser()));
-        return "portal/runners";
+    @GetMapping("/extension/connect")
+    public String connectPage() {
+        return "portal/connect";
     }
 
-    @PostMapping("/account/runners")
-    public String connect(@AuthenticationPrincipal CredAppUserDetails principal, @RequestParam String name,
+    /** Makes a token for this browser. The page hands it to the extension and it's never shown. */
+    @PostMapping("/extension/connect")
+    public String connect(@AuthenticationPrincipal CredAppUserDetails principal, HttpServletRequest request,
                           Model model) {
-        try {
-            model.addAttribute("pairing", runners.create(principal.getUser(), name));
-        } catch (IllegalArgumentException e) {
-            model.addAttribute("error", e.getMessage());
-        }
-        model.addAttribute("minutes", RunnerService.PAIRING_MINUTES);
-        return runners(principal, model);
+        model.addAttribute("token", browsers.connect(principal.getUser(), browserName(request.getHeader("User-Agent"))));
+        return "portal/connect";
     }
 
-    @PostMapping("/account/runners/{id}/revoke")
+    @GetMapping("/account/browsers")
+    public String connected(@AuthenticationPrincipal CredAppUserDetails principal, Model model) {
+        model.addAttribute("browsers", browsers.runners(principal.getUser()));
+        return "portal/browsers";
+    }
+
+    @PostMapping("/account/browsers/{id}/revoke")
     public String revoke(@AuthenticationPrincipal CredAppUserDetails principal, @PathVariable long id,
                          RedirectAttributes redirect) {
-        runners.revoke(principal.getUser(), id);
-        redirect.addFlashAttribute("message", "Runner revoked. It can't fetch or fill anything now.");
-        return "redirect:/account/runners";
+        browsers.revoke(principal.getUser(), id);
+        redirect.addFlashAttribute("message", "Disconnected. That browser can't fetch or fill anything now.");
+        return "redirect:/account/browsers";
     }
 
     // --- Portal templates on a payer ---
@@ -83,7 +93,7 @@ public class PortalWebController {
                          Model model, RedirectAttributes redirect) {
         try {
             portals.create(payerId, name, startUrl);
-            redirect.addFlashAttribute("message", LEARN_MESSAGE);
+            jobReady(redirect, LEARN_MESSAGE);
             return "redirect:/payers/" + payerId + "/portals";
         } catch (IllegalArgumentException e) {
             model.addAttribute("error", e.getMessage());
@@ -96,7 +106,7 @@ public class PortalWebController {
     @PostMapping("/portal-templates/{id}/teach")
     public String teach(@PathVariable long id, RedirectAttributes redirect) {
         portals.teach(id);
-        redirect.addFlashAttribute("message", LEARN_MESSAGE);
+        jobReady(redirect, LEARN_MESSAGE);
         return "redirect:/payers/" + portals.template(id).summary().payerId() + "/portals";
     }
 
@@ -119,9 +129,24 @@ public class PortalWebController {
                        HttpServletRequest request, Model model, RedirectAttributes redirect) {
         try {
             portals.startFill(providerId, templateId, groupId, locationId, request.getRemoteAddr());
-            redirect.addFlashAttribute("message", "Sent to your runner. It opens the portal in Chrome; sign in, "
-                    + "go to the form, then press Fill this page. It never submits: check the page and submit it yourself.");
+            jobReady(redirect, "Opening the portal in a new tab. Sign in, go to the form, then press Fill this "
+                    + "page in the CredCloud panel. It never submits: check each page and submit it yourself.");
             return "redirect:/providers/" + providerId + "/portal-fills";
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error", e.getMessage());
+            return fills(providerId, model);
+        }
+    }
+
+    /** The answers a fill would type, to copy by hand, for a browser without the extension. */
+    @PostMapping("/providers/{providerId}/portal-fills/copy")
+    public String copy(@PathVariable long providerId, @RequestParam long templateId,
+                       @RequestParam(required = false) Long groupId, @RequestParam(required = false) Long locationId,
+                       HttpServletRequest request, Model model) {
+        try {
+            model.addAttribute("provider", providers.findById(providerId));
+            model.addAttribute("copy", portals.copy(providerId, templateId, groupId, locationId, request.getRemoteAddr()));
+            return "portal/copy";
         } catch (IllegalArgumentException e) {
             model.addAttribute("error", e.getMessage());
             return fills(providerId, model);
@@ -135,6 +160,20 @@ public class PortalWebController {
         return "redirect:/providers/" + providerId + "/portal-fills";
     }
 
-    private static final String LEARN_MESSAGE = "Sent to your runner. It opens the portal in Chrome; sign in, go to "
-            + "the form, click each box and choose what goes in it, then press Save template.";
+    private static void jobReady(RedirectAttributes redirect, String message) {
+        redirect.addFlashAttribute("message", message);
+        redirect.addFlashAttribute("jobReady", true);
+    }
+
+    /** "Chrome on macOS" and the like, so she can tell her browsers apart on the account page. */
+    static String browserName(String userAgent) {
+        String agent = userAgent == null ? "" : userAgent;
+        String browser = agent.contains("Edg/") ? "Edge" : agent.contains("Chrome/") ? "Chrome" : "Browser";
+        String system = agent.contains("Mac OS X") ? "macOS" : agent.contains("Windows") ? "Windows"
+                : agent.contains("CrOS") ? "ChromeOS" : agent.contains("Linux") ? "Linux" : "";
+        return system.isEmpty() ? browser : browser + " on " + system;
+    }
+
+    private static final String LEARN_MESSAGE = "Opening the portal in a new tab. Sign in, go to the form, press "
+            + "Pick a box in the CredCloud panel, and click each box to choose what goes in it. Then press Save template.";
 }

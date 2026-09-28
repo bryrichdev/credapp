@@ -2703,5 +2703,5 @@ body:has(.modal[open]) {
     min-width: 0;
 }
 
-/* The one-time code for pairing a runner, easy to read and retype. */
-.pairing-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.75rem; letter-spacing: 0.1em; }
+/* Answers to copy into a portal by hand. */
+.copy-answers code { font-size: 0.95rem; word-break: break-all; }
