@@ -27,10 +27,10 @@ variable "timezone" {
   default     = "America/New_York"
 }
 
-variable "github_repo" {
-  description = "owner/name of the repository whose Promote workflow deploys production."
+variable "github_subject_prefix" {
+  description = "Start of the subject in GitHub's OIDC token for this repository. The repository uses immutable subjects, which name the owner and repo by ID so a rename can't hand the role to someone else. Check with: gh api repos/bryrichdev/credapp/actions/oidc/customization/sub (sub_claim_prefix)."
   type        = string
-  default     = "bryrichdev/credapp"
+  default     = "repo:bryrichdev@316645314/credapp@1371664179"
 }
 
 variable "create_github_oidc_provider" {
