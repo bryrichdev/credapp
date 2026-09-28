@@ -14,8 +14,11 @@ import java.util.Set;
  * @param key       for key: Enter, Tab, an arrow and the like, or one character with modifiers
  * @param modifiers for key: any of Shift, Control, Alt, Meta
  */
-public record RemoteInput(String type, double x, double y, String button, int clicks, double dx, double dy,
+public record RemoteInput(String type, Double x, Double y, String button, Integer clicks, Double dx, Double dy,
                           String key, List<String> modifiers, String text) {
+
+    // The numbers are boxed because the page leaves out what an event doesn't use (a move has
+    // no clicks), and Jackson 3 refuses a missing value for a primitive.
 
     static final int MAX_TEXT = 4000;
 
@@ -48,6 +51,22 @@ public record RemoteInput(String type, double x, double y, String button, int cl
     }
 
     int clickCount() {
-        return Math.clamp(clicks, 1, 3);
+        return clicks == null ? 1 : Math.clamp(clicks, 1, 3);
+    }
+
+    double px() {
+        return x == null ? 0 : x;
+    }
+
+    double py() {
+        return y == null ? 0 : y;
+    }
+
+    double scrollX() {
+        return dx == null ? 0 : dx;
+    }
+
+    double scrollY() {
+        return dy == null ? 0 : dy;
     }
 }

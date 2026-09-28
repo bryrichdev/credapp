@@ -73,6 +73,7 @@ public final class RemoteSession {
     private final Object lock = new Object();
     private final Thread thread;
     private volatile boolean closing;
+    private volatile boolean ended;
     private volatile Instant lastUsed = Instant.now();
 
     // Guarded by lock.
@@ -161,11 +162,17 @@ public final class RemoteSession {
         CompletableFuture<T> result = new CompletableFuture<>();
         work.add(() -> {
             try {
+                if (page == null) {
+                    throw new IllegalStateException("CredCloud's browser has closed");
+                }
                 result.complete(action.apply(page));
             } catch (Throwable e) {
                 result.completeExceptionally(e);
             }
         });
+        if (ended) {
+            drain();
+        }
         return result;
     }
 
@@ -205,6 +212,8 @@ public final class RemoteSession {
             setStatus("failed", "CredCloud's browser stopped: " + reason(String.valueOf(e.getMessage())));
         } finally {
             shutdown();
+            ended = true;
+            drain();
             synchronized (lock) {
                 if (!status.over()) {
                     status = new Status("ended", status.url(), status.title(), status.message(), 0);
@@ -351,8 +360,8 @@ public final class RemoteSession {
         if (page == null || event == null || event.type() == null) {
             return;
         }
-        double x = Math.clamp(event.x(), 0, options.width() - 1);
-        double y = Math.clamp(event.y(), 0, options.height() - 1);
+        double x = Math.clamp(event.px(), 0, options.width() - 1);
+        double y = Math.clamp(event.py(), 0, options.height() - 1);
         var mouse = page.mouse();
         switch (event.type()) {
             case "move" -> mouse.move(x, y);
@@ -368,7 +377,7 @@ public final class RemoteSession {
             }
             case "wheel" -> {
                 mouse.move(x, y);
-                mouse.wheel(Math.clamp(event.dx(), -2000, 2000), Math.clamp(event.dy(), -2000, 2000));
+                mouse.wheel(Math.clamp(event.scrollX(), -2000, 2000), Math.clamp(event.scrollY(), -2000, 2000));
             }
             case "key" -> {
                 String chord = event.chord();
@@ -428,6 +437,17 @@ public final class RemoteSession {
             status = new Status(state, status.url(), status.title(), note.isEmpty() ? message : note, pages.size());
             statusVersion++;
             lock.notifyAll();
+        }
+    }
+
+    /** Once the browser is gone, answers anything still waiting (calls fail rather than hang). */
+    private synchronized void drain() {
+        for (Runnable next = work.poll(); next != null; next = work.poll()) {
+            try {
+                next.run();
+            } catch (Throwable ignored) {
+                // nothing left to do it to
+            }
         }
     }
 

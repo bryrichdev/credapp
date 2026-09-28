@@ -97,14 +97,14 @@ class RemoteSessionTest {
         BoundingBox pass = box("#pass");
         session.input(List.of(
                 click("down", user), click("up", user),
-                new RemoteInput("type", 0, 0, null, 0, 0, 0, null, null, "dr.okafor"),
-                new RemoteInput("key", 0, 0, null, 0, 0, 0, "Backspace", null, null),
-                new RemoteInput("type", 0, 0, null, 0, 0, 0, null, null, "é"),
+                new RemoteInput("type", null, null, null, null, null, null, null, null, "dr.okafor"),
+                new RemoteInput("key", null, null, null, null, null, null, "Backspace", null, null),
+                new RemoteInput("type", null, null, null, null, null, null, null, null, "é"),
                 click("down", pass), click("up", pass),
-                new RemoteInput("paste", 0, 0, null, 0, 0, 0, null, null, "s3cret!"),
+                new RemoteInput("paste", null, null, null, null, null, null, null, null, "s3cret!"),
                 // Cmd+A on her Mac selects all in the remote (Linux) browser, then typing replaces it.
-                new RemoteInput("key", 0, 0, null, 0, 0, 0, "a", List.of("Meta"), null),
-                new RemoteInput("type", 0, 0, null, 0, 0, 0, null, null, "new")));
+                new RemoteInput("key", null, null, null, null, null, null, "a", List.of("Meta"), null),
+                new RemoteInput("type", null, null, null, null, null, null, null, null, "new")));
         assertThat(value("#user")).isEqualTo("dr.okafoé");
         assertThat(value("#pass")).isEqualTo("new");
     }
@@ -187,7 +187,7 @@ class RemoteSessionTest {
     }
 
     private static RemoteInput click(String type, BoundingBox box) {
-        return new RemoteInput(type, box.x + box.width / 2, box.y + box.height / 2, "left", 1, 0, 0, null, null, null);
+        return new RemoteInput(type, box.x + box.width / 2, box.y + box.height / 2, "left", 1, null, null, null, null, null);
     }
 
     private static void page(String path, String body) {
