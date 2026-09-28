@@ -68,9 +68,9 @@ variable "monthly_backup_days" {
 }
 
 variable "document_storage" {
-  description = "Where new document uploads go: database (Postgres, as before) or s3 (a bucket per workspace). Leave it on database until files deleted with a provider or workspace are cleaned up from S3 too."
+  description = "Where new document uploads go: s3 (a bucket per workspace) or database (Postgres). Files already stored open either way. Takes effect at the next promote."
   type        = string
-  default     = "database"
+  default     = "s3"
 
   validation {
     condition     = contains(["database", "s3"], var.document_storage)
