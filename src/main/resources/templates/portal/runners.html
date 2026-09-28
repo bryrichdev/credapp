@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Runners · CredCloud</title><link rel="stylesheet" th:href="@{/css/app.css}"><link rel="icon" th:href="@{/favicon.ico}"></head>
+<body><div th:replace="~{fragments/layout :: topbar(${user}, 'account')}"></div>
+<main class="page">
+<div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
+<div class="alert alert--error" role="alert" th:if="${error}" th:text="${error}"></div>
+
+<a class="backlink" th:href="@{/account}">&larr; Back to my account</a>
+<div class="page__header"><h1>Runners</h1>
+<p class="page__subtitle">The runner fills payer portals in Chrome on your computer. You sign in to each portal yourself, so CredCloud never sees your portal passwords. It fills and stops; you check the page and submit.</p></div>
+
+<section class="card" th:if="${pairing}"><h2>Your code</h2>
+<p>Type this into the runner on your computer. It works once, for <span th:text="${minutes}">10</span> minutes, and isn't shown again.</p>
+<p class="pairing-code"><strong th:text="${pairing.code}">ABCDE-FGH23</strong></p></section>
+
+<section class="card"><h2>Your runners</h2>
+<p th:if="${#lists.isEmpty(runners)}">None yet. Connect the runner on your computer below.</p>
+<div class="application-template" th:each="r : ${runners}"><div><strong th:text="${r.name}"></strong>
+<span class="badge" th:classappend="${r.revokedAt != null} ? 'badge--pending' : 'badge--active'" th:text="${r.state()}"></span>
+<p class="field__hint" th:if="${r.lastSeenAt != null}">Last seen <time data-local-time th:datetime="${r.lastSeenAt}" th:text="${r.lastSeenAt}"></time></p></div>
+<form th:if="${canEdit and r.revokedAt == null}" method="post" th:action="@{/account/runners/{id}/revoke(id=${r.id})}">
+<button class="button button--quiet" type="submit">Revoke</button></form></div></section>
+
+<section class="card" th:if="${canEdit}"><h2>Connect a runner</h2>
+<form method="post" th:action="@{/account/runners}"><div class="form-grid">
+<label class="field"><span class="field__label">Which computer is it on?</span>
+<input class="field__input" name="name" required maxlength="100" placeholder="Work MacBook"></label></div>
+<div class="form-actions"><button class="button" type="submit">Get a code</button></div></form></section>
+</main><div th:replace="~{fragments/layout :: footer}"></div>
+<script th:src="@{/js/local-time.js}"></script></body></html>

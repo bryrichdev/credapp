@@ -26,6 +26,7 @@
         </div>
         <div class="page__actions">
             <a class="button button--quiet" th:href="@{/payers/{id}/templates(id=${payer.id})}">PDF templates</a>
+            <a class="button button--quiet" th:href="@{/payers/{id}/portals(id=${payer.id})}">Portal templates</a>
             <a class="button button--quiet" th:if="${canEdit and !editing}"
                th:href="@{/payers/{id}(id=${payer.id}, edit=1)}">Edit payer</a>
         </div>

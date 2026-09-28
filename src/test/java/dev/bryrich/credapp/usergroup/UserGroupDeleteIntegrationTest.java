@@ -293,6 +293,23 @@ class UserGroupDeleteIntegrationTest {
                 """, Long.class, template, account.getUserGroupId());
         jdbc.update("INSERT INTO application_access_log (user_group_id, run_id, user_id, user_email, action) VALUES (?, ?, ?, ?, 'review')",
                 account.getUserGroupId(), run, account.getId(), account.getEmail());
+        // Nor portal templates, runners or their jobs.
+        long portal = jdbc.queryForObject("""
+                INSERT INTO portal_templates (user_group_id, payer_id, name, start_url, revision, created_by)
+                SELECT user_group_id, min(id), 'Portal', 'https://portal.example.com', 1, 'test'
+                FROM payers WHERE user_group_id = ? GROUP BY user_group_id RETURNING id
+                """, Long.class, account.getUserGroupId());
+        jdbc.update("""
+                INSERT INTO portal_template_versions (user_group_id, template_id, revision, fields, created_by)
+                VALUES (?, ?, 1, '[]'::jsonb, 'test')""", account.getUserGroupId(), portal);
+        long runner = jdbc.queryForObject("INSERT INTO runners (user_group_id, user_id, name) VALUES (?, ?, 'Laptop') RETURNING id",
+                Long.class, account.getUserGroupId(), account.getId());
+        jdbc.update("""
+                INSERT INTO runner_jobs (user_group_id, user_id, kind, template_id, template_revision, provider_id,
+                                         status, runner_id, created_by)
+                SELECT user_group_id, ?, 'fill', ?, 1, min(id), 'done', ?, 'test'
+                FROM providers WHERE user_group_id = ? GROUP BY user_group_id""",
+                account.getId(), portal, runner, account.getUserGroupId());
         // Nor training or work history.
         jdbc.update("""
                 INSERT INTO provider_training (user_group_id, provider_id, training_type, institution, start_date)

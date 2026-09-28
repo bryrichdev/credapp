@@ -56,6 +56,27 @@ public class SecurityConfig {
             UrlPathHelper.defaultInstance.getPathWithinApplication(request).matches(".*/(new|edit)(/.*)?")
                     || request.getParameter("edit") != null;
 
+    /**
+     * The runner's API. Signed in by device token only (RunnerTokenFilter); no session, no
+     * form login, and a token grants nothing outside /runner/api.
+     */
+    @Bean
+    @Order(0)
+    public SecurityFilterChain runnerSecurityFilterChain(HttpSecurity http,
+                                                         dev.bryrich.credapp.portal.RunnerService runners) throws Exception {
+        http
+                .securityMatcher("/runner/api/**")
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.POST, "/runner/api/pair").permitAll()
+                        .anyRequest().hasRole("RUNNER"))
+                .addFilterBefore(new dev.bryrich.credapp.portal.RunnerTokenFilter(runners), AuthorizationFilter.class)
+                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(
+                        (request, response, e) -> response.sendError(401)));
+        return http.build();
+    }
+
     @Bean
     @Order(1)
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http, UserRepository users) throws Exception {

@@ -2702,3 +2702,6 @@ body:has(.modal[open]) {
     flex: 1;
     min-width: 0;
 }
+
+/* The one-time code for pairing a runner, easy to read and retype. */
+.pairing-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.75rem; letter-spacing: 0.1em; }
