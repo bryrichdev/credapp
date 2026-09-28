@@ -33,6 +33,7 @@ import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -131,7 +132,12 @@ class S3DocumentIntegrationTest {
         assertThat(queued(workspace)).isEqualTo(2);
         cleanup.run();
         String bucket = "credcloud-test-ws-" + workspace;
-        assertThat(s3Client().listObjectsV2(r -> r.bucket(bucket)).contents()).isEmpty();
+        // The bucket is versioned, so a delete leaves a delete marker. S3Mock still lists those
+        // keys, so check that each file is gone instead of listing the bucket.
+        for (long id : List.of(first, second)) {
+            assertThatThrownBy(() -> s3Client().getObject(r -> r.bucket(bucket).key("documents/" + id)))
+                    .isInstanceOf(NoSuchKeyException.class);
+        }
         assertThat(queued(workspace)).isZero();
         assertThat(first).isNotEqualTo(second);
     }

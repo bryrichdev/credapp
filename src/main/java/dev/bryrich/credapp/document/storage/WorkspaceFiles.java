@@ -1,5 +1,6 @@
 package dev.bryrich.credapp.document.storage;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
@@ -48,6 +49,7 @@ public class WorkspaceFiles {
     private final Supplier<S3Client> adminFactory;
     private volatile S3Client admin;
 
+    @Autowired
     public WorkspaceFiles(@Value("${credapp.storage.mode:database}") String mode,
                           @Value("${credapp.storage.bucket-prefix:}") String bucketPrefix,
                           @Value("${credapp.storage.data-role-arn:}") String dataRoleArn,
