@@ -79,11 +79,19 @@
   const BUTTONS = ['left', 'middle', 'right'];
   let lastMove = 0;
   let touch = null;
+  // While teaching and picking, a click goes to CredCloud (which box is this?), not the portal.
+  let picker = null;
+  const swallowed = new Set();
 
   keys.addEventListener('pointerdown', e => {
     e.preventDefault();
     keys.focus({ preventScroll: true });
     const at = point(e);
+    if (picker) {
+      swallowed.add(e.pointerId);
+      picker(at);
+      return;
+    }
     if (e.pointerType === 'touch') {
       touch = { x: e.clientX, y: e.clientY, start: at, moved: false };
       return;
@@ -93,6 +101,7 @@
   });
 
   keys.addEventListener('pointermove', e => {
+    if (swallowed.has(e.pointerId)) return;
     if (e.pointerType === 'touch') {
       if (!touch) return;
       // A finger drag scrolls the portal rather than selecting text.
@@ -114,6 +123,7 @@
   });
 
   keys.addEventListener('pointerup', e => {
+    if (swallowed.delete(e.pointerId)) return;
     if (e.pointerType === 'touch') {
       if (touch && !touch.moved) {
         send({ type: 'down', ...touch.start, button: 'left', clicks: 1 });
@@ -219,8 +229,8 @@
     cover.textContent = text;
     cover.hidden = false;
     keys.disabled = true;
-    const fillButton = document.getElementById('live-fill-page');
-    if (fillButton) fillButton.disabled = true;
+    picker = null;
+    document.querySelectorAll('#live-fill-page, #live-pick, #live-save').forEach(button => { button.disabled = true; });
     stream.close();
   }
 
@@ -287,10 +297,153 @@
     });
   }
 
+  // --- Teaching CredCloud the portal ---
+
+  let unsaved = false;
+  const teachSection = document.getElementById('live-teach');
+  if (teachSection) {
+    const pickButton = document.getElementById('live-pick');
+    const saveButton = document.getElementById('live-save');
+    const form = document.getElementById('live-teach-form');
+    const teachNote = document.getElementById('live-teach-message');
+    const list = document.getElementById('live-teach-boxes');
+    const count = document.getElementById('live-teach-count');
+    const fixedLabel = document.getElementById('live-fixed-label');
+    let pending = null;
+
+    const tell = (text, problem) => {
+      teachNote.textContent = text;
+      teachNote.classList.toggle('is-problem', Boolean(problem));
+    };
+
+    async function call(url, body) {
+      const options = { method: body === undefined ? 'GET' : 'POST', credentials: 'same-origin', headers: headers({}) };
+      if (body !== undefined && body !== null) {
+        options.headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(body);
+      }
+      const response = await fetch(url, options);
+      if (response.status === 404) {
+        ended('This browser has closed.');
+        return null;
+      }
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        tell(data.error || 'That didn’t go through. Try again.', true);
+        return null;
+      }
+      return data;
+    }
+
+    // Built with textContent: box names come from the portal's pages.
+    function render(state) {
+      list.replaceChildren(...state.boxes.map((box, index) => {
+        const row = document.createElement('li');
+        const label = document.createElement('span');
+        label.className = 'live__answer-label';
+        label.textContent = box.label;
+        const detail = document.createElement('span');
+        detail.className = 'live__answer';
+        detail.textContent = box.detail;
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'live__remove';
+        remove.textContent = 'Remove';
+        remove.setAttribute('aria-label', 'Remove ' + box.label);
+        remove.addEventListener('click', async () => {
+          const next = await call(teachSection.dataset.remove + '?index=' + index, null);
+          if (next) render(next);
+        });
+        row.append(label, detail, ' ', remove);
+        return row;
+      }));
+      count.textContent = state.boxes.length === 1 ? '1 box' : state.boxes.length + ' boxes';
+      unsaved = state.unsaved;
+      if (state.message) tell(state.message);
+    }
+
+    function setPicking(on) {
+      picker = on ? pickAt : null;
+      pickButton.setAttribute('aria-pressed', String(on));
+      pickButton.textContent = on ? 'Stop picking' : 'Pick a box';
+      root.classList.toggle('is-picking', on);
+      if (on) tell('Click a box in the portal. Clicks go to CredCloud, not the portal, until you stop picking.');
+    }
+
+    async function pickAt(at) {
+      const found = await call(teachSection.dataset.pick, { x: at.x, y: at.y });
+      if (!found) return;
+      if (found.problem) {
+        tell(found.problem, true);
+        return;
+      }
+      pending = found.box;
+      setPicking(false);
+      form.hidden = false;
+      form.elements.label.value = pending.label;
+      form.elements.source.value = '';
+      form.elements.format.value = 'AS_SAVED';
+      form.elements.defaultValue.value = '';
+      fixedLabel.textContent = 'Fixed answer';
+      tell('Say what goes in this box, then press Add box.');
+      form.elements.source.focus();
+    }
+
+    form.elements.source.addEventListener('change', () => {
+      fixedLabel.textContent = form.elements.source.value ? 'If there’s no data, use' : 'Fixed answer';
+    });
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      if (!pending) return;
+      const state = await call(teachSection.dataset.add, {
+        ...pending,
+        label: form.elements.label.value,
+        source: form.elements.source.value,
+        format: form.elements.format.value,
+        defaultValue: form.elements.defaultValue.value
+      });
+      if (!state) return;
+      pending = null;
+      form.hidden = true;
+      render(state);
+      setPicking(true);
+      tell(state.message);
+    });
+
+    document.getElementById('live-discard').addEventListener('click', () => {
+      pending = null;
+      form.hidden = true;
+      tell('Discarded. Press Pick a box to pick another.');
+    });
+
+    pickButton.addEventListener('click', () => {
+      form.hidden = true;
+      pending = null;
+      setPicking(!picker);
+      if (!picker) tell('Stopped picking. Clicks go to the portal again.');
+    });
+
+    saveButton.addEventListener('click', async () => {
+      saveButton.disabled = true;
+      const state = await call(teachSection.dataset.save, null);
+      saveButton.disabled = over;
+      if (state) {
+        setPicking(false);
+        render(state);
+      }
+    });
+
+    call(teachSection.dataset.state).then(state => { if (state) render(state); });
+  }
+
   const done = document.getElementById('live-done');
-  if (done && done.dataset.confirm) {
+  if (done) {
     done.addEventListener('submit', e => {
-      if (!over && !window.confirm(done.dataset.confirm)) e.preventDefault();
+      if (over) return;
+      const question = done.dataset.confirm
+        || (unsaved ? 'Close CredCloud’s browser without saving the boxes you changed?' : '');
+      if (question && !window.confirm(question)) e.preventDefault();
     });
   }
 

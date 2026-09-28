@@ -86,6 +86,17 @@ public class PortalTemplateService {
     /** Adds a template and asks the user's browser to open it in learn mode. */
     @Transactional
     public long create(long payerId, String name, String startUrl) {
+        return create(payerId, name, startUrl, true);
+    }
+
+    /**
+     * Adds a template.
+     *
+     * @param forExtension queue a learn job for CredCloud for Chrome; teaching in CredCloud's own
+     *                     browser doesn't need one
+     */
+    @Transactional
+    public long create(long payerId, String name, String startUrl, boolean forExtension) {
         User user = actor(true);
         Integer payers = jdbc.queryForObject("SELECT count(*) FROM payers WHERE user_group_id = ? AND id = ?",
                 Integer.class, workspace(), payerId);
@@ -99,7 +110,9 @@ public class PortalTemplateService {
                         INSERT INTO portal_templates (user_group_id, payer_id, name, start_url, created_by)
                         VALUES (?, ?, ?, ?, ?) RETURNING id""",
                 Long.class, workspace(), payerId, name.trim(), checkUrl(startUrl), user.getEmail());
-        learn(user, id, 0);
+        if (forExtension) {
+            learn(user, id, 0);
+        }
         return id;
     }
 
@@ -110,11 +123,31 @@ public class PortalTemplateService {
         learn(user, templateId, current(templateId).summary().revision());
     }
 
-    /** A template to open in CredCloud's own browser, for someone who can edit. */
+    /** A template to teach in CredCloud's own browser, with its current boxes, for someone who can edit. */
     @Transactional(readOnly = true)
-    public TemplateSummary openable(long id) {
+    public Template teachable(long id) {
         actor(true);
-        return current(id).summary();
+        return current(id);
+    }
+
+    /**
+     * Saves boxes taught in CredCloud's own browser as the template's next version.
+     *
+     * @return the new version number
+     * @throws IllegalArgumentException with a message for the coordinator, if a box isn't complete
+     */
+    @Transactional
+    public int saveTaught(long templateId, List<PortalField> fields) {
+        User user = actor(true);
+        current(templateId);
+        saveVersion(workspace(), templateId, null, fields, user.getEmail());
+        return jdbc.queryForObject("SELECT revision FROM portal_templates WHERE user_group_id = ? AND id = ?",
+                Integer.class, workspace(), templateId);
+    }
+
+    /** What a box can be filled with. */
+    public List<ApplicationDataService.Source> sources() {
+        return data.sources();
     }
 
     @Transactional(readOnly = true)

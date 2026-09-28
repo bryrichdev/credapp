@@ -2776,3 +2776,10 @@ body:has(.modal[open]) {
 .live__answer { overflow-wrap: anywhere; }
 .live__answer.is-empty { color: var(--slate-500); font-style: italic; }
 .live__answers li.is-filled .live__answer::after { content: " \2713"; color: var(--green-700); font-weight: 600; }
+.live__teach-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.live__teach-form { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--slate-200); }
+.live__teach-form[hidden] { display: none; }
+.live__remove { margin-left: 0.25rem; padding: 0; border: 0; background: none; color: var(--red-700); font: inherit;
+    font-size: 0.85rem; cursor: pointer; text-decoration: underline; }
+/* While picking, a click on the picture asks CredCloud which box it is. */
+.live.is-picking .live__keys { cursor: crosshair; box-shadow: inset 0 0 0 3px var(--teal-600); }

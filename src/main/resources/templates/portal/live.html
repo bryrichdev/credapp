@@ -28,6 +28,33 @@ CredCloud never submits: check every page, submit it in the portal yourself, the
 <span class="live__answer" th:text="${b.value().isEmpty()} ? 'No answer' : ${b.value()}" th:classappend="${b.value().isEmpty()} ? 'is-empty'"></span></li></ol>
 </details>
 </section>
+<section class="live__fill live__teach" id="live-teach" th:if="${teach}"
+         th:data-pick="@{/live/{id}/pick(id=${sessionId})}" th:data-add="@{/live/{id}/teach/add(id=${sessionId})}"
+         th:data-remove="@{/live/{id}/teach/remove(id=${sessionId})}" th:data-save="@{/live/{id}/teach/save(id=${sessionId})}"
+         th:data-state="@{/live/{id}/teach(id=${sessionId})}">
+<div class="live__fill-head">
+<div><strong>Teaching CredCloud this portal</strong> <span class="live__progress" id="live-teach-count"></span></div>
+<div class="live__teach-actions">
+<button class="button button--quiet" type="button" id="live-pick" aria-pressed="false">Pick a box</button>
+<button class="button" type="button" id="live-save">Save template</button></div>
+</div>
+<p class="live__fill-message" id="live-teach-message" role="status" aria-live="polite">Sign in and open the form. Press Pick a box,
+click a box in the portal, and choose what goes in it. Save when you're done.</p>
+<form class="live__teach-form" id="live-teach-form" hidden>
+<div class="form-grid">
+<label class="field"><span class="field__label">Box name</span><input class="field__input" name="label" maxlength="200" required></label>
+<label class="field"><span class="field__label">Fill it with</span><select class="field__input" name="source">
+<option value="">A fixed answer</option>
+<option th:each="s : ${sources}" th:value="${s.key()}" th:text="${s.label()}"></option></select></label>
+<label class="field"><span class="field__label">Format</span><select class="field__input" name="format">
+<option th:each="f : ${formats}" th:value="${f.name()}" th:text="${f.label}"></option></select></label>
+<label class="field"><span class="field__label" id="live-fixed-label">Fixed answer</span><input class="field__input" name="defaultValue" maxlength="500"></label>
+</div>
+<div class="form-actions"><button class="button" type="submit">Add box</button>
+<button class="button button--quiet" type="button" id="live-discard">Discard</button></div>
+</form>
+<details class="live__answers" open><summary>Boxes</summary><ol id="live-teach-boxes"></ol></details>
+</section>
 <div class="live__bar">
 <button class="button button--quiet live__nav" type="button" id="live-back" title="Back" aria-label="Back">&larr;</button>
 <button class="button button--quiet live__nav" type="button" id="live-reload" title="Reload" aria-label="Reload">&#x21bb;</button>
