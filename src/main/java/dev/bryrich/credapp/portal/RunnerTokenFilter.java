@@ -12,7 +12,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 /**
- * Signs a runner in from its {@code Authorization: Bearer <token>} header, for the runner API
+ * Signs CredCloud Helper in from its {@code Authorization: Bearer <token>} header, for the runner API
  * only. The principal is the {@link RunnerService.Identity}, never the user, so a token can't
  * reach any of the app's pages.
  */
@@ -29,7 +29,7 @@ public class RunnerTokenFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         String header = request.getHeader("Authorization");
         if (header != null && header.regionMatches(true, 0, "Bearer ", 0, 7)) {
-            runners.authenticate(header.substring(7).trim()).ifPresent(identity -> {
+            runners.authenticate(header.substring(7).trim(), request.getHeader("X-CredCloud-Helper")).ifPresent(identity -> {
                 var context = SecurityContextHolder.createEmptyContext();
                 context.setAuthentication(UsernamePasswordAuthenticationToken.authenticated(
                         identity, null, AuthorityUtils.createAuthorityList("ROLE_RUNNER")));

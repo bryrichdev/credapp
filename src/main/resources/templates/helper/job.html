@@ -1,0 +1,12 @@
+<!-- A portal job on its way to CredCloud Helper. See helper-launch.js. -->
+<th:block th:fragment="job(job, helper)">
+<section class="card helper-job" th:if="${job != null}" data-helper-job
+         th:data-status="@{/helper/status(job=${job})}" th:data-open="${helper.openUrl()}">
+<p class="helper-job__message" data-helper-message role="status" aria-live="polite">Sending it to CredCloud Helper…</p>
+<p data-helper-setup hidden>CredCloud Helper isn't set up for your account yet. <a th:href="@{/helper}">Set it up</a>; it takes a
+minute, once. This waits for it.</p>
+<p data-helper-start hidden><a class="button" th:href="${helper.openUrl()}">Open CredCloud Helper</a>
+<a class="button button--quiet" th:href="@{/helper}">Set it up again</a></p>
+</section>
+<script th:src="@{/js/helper-launch.js}"></script>
+</th:block>

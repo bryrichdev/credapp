@@ -27,15 +27,45 @@ resource "cloudflare_zone_setting" "this" {
   value      = each.value
 }
 
-# Bot Fight Mode: challenges known bot networks, and blocks AI scrapers and crawlers.
-# Nothing in CredCloud is public content, so there's nothing for them to read.
+# AI scrapers and crawlers are blocked: nothing in CredCloud is public content.
 #
-# Bot Fight Mode needs JavaScript detections: small inline scripts Cloudflare injects into
-# pages. The app's Content-Security-Policy carries a fresh nonce on every response, and
-# Cloudflare stamps that nonce on the scripts it injects, so they run under the policy.
+# Bot Fight Mode is off. It challenges programs that aren't browsers, and CredCloud Helper,
+# the program on coordinators' computers, is one: it calls /runner/api every couple of
+# seconds. On the Free plan Bot Fight Mode can't be skipped for some paths (a WAF skip rule
+# doesn't apply to it), so it's off for the whole zone. Signing in is still behind the
+# managed challenge and rate limit in waf.tf, and everything else needs a session or a
+# helper's token.
+#
+# JavaScript detections stay on: small inline scripts Cloudflare injects into pages, which
+# the app's Content-Security-Policy lets run by the nonce Cloudflare stamps on them.
 resource "cloudflare_bot_management" "this" {
   zone_id            = var.zone_id
   enable_js          = true
-  fight_mode         = true
+  fight_mode         = false
   ai_bots_protection = "block"
+}
+
+# CredCloud Helper calls /runner/api, and Terminal and PowerShell fetch its install scripts
+# and builds from /helper/install and /helper/download. None of them is a browser that can
+# answer a challenge, so the browser integrity check and security level challenges are off
+# there. The API needs a helper's token; a script needs a live one-time code.
+resource "cloudflare_ruleset" "helper_config" {
+  zone_id     = var.zone_id
+  name        = "CredCloud Helper"
+  description = "No browser challenges for CredCloud Helper and its installer"
+  kind        = "zone"
+  phase       = "http_config_settings"
+
+  rules = [
+    {
+      ref         = "helper_no_browser_checks"
+      description = "CredCloud Helper's API, install scripts and builds aren't fetched by a browser"
+      expression  = "starts_with(http.request.uri.path, \"/runner/api/\") or starts_with(http.request.uri.path, \"/helper/install/\") or starts_with(http.request.uri.path, \"/helper/download/\")"
+      action      = "set_config"
+      action_parameters = {
+        bic            = false
+        security_level = "essentially_off"
+      }
+    },
+  ]
 }

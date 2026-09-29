@@ -102,11 +102,14 @@ public class SecurityConfig {
                                                       TwoStepService twoStep) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        // The second half of a request that was already let in, such as the live
-                        // picture of CredCloud's browser (an SseEmitter) finishing.
+                        // The second half of a request that was already let in, such as a streamed
+                        // download finishing.
                         .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ASYNC).permitAll()
                         .requestMatchers(HttpMethod.GET, "/login", "/register", "/privacy", "/css/**", "/js/**",
                                 "/favicon.ico", "/favicon.svg", "/apple-touch-icon.png").permitAll()
+                        // CredCloud Helper's install scripts and builds: Terminal and PowerShell fetch
+                        // them with no session. A script only works with a live one-time code.
+                        .requestMatchers(HttpMethod.GET, "/helper/install/*", "/helper/download/*").permitAll()
                         // Open to everyone, signed in or not: signing in again switches accounts,
                         // and registering never touches the account you're signed in with.
                         .requestMatchers(HttpMethod.POST, "/login", "/register").permitAll()

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="_csrf" th:content="${_csrf?.token}"><meta name="_csrf_header" th:content="${_csrf?.headerName}">
+<title>Connect CredCloud Helper · CredCloud</title><link rel="stylesheet" th:href="@{/css/app.css}"><link rel="icon" th:href="@{/favicon.ico}"></head>
+<body><div th:replace="~{fragments/layout :: topbar(${user}, 'account')}"></div>
+<main class="page">
+<div class="page__header"><h1>Connect CredCloud Helper</h1>
+<p class="page__subtitle">Connect CredCloud Helper on this computer to your account (<span th:text="${user.email}"></span>).
+You only do this once per computer.</p></div>
+<section class="card" id="helper-connect" th:data-connect="@{/helper/connect}" th:data-status="@{/helper/status}">
+<p>Press the button, and if your browser asks whether to open CredCloud Helper, choose <strong>Open</strong>.</p>
+<div class="form-actions"><button class="button" type="button" id="helper-connect-button">Connect this computer</button></div>
+<p class="helper-job__message" id="helper-connect-message" role="status" aria-live="polite"></p>
+<p class="field__hint">Not installed yet? <a th:href="@{/helper}">Set up CredCloud Helper</a>.</p>
+</section>
+</main><div th:replace="~{fragments/layout :: footer}"></div>
+<script th:src="@{/js/helper-connect.js}"></script></body></html>

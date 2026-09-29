@@ -37,9 +37,23 @@ public class RunnerService {
     public record Runner(long id, String name, Instant createdAt, Instant pairedAt, Instant lastSeenAt,
                          Instant revokedAt) {
         public String state() {
-            return revokedAt != null ? "Revoked" : "Connected";
+            return revokedAt != null ? "Disconnected" : running() ? "Running now" : "Connected";
+        }
+
+        /** It asks for work every couple of seconds while it runs. */
+        public boolean running() {
+            return revokedAt == null && lastSeenAt != null && lastSeenAt.isAfter(Instant.now().minus(RUNNING));
         }
     }
+
+    /** Whether this account has a helper, whether one is running, and how one of its jobs went. */
+    public record Status(boolean connected, boolean running, Instant lastPairedAt, JobStatus job) {
+    }
+
+    public record JobStatus(String status, String error) {
+    }
+
+    static final java.time.Duration RUNNING = java.time.Duration.ofSeconds(10);
 
     /** A one-time code that connects CredCloud Helper to an account. */
     public record PairingCode(String code, Instant expiresAt) {
@@ -84,22 +98,33 @@ public class RunnerService {
                 owner.getUserGroupId(), owner.getId());
     }
 
-    /**
-     * Connects a browser for this user and returns its token, which the page hands straight
-     * to the extension. It's shown nowhere else and can't be looked up again.
-     */
-    @Transactional
-    public String connect(User owner, String name) {
-        String cleaned = name == null || name.isBlank() ? "Chrome" : name.trim();
-        if (cleaned.length() > 100) {
-            cleaned = cleaned.substring(0, 100);
+    /** For CredCloud's pages: this account's helpers, and one job of its own if asked. */
+    @Transactional(readOnly = true)
+    public Status status(User owner, Long jobId) {
+        record Row(long connected, long running, java.sql.Timestamp paired) {
         }
-        String token = token();
-        jdbc.update("""
-                        INSERT INTO runners (user_group_id, user_id, name, token_hash, paired_at)
-                        VALUES (?, ?, ?, ?, now())""",
-                owner.getUserGroupId(), owner.getId(), cleaned, hash(token));
-        return token;
+        Row row = jdbc.queryForObject("""
+                        SELECT count(*) FILTER (WHERE revoked_at IS NULL) AS connected,
+                               count(*) FILTER (WHERE revoked_at IS NULL AND last_seen_at > now() - ?::interval) AS running,
+                               max(paired_at) FILTER (WHERE revoked_at IS NULL) AS paired
+                        FROM runners WHERE user_group_id = ? AND user_id = ?""",
+                (r, i) -> new Row(r.getLong("connected"), r.getLong("running"), r.getTimestamp("paired")),
+                RUNNING.toSeconds() + " seconds", owner.getUserGroupId(), owner.getId());
+        JobStatus job = jobId == null ? null : jdbc.query("""
+                        SELECT status, result->>'error' AS error FROM runner_jobs
+                        WHERE user_group_id = ? AND user_id = ? AND id = ?""",
+                (r, i) -> new JobStatus(r.getString("status"), r.getString("error")),
+                owner.getUserGroupId(), owner.getId(), jobId).stream().findFirst().orElse(null);
+        return new Status(row.connected() > 0, row.running() > 0,
+                row.paired() == null ? null : row.paired().toInstant(), job);
+    }
+
+    /** Whether an install command's code can still connect a computer. It isn't used up here. */
+    @Transactional(readOnly = true)
+    public boolean pairingCodeLive(String code) {
+        return code != null && !code.isBlank() && Boolean.TRUE.equals(jdbc.queryForObject(
+                "SELECT EXISTS (SELECT 1 FROM runner_pairing_codes WHERE code_hash = ? AND expires_at > now())",
+                Boolean.class, (Object) hash(code.trim())));
     }
 
     /**
@@ -159,20 +184,25 @@ public class RunnerService {
 
     // --- From the browser ---
 
-    /** The runner a token belongs to, if the token is live and its owner can still sign in. */
+    /**
+     * The runner a token belongs to, if the token is live and its owner can still sign in.
+     *
+     * @param platform the helper's build, such as darwin-arm64, when it says
+     */
     @Transactional
-    public Optional<Identity> authenticate(String token) {
+    public Optional<Identity> authenticate(String token, String platform) {
         if (token == null || token.isBlank()) {
             return Optional.empty();
         }
+        String build = platform != null && platform.matches("[a-z0-9]{1,20}-[a-z0-9]{1,20}") ? platform : null;
         return jdbc.query("""
-                        UPDATE runners r SET last_seen_at = now() FROM users u
+                        UPDATE runners r SET last_seen_at = now(), platform = coalesce(?::text, r.platform) FROM users u
                         WHERE r.token_hash = ? AND r.revoked_at IS NULL AND u.id = r.user_id
                           AND u.user_group_id = r.user_group_id AND u.is_enabled
                         RETURNING r.id, r.user_id, r.user_group_id, u.email""",
                 (r, i) -> new Identity(r.getLong("id"), r.getLong("user_id"), r.getLong("user_group_id"),
                         r.getString("email")),
-                hash(token)).stream().findFirst();
+                build, hash(token)).stream().findFirst();
     }
 
     /** The runner's next job, when it has none open. */
@@ -249,12 +279,22 @@ public class RunnerService {
         return jdbc.queryForObject("SELECT revision FROM portal_templates WHERE id = ?", Integer.class, templateId);
     }
 
+    /**
+     * Gives a job back without finishing it.
+     *
+     * @param reason why, for the page she started it from, such as "CredCloud Helper needs
+     *               Google Chrome"; may be null
+     */
     @Transactional
-    public void cancel(Identity runner, long jobId) {
+    public void cancel(Identity runner, long jobId, String reason) {
+        String error = reason == null || reason.isBlank() ? null
+                : PortalTemplateService.JSON.writeValueAsString(Map.of("error",
+                reason.length() > 300 ? reason.substring(0, 300) : reason.trim()));
         jdbc.update("""
-                UPDATE runner_jobs SET status = 'cancelled', answers = NULL, finished_at = now()
+                UPDATE runner_jobs SET status = 'cancelled', answers = NULL, finished_at = now(),
+                       result = coalesce(?::jsonb, result)
                 WHERE user_group_id = ? AND user_id = ? AND id = ? AND status IN ('waiting', 'claimed')""",
-                runner.workspace(), runner.userId(), jobId);
+                error, runner.workspace(), runner.userId(), jobId);
     }
 
     /** @return the job's template id, once it's known to be this runner's to finish */

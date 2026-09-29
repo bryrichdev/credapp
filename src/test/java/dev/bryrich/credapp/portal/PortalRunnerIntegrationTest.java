@@ -9,6 +9,7 @@ import dev.bryrich.credapp.security.CredAppUserDetails;
 import dev.bryrich.credapp.user.Role;
 import dev.bryrich.credapp.user.User;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,6 +24,11 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -34,12 +40,19 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Connecting a browser, teaching it a portal, filling a provider into it, and copying by hand. */
+/**
+ * CredCloud Helper from the server's side: connecting it with a one-time code, installing it,
+ * teaching it a portal, filling a provider into it, keeping it up to date, and copying by hand.
+ */
 @SpringBootTest(properties = {
         "spring.docker.compose.enabled=false",
-        "credapp.security.ssn-key=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="
+        "credapp.security.ssn-key=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=",
+        "credapp.base-url=https://credcloud.test",
+        "credapp.helper.dir=${java.io.tmpdir}/credcloud-helper-builds"
 })
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
@@ -47,8 +60,8 @@ class PortalRunnerIntegrationTest {
 
     private static final String PASSWORD = "test-password-1234";
     private static final JsonMapper JSON = JsonMapper.builder().build();
-    private static final Pattern TOKEN = Pattern.compile("data-token=\"([A-Za-z0-9_-]{43})\"");
-    private static final Pattern CODE = Pattern.compile("go run \\. pair \\S+ ([A-Za-z0-9_-]{43})");
+    private static final Pattern CODE = Pattern.compile("/helper/install/([A-Za-z0-9_-]{43})\\.sh");
+    private static final byte[] MAC_BUILD = "a Mac build of the helper".getBytes(StandardCharsets.UTF_8);
 
     @Autowired MockMvc mvc;
     @Autowired RegistrationService registration;
@@ -59,6 +72,13 @@ class PortalRunnerIntegrationTest {
     @AfterEach
     void clear() {
         SecurityContextHolder.clearContext();
+    }
+
+    @BeforeAll
+    static void builds() throws Exception {
+        Path dir = Path.of(System.getProperty("java.io.tmpdir"), "credcloud-helper-builds");
+        Files.createDirectories(dir);
+        Files.write(dir.resolve("credcloud-helper-darwin-arm64"), MAC_BUILD);
     }
 
     @Test
@@ -134,13 +154,14 @@ class PortalRunnerIntegrationTest {
         mvc.perform(get("/runner/api/jobs/next").with(bearer("not-a-token"))).andExpect(status().isUnauthorized());
         // A token opens none of the app's pages: they still send you to sign in.
         mvc.perform(get("/providers").with(bearer(token))).andExpect(status().is3xxRedirection());
-        // Connecting needs a signed-in page, with its CSRF token, and without them no browser is
-        // connected. Signed out, it's an expired form: back to sign in. Signed in without the
-        // token, it looks like a forged request: 403 (ExpiredFormHandler).
-        long connectedBefore = jdbc.queryForObject("SELECT count(*) FROM runners", Long.class);
-        mvc.perform(post("/extension/connect")).andExpect(status().is3xxRedirection());
-        mvc.perform(post("/extension/connect").with(signedIn(admin))).andExpect(status().isForbidden());
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM runners", Long.class)).isEqualTo(connectedBefore);
+        // A code comes only from a signed-in page, with its CSRF token. Signed out, it's an
+        // expired form: back to sign in. Signed in without the token, it looks like a forged
+        // request: 403 (ExpiredFormHandler).
+        long codesBefore = jdbc.queryForObject("SELECT count(*) FROM runner_pairing_codes", Long.class);
+        mvc.perform(post("/helper/setup")).andExpect(status().is3xxRedirection());
+        mvc.perform(post("/helper/setup").with(signedIn(admin))).andExpect(status().isForbidden());
+        mvc.perform(post("/helper/connect").with(signedIn(admin))).andExpect(status().isForbidden());
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM runner_pairing_codes", Long.class)).isEqualTo(codesBefore);
 
         User stranger = practice();
         String strangersToken = connected(stranger);
@@ -151,7 +172,7 @@ class PortalRunnerIntegrationTest {
         mvc.perform(get("/runner/api/jobs/next").with(bearer(strangersToken))).andExpect(status().isNoContent());
 
         long browser = jdbc.queryForObject("SELECT id FROM runners WHERE user_id = ?", Long.class, admin.getId());
-        mvc.perform(post("/account/browsers/" + browser + "/revoke").with(signedIn(admin)).with(csrf()))
+        mvc.perform(post("/helper/computers/" + browser + "/revoke").with(signedIn(admin)).with(csrf()))
                 .andExpect(status().is3xxRedirection());
         mvc.perform(get("/runner/api/jobs/next").with(bearer(token))).andExpect(status().isUnauthorized());
     }
@@ -159,12 +180,7 @@ class PortalRunnerIntegrationTest {
     @Test
     void aHelperConnectsOnceWithACodeFromASignedInPage() throws Exception {
         User admin = practice();
-        mvc.perform(post("/helper/code")).andExpect(status().is3xxRedirection());
-        String page = mvc.perform(post("/helper/code").with(signedIn(admin)).with(csrf()))
-                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        Matcher matcher = CODE.matcher(page);
-        assertThat(matcher.find()).as("the page shows the code").isTrue();
-        String code = matcher.group(1);
+        String code = installCode(admin);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM runner_pairing_codes WHERE code_hash = ?",
                 Long.class, (Object) RunnerService.hash(code))).as("only its hash is kept").isOne();
 
@@ -216,6 +232,102 @@ class PortalRunnerIntegrationTest {
     }
 
     @Test
+    void theInstallCommandFetchesAScriptWithItsCode_andOnlyWhileTheCodeIsLive() throws Exception {
+        User admin = practice();
+        String page = mvc.perform(post("/helper/setup").with(signedIn(admin)).with(csrf()))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(page).contains("curl -fsSL https://credcloud.test/helper/install/")
+                .contains("irm https://credcloud.test/helper/install/");
+        String code = installCode(admin);
+
+        // No session: Terminal and PowerShell fetch these.
+        String mac = mvc.perform(get("/helper/install/" + code + ".sh")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(mac).startsWith("#!/bin/sh").contains("SERVER='https://credcloud.test'").contains("CODE='" + code + "'")
+                .contains("/helper/download/credcloud-helper-darwin-$ARCH").contains("install --server");
+        String windows = mvc.perform(get("/helper/install/" + code + ".ps1")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(windows).contains("$code = '" + code + "'").contains("credcloud-helper-windows-amd64.exe");
+
+        // Fetching the script doesn't use the code up; connecting does.
+        mvc.perform(post("/runner/api/pair").contentType(MediaType.APPLICATION_JSON)
+                        .content(JSON.writeValueAsString(Map.of("code", code, "name", "Front desk iMac (Mac)"))))
+                .andExpect(status().isOk());
+        assertThat(mvc.perform(get("/helper/install/" + code + ".sh")).andReturn().getResponse().getContentAsString())
+                .contains("expired or was already used").doesNotContain(code);
+        assertThat(mvc.perform(get("/helper/install/not-a-code.ps1")).andReturn().getResponse().getContentAsString())
+                .contains("expired or was already used");
+    }
+
+    @Test
+    void buildsAreServedToAnyone_andAHelperLearnsWhenItsBuildIsOutOfDate() throws Exception {
+        byte[] build = mvc.perform(get("/helper/download/credcloud-helper-darwin-arm64"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", "attachment; filename=\"credcloud-helper-darwin-arm64\""))
+                .andReturn().getResponse().getContentAsByteArray();
+        assertThat(build).isEqualTo(MAC_BUILD);
+        mvc.perform(get("/helper/download/credcloud-helper-windows-amd64.exe")).andExpect(status().isNotFound());
+        mvc.perform(get("/helper/download/application.properties")).andExpect(status().isNotFound());
+
+        User admin = practice();
+        String token = connected(admin);
+        String sha256 = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(MAC_BUILD));
+        mvc.perform(get("/runner/api/jobs/next").with(bearer(token)).header("X-CredCloud-Helper", "darwin-arm64"))
+                .andExpect(status().isNoContent())
+                .andExpect(header().string("X-Helper-Sha256", sha256));
+        assertThat(jdbc.queryForObject("SELECT platform FROM runners WHERE user_id = ?", String.class, admin.getId()))
+                .isEqualTo("darwin-arm64");
+        // No build for it here: no checksum, so it doesn't try to update.
+        mvc.perform(get("/runner/api/jobs/next").with(bearer(token)).header("X-CredCloud-Helper", "windows-amd64"))
+                .andExpect(status().isNoContent())
+                .andExpect(header().doesNotExist("X-Helper-Sha256"));
+    }
+
+    @Test
+    void thePageFollowsItsJob_andShowsWhyTheHelperCouldntOpenIt() throws Exception {
+        User admin = practice();
+        long payer = jdbc.queryForObject("SELECT min(id) FROM payers WHERE user_group_id = ?", Long.class,
+                admin.getUserGroupId());
+        String none = mvc.perform(get("/helper/status").with(signedIn(admin)))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(JSON.readTree(none).path("connected").asBoolean()).isFalse();
+
+        String token = connected(admin);
+        var queued = mvc.perform(post("/payers/" + payer + "/portals").with(signedIn(admin)).with(csrf())
+                        .param("name", "Enrollment").param("startUrl", "https://portal.example.com/enroll"))
+                .andExpect(status().is3xxRedirection()).andReturn();
+        Object job = queued.getFlashMap().get("helperJob");
+        assertThat(job).as("the page gets the job to follow").isNotNull();
+
+        String waiting = mvc.perform(get("/helper/status").param("job", job.toString()).with(signedIn(admin)))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(JSON.readTree(waiting).path("job").path("status").asString()).isEqualTo("waiting");
+        assertThat(JSON.readTree(waiting).path("running").asBoolean()).as("it hasn't asked for work yet").isFalse();
+
+        assertThat(next(token).path("id").asLong()).isEqualTo(((Number) job).longValue());
+        mvc.perform(post("/runner/api/jobs/" + job + "/cancel").with(bearer(token)).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"CredCloud Helper needs Google Chrome or Microsoft Edge.\"}"))
+                .andExpect(status().isNoContent());
+        String cancelled = mvc.perform(get("/helper/status").param("job", job.toString()).with(signedIn(admin)))
+                .andReturn().getResponse().getContentAsString();
+        JsonNode status = JSON.readTree(cancelled);
+        assertThat(status.path("running").asBoolean()).isTrue();
+        assertThat(status.path("job").path("status").asString()).isEqualTo("cancelled");
+        assertThat(status.path("job").path("error").asString()).contains("Google Chrome");
+
+        // Someone else's job isn't theirs to follow.
+        User stranger = practice();
+        String other = mvc.perform(get("/helper/status").param("job", job.toString()).with(signedIn(stranger)))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(JSON.readTree(other).has("job")).isFalse();
+
+        String helperPage = mvc.perform(get("/helper").with(signedIn(admin)))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(helperPage).contains("Test Mac (Mac)").contains("Running now");
+        mvc.perform(get("/account/browsers").with(signedIn(admin))).andExpect(redirectedUrl("/helper"));
+    }
+
+    @Test
     void answersCanBeCopiedByHand_withoutQueueingAnything() throws Exception {
         User admin = practice();
         long workspace = admin.getUserGroupId();
@@ -248,14 +360,22 @@ class PortalRunnerIntegrationTest {
         return JSON.readTree(body);
     }
 
-    /** Connects a browser the way the extension does, and returns the token the page hands it. */
-    private String connected(User owner) throws Exception {
-        String page = mvc.perform(post("/extension/connect").with(signedIn(owner)).with(csrf())
+    /** The one-time code in the install command the helper page shows. */
+    private String installCode(User owner) throws Exception {
+        String page = mvc.perform(post("/helper/setup").with(signedIn(owner)).with(csrf())
                         .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) Chrome/141.0"))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        Matcher matcher = TOKEN.matcher(page);
-        assertThat(matcher.find()).as("the page carries the token for the extension").isTrue();
+        Matcher matcher = CODE.matcher(page);
+        assertThat(matcher.find()).as("the page shows the install command").isTrue();
         return matcher.group(1);
+    }
+
+    /** Connects a helper the way the install command does, and returns its token. */
+    private String connected(User owner) throws Exception {
+        String body = mvc.perform(post("/runner/api/pair").contentType(MediaType.APPLICATION_JSON)
+                        .content(JSON.writeValueAsString(Map.of("code", installCode(owner), "name", "Test Mac (Mac)"))))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        return JSON.readTree(body).path("token").asString();
     }
 
     private long count(String table, long workspace) {

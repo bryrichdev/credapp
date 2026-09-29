@@ -528,3 +528,13 @@ func (b *Browser) isClosed() bool {
 		return false
 	}
 }
+
+// Busy says whether any job is open in a tab.
+func (b *Browser) Busy() bool {
+	if b.isClosed() {
+		return false
+	}
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return len(b.tabs) > 0
+}

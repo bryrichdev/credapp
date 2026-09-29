@@ -2737,49 +2737,17 @@ body:has(.modal[open]) {
 
 .application-template__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
-/* ============ CredCloud's browser (portal/live.html) ============ */
-.page--live { max-width: 1360px; padding-top: 1.25rem; }
-.live__header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 0.75rem; }
-.live__title { margin: 0; font-size: 1.25rem; min-width: 0; overflow-wrap: anywhere; }
-.live__bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: #ffffff;
-    border: 1px solid var(--slate-200); border-bottom: none; border-radius: var(--radius) var(--radius) 0 0; }
-.live__nav { min-width: 2.25rem; padding: 0.25rem 0.6rem; }
-.live__address { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    padding: 0.3rem 0.8rem; border-radius: 999px; background: var(--slate-100); color: var(--slate-700); font-size: 0.85rem; }
-.live__message { margin: 0; padding: 0.5rem 0.75rem; background: var(--amber-50); color: var(--amber-700);
-    border: 1px solid var(--slate-200); border-bottom: none; font-size: 0.9rem; }
-.live__message[hidden] { display: none; }
-.live__screen { position: relative; overflow: hidden; line-height: 0; background: #ffffff;
-    border: 1px solid var(--slate-200); border-radius: 0 0 var(--radius) var(--radius); }
-.live__screen canvas { display: block; width: 100%; height: auto; }
-/* Takes her clicks and keys over the picture: see-through, no caret, no scrolling of its own. */
-.live__keys { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; resize: none;
-    overflow: hidden; background: transparent; color: transparent; caret-color: transparent; font-size: 16px;
-    cursor: default; touch-action: none; outline: none; }
-.live__keys:focus-visible { box-shadow: inset 0 0 0 2px var(--teal-600); }
-.live__cover { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 1rem;
-    background: rgba(247, 249, 251, 0.94); color: var(--slate-700); font-size: 1rem; line-height: 1.5; text-align: center; }
-.live__cover[hidden] { display: none; }
-.live__hint { margin-top: 0.75rem; line-height: 1.5; }
-.live__fill { margin-bottom: 0.75rem; padding: 0.75rem 1rem; background: #ffffff; border: 1px solid var(--slate-200);
-    border-radius: var(--radius); box-shadow: var(--shadow-sm); }
-.live__fill-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
-.live__progress { margin-left: 0.5rem; color: var(--slate-500); font-size: 0.9rem; }
-.live__fill-message { margin: 0.5rem 0 0; color: var(--slate-700); font-size: 0.9rem; }
-.live__fill-message.is-problem { color: var(--amber-700); }
-.live__answers { margin-top: 0.5rem; font-size: 0.9rem; }
-.live__answers summary { cursor: pointer; color: var(--teal-700); }
-.live__answers ol { margin: 0.5rem 0 0; padding-left: 1.5rem; columns: 2 22rem; column-gap: 2rem; }
-.live__answers li { break-inside: avoid; padding: 0.15rem 0; }
-.live__answer-label { color: var(--slate-500); }
-.live__answer-label::after { content: ": "; }
-.live__answer { overflow-wrap: anywhere; }
-.live__answer.is-empty { color: var(--slate-500); font-style: italic; }
-.live__answers li.is-filled .live__answer::after { content: " \2713"; color: var(--green-700); font-weight: 600; }
-.live__teach-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.live__teach-form { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--slate-200); }
-.live__teach-form[hidden] { display: none; }
-.live__remove { margin-left: 0.25rem; padding: 0; border: 0; background: none; color: var(--red-700); font: inherit;
-    font-size: 0.85rem; cursor: pointer; text-decoration: underline; }
-/* While picking, a click on the picture asks CredCloud which box it is. */
-.live.is-picking .live__keys { cursor: crosshair; box-shadow: inset 0 0 0 3px var(--teal-600); }
+/* ============ CredCloud Helper (helper/*.html) ============ */
+.helper-setup { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); }
+.helper-setup--windows-first .helper-setup__system:last-child { order: -1; }
+.helper-setup__system h3 { margin: 0 0 0.5rem; font-size: 1rem; }
+.helper-steps { margin: 0; padding-left: 1.2rem; }
+.helper-steps li + li { margin-top: 0.6rem; }
+.command { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.4rem; padding: 0.5rem 0.6rem;
+    background: var(--slate-100); border-radius: var(--radius); }
+.command code { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 0.85rem; }
+kbd { padding: 0.05rem 0.35rem; border: 1px solid var(--slate-200); border-radius: 4px; background: #ffffff;
+    font: inherit; font-size: 0.85em; }
+.helper-job__message { margin: 0; }
+.helper-job--problem { border-color: var(--amber-700); }
+.helper-job--problem .helper-job__message { color: var(--amber-700); }

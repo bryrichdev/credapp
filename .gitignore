@@ -35,3 +35,5 @@ build/
 
 # Local environment variables
 .env
+# CredCloud Helper builds (helper/build.sh)
+helper/dist/

@@ -80,6 +80,7 @@ func launchChrome(profile string) (*CDP, error) {
 	// For tests: --headless=new and the like.
 	args = append(args, strings.Fields(os.Getenv("CREDCLOUD_BROWSER_ARGS"))...)
 	cmd := exec.Command(chrome, append(args, "about:blank")...)
+	detach(cmd) // Chrome stays open when the helper quits; the next run reconnects to it
 	if err := cmd.Start(); err != nil {
 		return nil, err
 	}

@@ -6,7 +6,7 @@
 <main class="page">
 <div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
 <div class="alert alert--error" role="alert" th:if="${error}" th:text="${error}"></div>
-<th:block th:replace="~{portal/extension :: jobReady(${jobReady})}"></th:block>
+<th:block th:replace="~{helper/job :: job(${helperJob}, ${helper})}"></th:block>
 
 <a class="backlink" th:href="@{/providers/{id}(id=${provider.id})}">&larr; Back to provider</a>
 <div class="page__header"><h1>Portal fills</h1><p class="page__subtitle" th:text="${provider.firstName} + ' ' + ${provider.lastName}"></p></div>
@@ -17,13 +17,12 @@
 <option value="">Choose a portal</option><option th:each="t : ${templates}" th:value="${t.id}" th:text="${t.payerName} + ' / ' + ${t.name}"></option></select></label>
 <label class="field"><span class="field__label">Practice</span><select class="field__input" name="groupId"><option value="">No practice selected</option><option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.label}"></option></select></label>
 <label class="field"><span class="field__label">Practice location</span><select class="field__input" name="locationId"><option value="">No location selected</option><option th:each="l : ${locations}" th:value="${l.id}" th:text="${l.label}"></option></select></label></div>
-<p class="field__hint">Fill in CredCloud opens the portal right here, in a browser CredCloud runs for you: sign in, then press Fill this page. It never submits. You can also fill with CredCloud for Chrome, or show the answers and copy them in. An SSN is read and logged only when the portal template uses it.</p>
-<div class="form-actions"><button class="button" type="submit" th:formaction="@{/providers/{id}/portal-fills/live(id=${provider.id})}">Fill in CredCloud</button>
-<button class="button button--quiet" type="submit">Fill with CredCloud for Chrome</button>
+<p class="field__hint">Fill in the portal opens it in <a th:href="@{/helper}">CredCloud Helper</a> on your computer: sign in, then press Fill this page. It never submits. Or show the answers and copy them in yourself. An SSN is read and logged only when the portal template uses it.</p>
+<div class="form-actions"><button class="button" type="submit">Fill in the portal</button>
 <button class="button button--quiet" type="submit" th:formaction="@{/providers/{id}/portal-fills/copy(id=${provider.id})}">Show answers to copy</button></div></form></section>
 <section class="card"><h2>Recent fills</h2><p th:if="${#lists.isEmpty(fills)}">No portal fills yet.</p>
 <div class="application-template" th:each="f : ${fills}"><div><strong th:text="${f.payerName} + ' / ' + ${f.templateName}"></strong>
-<p class="field__hint"><span th:text="${f.status == 'done'} ? ${f.result} : (${f.status == 'waiting'} ? 'Waiting for your browser' : (${f.status == 'claimed'} ? 'Open now' : 'Cancelled'))"></span>
+<p class="field__hint"><span th:text="${f.status == 'done'} ? ${f.result} : (${f.status == 'waiting'} ? 'Waiting for CredCloud Helper' : (${f.status == 'claimed'} ? 'Open in CredCloud Helper' : (${f.result != ''} ? 'Cancelled: ' + ${f.result} : 'Cancelled')))"></span>
  · <span th:text="${f.createdBy}"></span> · <time data-local-time th:datetime="${f.createdAt}" th:text="${f.createdAt}"></time></p></div>
 <form th:if="${canEdit and (f.status == 'waiting' or f.status == 'claimed')}" method="post" th:action="@{/portal-fills/{id}/cancel(id=${f.id})}">
 <input type="hidden" name="providerId" th:value="${provider.id}"><button class="button button--quiet" type="submit">Cancel</button></form></div></section>
