@@ -1,5 +1,6 @@
 package dev.bryrich.credapp.portal;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,10 +36,15 @@ public class RunnerApiController {
     public record PairRequest(String code, String name) {
     }
 
-    private final RunnerService runners;
+    public record CancelRequest(String reason) {
+    }
 
-    public RunnerApiController(RunnerService runners) {
+    private final RunnerService runners;
+    private final HelperFiles builds;
+
+    public RunnerApiController(RunnerService runners, HelperFiles builds) {
         this.runners = runners;
+        this.builds = builds;
     }
 
     /**
@@ -51,13 +58,19 @@ public class RunnerApiController {
 
     /**
      * 204 when there's nothing to do. The helper asks again every couple of seconds, listing the
-     * jobs it already has open in skip (such as skip=12,15).
+     * jobs it already has open in skip (such as skip=12,15). X-Helper-Sha256 is the checksum of
+     * the current build for its kind of computer: when its own differs, it updates itself.
      */
     @GetMapping("/jobs/next")
     public ResponseEntity<RunnerService.JobForRunner> next(@AuthenticationPrincipal RunnerService.Identity runner,
-                                                           @RequestParam(required = false) String skip) {
-        return runners.next(runner, open(skip)).map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.noContent().build());
+                                                           @RequestParam(required = false) String skip,
+                                                           @RequestHeader(value = "X-CredCloud-Helper", required = false)
+                                                           String platform) {
+        HttpHeaders headers = new HttpHeaders();
+        builds.sha256(platform).ifPresent(sha256 -> headers.set("X-Helper-Sha256", sha256));
+        return runners.next(runner, open(skip))
+                .map(job -> ResponseEntity.ok().headers(headers).body(job))
+                .orElseGet(() -> ResponseEntity.noContent().headers(headers).build());
     }
 
     /** At most 50 job ids; anything that isn't one is ignored. */
@@ -92,9 +105,11 @@ public class RunnerApiController {
         return Map.of("revision", runners.finishLearn(runner, id, result.startUrl(), result.fields()));
     }
 
+    /** The body is optional: {"reason": "…"} says why, for the page she started the job from. */
     @PostMapping("/jobs/{id}/cancel")
-    public ResponseEntity<Void> cancel(@AuthenticationPrincipal RunnerService.Identity runner, @PathVariable long id) {
-        runners.cancel(runner, id);
+    public ResponseEntity<Void> cancel(@AuthenticationPrincipal RunnerService.Identity runner, @PathVariable long id,
+                                       @RequestBody(required = false) CancelRequest request) {
+        runners.cancel(runner, id, request == null ? null : request.reason());
         return ResponseEntity.noContent().build();
     }
 

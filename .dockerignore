@@ -1,4 +1,4 @@
 .env
 .git
 .idea
-target
+targethelper/dist

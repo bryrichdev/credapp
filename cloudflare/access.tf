@@ -44,6 +44,7 @@ locals {
 }
 
 # All of staging sits behind Access: only superuser_emails get in, with a one-time code.
+# CredCloud Helper's API, install scripts and builds are the exception (below).
 resource "cloudflare_zero_trust_access_application" "staging" {
   account_id = var.account_id
   name       = "CredCloud staging"
@@ -61,6 +62,36 @@ resource "cloudflare_zero_trust_access_application" "staging" {
 
   policies = [{
     id         = cloudflare_zero_trust_access_policy.superusers.id
+    precedence = 1
+  }]
+}
+
+# CredCloud Helper can't sign in to Access: it's a program, not a browser. On staging, its API
+# and installer skip Access; the API still needs a helper's token, and an install script a
+# live one-time code, which only a signed-in staging page hands out. Access matches the most
+# specific path, so the rest of staging stays behind the sign-in above.
+resource "cloudflare_zero_trust_access_policy" "helper_bypass" {
+  account_id = var.account_id
+  name       = "CredCloud Helper (token or one-time code checked by the app)"
+  decision   = "bypass"
+  include    = [{ everyone = {} }]
+}
+
+resource "cloudflare_zero_trust_access_application" "staging_helper" {
+  account_id = var.account_id
+  name       = "CredCloud staging: CredCloud Helper"
+  type       = "self_hosted"
+  domain     = "${local.staging_hostname}/runner/api"
+  destinations = [
+    { type = "public", uri = "${local.staging_hostname}/runner/api" },
+    { type = "public", uri = "${local.staging_hostname}/helper/install" },
+    { type = "public", uri = "${local.staging_hostname}/helper/download" },
+  ]
+
+  app_launcher_visible = false
+
+  policies = [{
+    id         = cloudflare_zero_trust_access_policy.helper_bypass.id
     precedence = 1
   }]
 }

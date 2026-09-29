@@ -19,6 +19,8 @@ type serverConfig struct {
 
 type config struct {
 	Servers map[string]*serverConfig `json:"servers"`
+	// Home is the CredCloud it was installed from: where to send her to connect it again.
+	Home string `json:"home,omitempty"`
 }
 
 // helperDir is the helper's folder: its settings and its Chrome profile.
@@ -57,6 +59,25 @@ func saveConfig(cfg config) error {
 		return err
 	}
 	return os.Rename(tmp, configPath())
+}
+
+// connectAtInstall remembers where the helper was installed from and, with a code, connects
+// to it there and then. Without one (a plain download), the helper asks when it first runs.
+func connectAtInstall(server, code string) (string, error) {
+	cfg := loadConfig()
+	cfg.Home = server
+	if err := saveConfig(cfg); err != nil {
+		return "", err
+	}
+	if code == "" {
+		return "", nil
+	}
+	client, email, err := pair(server, code)
+	if err != nil {
+		return "", err
+	}
+	cfg.Servers[server] = &serverConfig{Token: client.Token, Email: email}
+	return email, saveConfig(cfg)
 }
 
 // computerName is what CredCloud lists this computer as: "Jane's MacBook Air (Mac)".

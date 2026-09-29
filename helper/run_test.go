@@ -1,11 +1,14 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -16,6 +19,7 @@ import (
 // job comes back until it's finished unless the helper skips it, and a revoked token gets 401.
 type fakeRunnerAPI struct {
 	mu      sync.Mutex
+	latest  []byte // the current build of the helper, when set
 	jobs    []json.RawMessage
 	status  map[int64]string // "claimed", "done", "cancelled"
 	posts   map[string]json.RawMessage
@@ -27,6 +31,14 @@ func (f *fakeRunnerAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	body, _ := io.ReadAll(r.Body)
+	if r.URL.Path == "/helper/download/"+downloadName() && f.latest != nil {
+		w.Write(f.latest)
+		return
+	}
+	if f.latest != nil {
+		sum := sha256.Sum256(f.latest)
+		w.Header().Set("X-Helper-Sha256", hex.EncodeToString(sum[:]))
+	}
 	if r.URL.Path == "/runner/api/pair" {
 		var p struct{ Code, Name string }
 		json.Unmarshal(body, &p)
@@ -100,14 +112,16 @@ func TestConnectThenTakeJobsFromCredCloud(t *testing.T) {
 	if err != nil || email != "coordinator@example.com" || client.Token != "tok" {
 		t.Fatalf("pair: %v %q", err, email)
 	}
-	cfg := loadConfig()
-	cfg.Servers[server.URL] = &serverConfig{Token: client.Token, Email: email}
-	if err := saveConfig(cfg); err != nil {
+	_ = client
+	api.mu.Lock()
+	api.pairs = 0 // a fresh code, for the helper itself
+	api.mu.Unlock()
+	h := newHelper()
+	if _, err := h.connect(server.URL, "good-code"); err != nil {
 		t.Fatal(err)
 	}
-	cfg = loadConfig()
-	if cfg.Servers[server.URL].Token != "tok" {
-		t.Fatal("the token wasn't saved")
+	if cfg := loadConfig(); cfg.Servers[server.URL] == nil || cfg.Servers[server.URL].Token != "tok" || cfg.Home != server.URL {
+		t.Fatalf("not saved: %+v", cfg)
 	}
 
 	// A teach-again job, as CredCloud sends it: formats as a JSON object, in CredCloud's order.
@@ -117,7 +131,8 @@ func TestConnectThenTakeJobsFromCredCloud(t *testing.T) {
 		"providerName":null,"answers":[],"sources":[{"key":"provider.first_name","label":"Provider / First name"}],
 		"formats":{"AS_SAVED":"As saved","UPPER":"UPPERCASE","DIGITS":"Digits only"}}`))
 
-	b := poll(&cfg, nil)
+	h.pollOnce()
+	b := h.browser
 	if b == nil || len(b.OpenJobs(server.URL)) != 1 {
 		t.Fatal("the job didn't open")
 	}
@@ -127,7 +142,7 @@ func TestConnectThenTakeJobsFromCredCloud(t *testing.T) {
 		t.Errorf("formats out of order: %+v", got)
 	}
 	// Asking again skips the open job, so it isn't opened twice.
-	b = poll(&cfg, b)
+	h.pollOnce()
 	if n := len(b.OpenJobs(server.URL)); n != 1 {
 		t.Fatalf("%d tabs for one job", n)
 	}
@@ -169,8 +184,102 @@ func TestConnectThenTakeJobsFromCredCloud(t *testing.T) {
 	api.mu.Lock()
 	api.revoked = true
 	api.mu.Unlock()
-	poll(&cfg, b)
+	h.pollOnce()
 	if len(loadConfig().Servers) != 0 {
 		t.Error("a revoked token was kept")
+	}
+}
+
+// An installed helper swaps in CredCloud's newer build between jobs, after checking it
+// against the checksum CredCloud sent, and then restarts.
+func TestUpdatesItselfBetweenJobs(t *testing.T) {
+	home, _ := os.MkdirTemp("", "helper-home-")
+	defer os.RemoveAll(home)
+	os.Setenv("CREDCLOUD_HELPER_HOME", home)
+	api := &fakeRunnerAPI{status: map[int64]string{}, posts: map[string]json.RawMessage{}, latest: []byte("the new build")}
+	server := httptest.NewServer(api)
+	defer server.Close()
+
+	h := newHelper()
+	h.exe = filepath.Join(home, "credcloud-helper")
+	os.WriteFile(h.exe, []byte("the old build"), 0o755)
+	h.selfHash = fileSHA256(h.exe)
+	h.updatable = true
+	if _, err := h.connect(server.URL, "good-code"); err != nil {
+		t.Fatal(err)
+	}
+
+	// A build that doesn't match its checksum is refused, and not tried again.
+	api.mu.Lock()
+	good := api.latest
+	api.latest = []byte("tampered")
+	api.mu.Unlock()
+	client := &Client{Server: server.URL, Token: "tok"}
+	h.maybeUpdate(client, hex.EncodeToString(func() []byte { s := sha256.Sum256(good); return s[:] }()))
+	if data, _ := os.ReadFile(h.exe); string(data) != "the old build" || h.restart {
+		t.Fatalf("installed a build that didn't match: %q", data)
+	}
+
+	api.mu.Lock()
+	api.latest = good
+	api.mu.Unlock()
+	h.badHash = ""
+	h.pollOnce()
+	if data, _ := os.ReadFile(h.exe); string(data) != "the new build" {
+		t.Fatalf("not updated: %q", data)
+	}
+	if !h.restart {
+		t.Error("it should restart into the new build")
+	}
+	select {
+	case <-h.quit:
+	default:
+		t.Error("it should quit so the new build can start")
+	}
+
+	// A helper run with go run . never replaces itself.
+	h2 := newHelper()
+	h2.exe = filepath.Join(home, "other")
+	os.WriteFile(h2.exe, []byte("dev"), 0o755)
+	h2.selfHash = fileSHA256(h2.exe)
+	h2.updatable = false
+	h2.pollOnce()
+	if data, _ := os.ReadFile(h2.exe); string(data) != "dev" {
+		t.Error("a development copy updated itself")
+	}
+}
+
+// A second start hands its link to the helper already running, and only CredCloud's own
+// sites are accepted from a link.
+func TestLinksGoToTheRunningHelper(t *testing.T) {
+	dir := t.TempDir()
+	release, err := lockFile(filepath.Join(dir, "helper.lock"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer release()
+	if _, err := lockFile(filepath.Join(dir, "helper.lock")); err == nil {
+		t.Fatal("two helpers got the lock")
+	}
+	got := make(chan string, 1)
+	inst, err := listen(dir, func(cmd, arg string) { got <- cmd + " " + arg })
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer inst.close()
+	if !forwardToRunning(dir, "url", "credcloud://open?server=https://credcloud.app") {
+		t.Fatal("not handed over")
+	}
+	if g := <-got; g != "url credcloud://open?server=https://credcloud.app" {
+		t.Errorf("got %q", g)
+	}
+
+	for raw, ok := range map[string]bool{
+		"https://credcloud.app": true, "https://staging.credcloud.app/": true, "http://localhost:8080": true,
+		"https://credcloud.app.evil.com": false, "http://credcloud.app": false, "https://example.com": false,
+	} {
+		if _, err := allowedServer(raw); (err == nil) != ok {
+			t.Errorf("allowedServer(%q) = %v", raw, err)
+		}
 	}
 }

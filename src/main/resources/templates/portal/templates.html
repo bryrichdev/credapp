@@ -6,7 +6,7 @@
 <main class="page">
 <div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
 <div class="alert alert--error" role="alert" th:if="${error}" th:text="${error}"></div>
-<th:block th:replace="~{portal/extension :: jobReady(${jobReady})}"></th:block>
+<th:block th:replace="~{helper/job :: job(${helperJob}, ${helper})}"></th:block>
 
 <a class="backlink" th:href="@{/payers/{id}(id=${payerId})}">&larr; Back to payer</a>
 <div class="page__header"><h1 th:text="${payerName} + ' · Portal templates'"></h1>
@@ -17,13 +17,11 @@
 <div><strong th:text="${t.name}"></strong> <span class="badge" th:classappend="${t.ready()} ? 'badge--active' : 'badge--pending'" th:text="${t.ready()} ? 'Ready' : 'Not taught yet'"></span>
 <p class="field__hint"><span th:text="${t.startUrl}"></span> · <span th:text="${t.fieldCount} + ' boxes, version ' + ${t.revision}"></span></p></div>
 <div class="application-template__actions" th:if="${canEdit}">
-<form method="post" th:action="@{/portal-templates/{id}/live(id=${t.id})}">
-<button class="button" type="submit" th:text="${t.ready()} ? 'Teach again' : 'Teach CredCloud'"></button></form>
 <form method="post" th:action="@{/portal-templates/{id}/teach(id=${t.id})}">
-<button class="button button--quiet" type="submit">With CredCloud for Chrome</button></form>
+<button class="button" type="submit" th:text="${t.ready()} ? 'Teach again' : 'Teach CredCloud'"></button></form>
 </div>
 </div>
-<p class="field__hint">Teaching opens the portal right here, in a browser CredCloud runs for you: sign in, then pick each box and say what goes in it. You can still teach in a new tab with CredCloud for Chrome.</p>
+<p class="field__hint">Teaching opens the portal in <a th:href="@{/helper}">CredCloud Helper</a> on your computer: sign in, then pick each box and say what goes in it.</p>
 </section>
 <section class="card" th:if="${canEdit}"><h2>Add a portal</h2>
 <form method="post" th:action="@{/payers/{id}/portals(id=${payerId})}">
@@ -32,6 +30,5 @@
 <label class="field field--wide"><span class="field__label">Portal address</span>
 <input class="field__input" name="startUrl" type="url" required maxlength="2000" th:value="${startUrl}" placeholder="https://portal.example-payer.com/enroll">
 <span class="field__hint">Where the portal opens. It can be the sign-in page.</span></label></div>
-<div class="form-actions"><button class="button" type="submit" th:formaction="@{/payers/{id}/portals/live(id=${payerId})}">Add and teach CredCloud</button>
-<button class="button button--quiet" type="submit">Add and teach with CredCloud for Chrome</button></div></form></section>
+<div class="form-actions"><button class="button" type="submit">Add and teach CredCloud</button></div></form></section>
 </main><div th:replace="~{fragments/layout :: footer}"></div></body></html>

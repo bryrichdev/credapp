@@ -46,7 +46,9 @@ func (c *Client) do(method, path string, body any) (*http.Response, error) {
 	}
 	req.Header.Set("Accept", "application/json")
 	// Cloudflare turns away requests that don't say what they are.
-	req.Header.Set("User-Agent", "CredCloudHelper/dev")
+	req.Header.Set("User-Agent", "CredCloudHelper/"+version()+" ("+platform()+")")
+	// Which build of the helper CredCloud should compare this one with.
+	req.Header.Set("X-CredCloud-Helper", platform())
 	return httpClient.Do(req)
 }
 
@@ -67,7 +69,9 @@ func failure(resp *http.Response) error {
 }
 
 // Next asks for the next job, skipping ones already open. nil means there's nothing to do.
-func (c *Client) Next(open []int64) (*Job, error) {
+// latest is the checksum of CredCloud's current build of the helper for this computer, when
+// it has one, so the helper can tell it's out of date.
+func (c *Client) Next(open []int64) (job *Job, latest string, err error) {
 	path := "/runner/api/jobs/next"
 	if len(open) > 0 {
 		ids := make([]string, len(open))
@@ -78,21 +82,27 @@ func (c *Client) Next(open []int64) (*Job, error) {
 	}
 	resp, err := c.do(http.MethodGet, path, nil)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	defer resp.Body.Close()
+	latest = resp.Header.Get("X-Helper-Sha256")
 	switch resp.StatusCode {
 	case http.StatusNoContent:
-		return nil, nil
+		return nil, latest, nil
 	case http.StatusOK:
-		var job Job
-		if err := json.NewDecoder(resp.Body).Decode(&job); err != nil {
-			return nil, err
+		job = &Job{}
+		if err := json.NewDecoder(resp.Body).Decode(job); err != nil {
+			return nil, latest, err
 		}
-		return &job, nil
+		return job, latest, nil
 	default:
-		return nil, failure(resp)
+		return nil, latest, failure(resp)
 	}
+}
+
+// cancel gives a job back, saying why, for the page she started it from.
+func (c *Client) cancel(id int64, reason string) error {
+	return c.post(fmt.Sprintf("/runner/api/jobs/%d/cancel", id), map[string]string{"reason": reason}, nil)
 }
 
 // post sends what happened with a job: filled, learned or cancel.

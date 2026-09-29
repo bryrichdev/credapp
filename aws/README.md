@@ -40,8 +40,8 @@ us-east-1, on demand:
 
 To go lower:
 - A 1-year EC2 Instance Savings Plan (no upfront) cuts the instance line by about a third.
-- `instance_type = "t4g.micro"` (1 GB) saves about $6. It works now because Playwright runs on
-  the coordinator's computer, not here. There is little headroom, though.
+- `instance_type = "t4g.micro"` (1 GB) saves about $6. It works: portals are filled by CredCloud
+  Helper on the coordinator's computer, so the server runs no browser. There is little headroom, though.
 - The IPv4 address is the price of skipping a $32 NAT gateway. GitHub, which the instance
   downloads Compose and age from, doesn't serve IPv6 yet.
 

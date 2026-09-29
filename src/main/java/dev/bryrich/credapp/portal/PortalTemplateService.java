@@ -28,8 +28,8 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 /**
  * Payer portal templates and the jobs that use them, from the app's pages. Every query names
- * the signed-in user's workspace. A job waits for one of its creator's connected browsers; see
- * {@link RunnerService} for the browser's side.
+ * the signed-in user's workspace. A job waits for CredCloud Helper on one of its creator's
+ * connected computers; see {@link RunnerService} for the helper's side.
  */
 @Service
 public class PortalTemplateService {
@@ -44,7 +44,7 @@ public class PortalTemplateService {
     public record Template(TemplateSummary summary, List<PortalField> fields) {
     }
 
-    /** What the extension types into one box. The value is formatted already. */
+    /** What the helper types into one box. The value is formatted already. */
     public record Answer(int field, String value) {
     }
 
@@ -91,20 +91,13 @@ public class PortalTemplateService {
                 payerId == null ? new Object[]{workspace()} : new Object[]{workspace(), payerId});
     }
 
-    /** Adds a template and asks the user's browser to open it in learn mode. */
-    @Transactional
-    public long create(long payerId, String name, String startUrl) {
-        return create(payerId, name, startUrl, true);
-    }
-
     /**
-     * Adds a template.
+     * Adds a template and asks the user's helper to open it in learn mode.
      *
-     * @param forExtension queue a learn job for CredCloud for Chrome; teaching in CredCloud's own
-     *                     browser doesn't need one
+     * @return the learn job
      */
     @Transactional
-    public long create(long payerId, String name, String startUrl, boolean forExtension) {
+    public long create(long payerId, String name, String startUrl) {
         User user = actor(true);
         Integer payers = jdbc.queryForObject("SELECT count(*) FROM payers WHERE user_group_id = ? AND id = ?",
                 Integer.class, workspace(), payerId);
@@ -118,39 +111,18 @@ public class PortalTemplateService {
                         INSERT INTO portal_templates (user_group_id, payer_id, name, start_url, created_by)
                         VALUES (?, ?, ?, ?, ?) RETURNING id""",
                 Long.class, workspace(), payerId, name.trim(), checkUrl(startUrl, allowLocalHttp), user.getEmail());
-        if (forExtension) {
-            learn(user, id, 0);
-        }
-        return id;
-    }
-
-    /** Asks the user's browser to open the template in learn mode, starting from its current boxes. */
-    @Transactional
-    public void teach(long templateId) {
-        User user = actor(true);
-        learn(user, templateId, current(templateId).summary().revision());
-    }
-
-    /** A template to teach in CredCloud's own browser, with its current boxes, for someone who can edit. */
-    @Transactional(readOnly = true)
-    public Template teachable(long id) {
-        actor(true);
-        return current(id);
+        return learn(user, id, 0);
     }
 
     /**
-     * Saves boxes taught in CredCloud's own browser as the template's next version.
+     * Asks the user's helper to open the template in learn mode, starting from its current boxes.
      *
-     * @return the new version number
-     * @throws IllegalArgumentException with a message for the coordinator, if a box isn't complete
+     * @return the learn job
      */
     @Transactional
-    public int saveTaught(long templateId, List<PortalField> fields) {
+    public long teach(long templateId) {
         User user = actor(true);
-        current(templateId);
-        saveVersion(workspace(), templateId, null, fields, user.getEmail());
-        return jdbc.queryForObject("SELECT revision FROM portal_templates WHERE user_group_id = ? AND id = ?",
-                Integer.class, workspace(), templateId);
+        return learn(user, templateId, current(templateId).summary().revision());
     }
 
     /** What a box can be filled with. */
@@ -169,8 +141,10 @@ public class PortalTemplateService {
     }
 
     /**
-     * Captures one provider's answers for a portal and queues them for the user's browser. An
+     * Captures one provider's answers for a portal and queues them for the user's helper. An
      * SSN is read, and logged, only when the template uses it.
+     *
+     * @return the fill job
      */
     @Transactional
     public long startFill(long providerId, long templateId, Long groupId, Long locationId, String ip) {
@@ -186,61 +160,6 @@ public class PortalTemplateService {
     }
 
     /** The same answers a fill would type, shown to copy by hand. Nothing is kept. */
-    /**
-     * A fill that runs in CredCloud's own browser. The answers go to the browser in memory and
-     * are never stored; the job row only records that the fill happened and, later, which boxes
-     * it filled.
-     */
-    public record LiveFillStart(long jobId, long workspace, TemplateSummary template, List<PortalField> fields,
-                                List<Answer> answers, String providerName) {
-    }
-
-    @Transactional
-    public LiveFillStart startLiveFill(long providerId, long templateId, Long groupId, Long locationId, String ip) {
-        User user = actor(true);
-        Template template = ready(templateId);
-        List<Answer> answers = answers(user, template, providerId, groupId, locationId, ip);
-        // Claimed from the start, by no connected browser, so the extension never picks it up.
-        long jobId = jdbc.queryForObject("""
-                        INSERT INTO runner_jobs (user_group_id, user_id, kind, template_id, template_revision,
-                                                 provider_id, status, claimed_at, created_by)
-                        VALUES (?, ?, 'fill', ?, ?, ?, 'claimed', now(), ?) RETURNING id""",
-                Long.class, workspace(), user.getId(), templateId, template.summary().revision(), providerId,
-                user.getEmail());
-        String providerName = jdbc.queryForObject(
-                "SELECT first_name || ' ' || last_name FROM providers WHERE user_group_id = ? AND id = ?",
-                String.class, workspace(), providerId);
-        return new LiveFillStart(jobId, workspace(), template.summary(), template.fields(), answers, providerName);
-    }
-
-    /**
-     * Records how a fill in CredCloud's browser ended: done if it filled anything, cancelled if
-     * not. Runs when the browser closes, which can be on a timer with nobody signed in.
-     */
-    @Transactional
-    public void endLiveFill(long workspace, long jobId, List<String> filled, List<String> missed) {
-        if (filled.isEmpty()) {
-            jdbc.update("""
-                    UPDATE runner_jobs SET status = 'cancelled', finished_at = now()
-                    WHERE user_group_id = ? AND id = ? AND status = 'claimed' AND runner_id IS NULL""",
-                    workspace, jobId);
-            return;
-        }
-        jdbc.update("""
-                        UPDATE runner_jobs SET status = 'done', result = ?::jsonb, finished_at = now()
-                        WHERE user_group_id = ? AND id = ? AND status = 'claimed' AND runner_id IS NULL""",
-                JSON.writeValueAsString(Map.of("filled", filled, "missed", missed)), workspace, jobId);
-    }
-
-    /** Fills that were open in CredCloud's browser when the app last stopped; their browsers are gone. */
-    @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
-    @Transactional
-    public void closeLeftoverLiveFills() {
-        jdbc.update("""
-                UPDATE runner_jobs SET status = 'cancelled', finished_at = now()
-                WHERE kind = 'fill' AND status = 'claimed' AND runner_id IS NULL""");
-    }
-
     @Transactional
     public CopyView copy(long providerId, long templateId, Long groupId, Long locationId, String ip) {
         User user = actor(true);
@@ -300,7 +219,7 @@ public class PortalTemplateService {
                 workspace(), jobId, user.getId());
     }
 
-    /** Saves a new version of a template's boxes. Called for a browser's learn job. */
+    /** Saves a new version of a template's boxes. Called for a helper's learn job. */
     void saveVersion(long workspace, long templateId, String startUrl, List<PortalField> fields, String savedBy) {
         Set<String> sources = data.sources().stream().map(ApplicationDataService.Source::key).collect(Collectors.toSet());
         PortalField.check(fields, sources);
@@ -345,11 +264,11 @@ public class PortalTemplateService {
         return template(workspace(), id, revision);
     }
 
-    private void learn(User user, long templateId, int revision) {
-        jdbc.update("""
+    private long learn(User user, long templateId, int revision) {
+        return jdbc.queryForObject("""
                         INSERT INTO runner_jobs (user_group_id, user_id, kind, template_id, template_revision, created_by)
-                        VALUES (?, ?, 'learn', ?, ?, ?)""",
-                workspace(), user.getId(), templateId, revision, user.getEmail());
+                        VALUES (?, ?, 'learn', ?, ?, ?) RETURNING id""",
+                Long.class, workspace(), user.getId(), templateId, revision, user.getEmail());
     }
 
     /** Only https pages; a portal on plain http would send the provider's answers in the clear. */
@@ -377,6 +296,9 @@ public class PortalTemplateService {
             return "";
         }
         var node = JSON.readTree(result);
+        if (node.has("error")) {
+            return node.path("error").asString();
+        }
         int filled = node.path("filled").size();
         int missed = node.path("missed").size();
         return filled + " filled" + (missed > 0 ? ", " + missed + " not found" : "");

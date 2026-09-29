@@ -16,28 +16,30 @@ jobs:
           distribution: temurin
           java-version: '25'
           cache: maven
-      # Chromium for the remote browser tests: the same headless shell the image uses, from the
-      # same Playwright version as the pom. The tests then skip Playwright's own download.
-      - run: npx -y playwright@1.62.0 install --with-deps --only-shell chromium
       - run: ./mvnw -B verify
         env:
           CREDAPP_SSN_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 
-  extension:
+  helper:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: extension
+        working-directory: helper
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-go@v5
         with:
-          node-version: '22'
-      - run: npm install
-      - run: npx playwright-core install --with-deps chromium
-      - run: npm test
+          go-version-file: helper/go.mod
+          cache-dependency-path: helper/go.sum
+      - run: go vet ./...
+      - run: GOOS=darwin go vet ./... && GOOS=windows go vet ./...
+      # The runner comes with Google Chrome. Headless, and without Chrome's sandbox, which the
+      # runner's AppArmor settings don't allow.
+      - run: go test ./...
+        env:
+          CREDCLOUD_BROWSER_ARGS: --headless=new --no-sandbox
+      - run: sh build.sh
 
   deploy-staging:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

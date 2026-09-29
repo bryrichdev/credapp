@@ -7,9 +7,11 @@ Cloudflare provider 5.25+; works with Terraform or OpenTofu.
 
 **Zone settings** (`zone.tf`)
 - HTTPS only, TLS 1.2 minimum, TLS 1.3 on, SSL mode Full (strict).
-- Security level medium and the browser integrity check.
+- Security level medium and the browser integrity check, except for CredCloud Helper's API,
+  install scripts and builds (a configuration rule), which no browser fetches.
 - Always Online off, so Cloudflare never serves a cached copy of a private page.
-- Bot Fight Mode on, and AI scrapers and crawlers blocked.
+- AI scrapers and crawlers blocked. Bot Fight Mode is off: it challenges CredCloud Helper,
+  and on the Free plan it can't be turned off for just its paths.
 
 **Firewall rules** (`waf.tf`): all 5 of the Free plan's custom rules, run in this order.
 
@@ -30,7 +32,8 @@ front of `/admin/user-groups/*`. Those are the superuser-only pages: view anothe
 admin, import into it, wipe it and delete it. Only `superuser_emails` get through. Practice users never
 reach these paths, so nothing changes for them. After signing in to Access, a superuser is sent
 back to the Users page with a note to choose the action again, because Access can't replay the
-original click.
+original click. On staging, which is all behind Access, CredCloud Helper's API and installer
+bypass it: the app checks their token or one-time code itself.
 
 ## One-time setup
 
@@ -45,6 +48,7 @@ original click.
 3. **Create an API token.** Go to My Profile > API Tokens > Create Token > Custom, and give it:
    - Zone > Zone Settings > Edit
    - Zone > Zone WAF > Edit
+   - Zone > Config Rules > Edit (CredCloud Helper's rule in `zone.tf`)
    - Zone > Bot Management > Edit
    - Zone > Zone > Read
    - Account > Access: Apps and Policies > Edit

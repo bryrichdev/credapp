@@ -6,13 +6,13 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * One box on a payer portal and the answer it gets. The extension records these in learn mode.
+ * One box on a payer portal and the answer it gets. CredCloud Helper records these in learn mode.
  *
  * @param label        what the box is called on the page, for people and for fill reports
- * @param by           how the extension finds the box: {@code label} (its visible label text, which
+ * @param by           how the helper finds the box: {@code label} (its visible label text, which
  *                     survives most redesigns) or {@code css} (a selector, the fallback)
  * @param locator      the label text or the selector
- * @param kind         {@code text}, {@code select}, {@code checkbox} or {@code radio}; the extension
+ * @param kind         {@code text}, {@code select}, {@code checkbox} or {@code radio}; the helper
  *                     types, picks an option or ticks a box. It never clicks anything else.
  * @param source       an {@link dev.bryrich.credapp.application.ApplicationDataService} key, or
  *                     empty to always use {@code defaultValue}
@@ -43,7 +43,7 @@ public record PortalField(String label, String by, String locator, String kind, 
     }
 
     /**
-     * Checks a set of fields as the extension sends them.
+     * Checks a set of fields as the helper sends them.
      *
      * @throws IllegalArgumentException with a message for the coordinator
      */

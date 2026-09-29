@@ -1,42 +1,70 @@
+// CredCloud Helper fills payer portals with provider data from CredCloud, in the coordinator's
+// own Chrome, on her own computer. She installs it once with a command CredCloud gives her;
+// after that it starts when she logs in, opens each portal she fills or teaches in CredCloud,
+// and keeps itself up to date. It never submits a form.
+//
+//	credcloud-helper                         run (what the app, the Start menu and links do)
+//	credcloud-helper url <credcloud://…>     what a credcloud:// link does
+//	credcloud-helper install --server <address> [--code <code>] [--report <file>]
+//	credcloud-helper uninstall
+//
+// For development, from helper/:
+//
+//	go run . pair <server> <code>     connect, with a code from CredCloud
+//	go run .                          run (never updates itself)
+//	go run . portal                   the test portal, at http://127.0.0.1:8181/enroll
+//	go run . demo [fill]              a fake job against the test portal, with no CredCloud
 package main
 
 import (
-	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
-	"time"
+	"os/exec"
+	"path/filepath"
 )
 
-// CredCloud Helper: fills payer portals in her own Chrome with provider data from CredCloud.
-//
-//	go run .                            run: open each job CredCloud sends, until stopped
-//	go run . pair <server> <code>       connect this computer, with a code from CredCloud
-//	go run . portal                     serve the test portal at http://127.0.0.1:8181/enroll
-//	go run . demo [fill]                the step 4 demo, with no CredCloud
-
 func main() {
+	args := os.Args[1:]
 	command := "run"
-	if len(os.Args) > 1 {
-		command = os.Args[1]
+	if len(args) > 0 {
+		command, args = args[0], args[1:]
 	}
 	switch command {
 	case "run":
-		run()
-	case "pair":
-		if len(os.Args) != 4 {
-			log.Fatal("usage: go run . pair <server> <code>   (get the code in CredCloud: My account > Connected browsers)")
+		// A copy downloaded straight from CredCloud installs itself the first time it runs.
+		if needsInstall() {
+			os.Exit(installCommand([]string{"--server", defaultServer}))
 		}
-		pairCommand(os.Args[2], os.Args[3])
+		os.Exit(runHelper("run", ""))
+	case "url":
+		link := ""
+		if len(args) > 0 {
+			link = args[0]
+		}
+		os.Exit(runHelper("url", link))
+	case "install":
+		os.Exit(installCommand(args))
+	case "uninstall":
+		os.Exit(uninstall())
+	case "version":
+		fmt.Println("CredCloud Helper", version(), platform())
+	case "pair":
+		if len(args) != 2 {
+			log.Fatal("usage: go run . pair <server> <code>")
+		}
+		pairCommand(args[0], args[1])
 	case "portal":
 		startURL, err := startTestPortal("127.0.0.1:8181")
 		must(err)
 		fmt.Println("test portal:", startURL, "(Ctrl+C to stop)")
 		select {}
 	case "demo":
-		demo(len(os.Args) > 2 && os.Args[2] == "fill")
+		demo(len(args) > 0 && args[0] == "fill")
 	default:
-		log.Fatalf("unknown command %q", command)
+		// Windows can pass a stray argument; treat it as a plain start.
+		os.Exit(runHelper("run", ""))
 	}
 }
 
@@ -49,65 +77,90 @@ func pairCommand(rawServer, code string) {
 	}
 	cfg := loadConfig()
 	cfg.Servers[server] = &serverConfig{Token: client.Token, Email: email}
+	if cfg.Home == "" {
+		cfg.Home = server
+	}
 	must(saveConfig(cfg))
 	fmt.Printf("Connected to %s as %s. Now run: go run .\n", server, email)
 }
 
-// run asks every connected server for work every couple of seconds, and opens each job in the
-// helper's Chrome. Chrome starts with the first job, and again if she quits it.
-func run() {
-	cfg := loadConfig()
-	if len(cfg.Servers) == 0 {
-		log.Fatal("Not connected yet. In CredCloud, go to My account > Connected browsers > Get a connection code, then run the command it shows.")
+// runHelper runs the helper, or hands the request to the one already running: one helper at
+// a time, however it was started.
+func runHelper(command, link string) int {
+	dir := helperDir()
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
 	}
-	for server, sc := range cfg.Servers {
-		fmt.Printf("Waiting for work from %s (%s). Ctrl+C to stop.\n", server, sc.Email)
-	}
-	var b *Browser
-	for {
-		b = poll(&cfg, b)
-		if len(cfg.Servers) == 0 {
-			log.Fatal("Not connected to any CredCloud now.")
+	setUpLog(dir)
+	release, err := lockFile(filepath.Join(dir, "helper.lock"))
+	if err != nil {
+		if forwardToRunning(dir, command, link) {
+			return 0
 		}
-		time.Sleep(2 * time.Second)
+		log.Printf("another helper is running but didn't answer: %v", err)
+		return 1
+	}
+	h := newHelper()
+	inst, err := listen(dir, func(cmd, arg string) {
+		switch cmd {
+		case "quit":
+			h.stop()
+		case "url":
+			go h.handleLink(arg)
+		default:
+			h.poke()
+		}
+	})
+	if err != nil {
+		log.Printf("can't listen for other starts: %v", err)
+	}
+	if command == "url" {
+		go h.handleLink(link)
+	}
+	log.Printf("CredCloud Helper %s running (%s)", version(), platform())
+	h.run()
+
+	if inst != nil {
+		inst.close()
+	}
+	release()
+	if h.restart {
+		if exe, err := executable(); err == nil {
+			next := exec.Command(exe, "run")
+			detach(next)
+			if err := next.Start(); err != nil {
+				log.Printf("couldn't start the new version: %v", err)
+			}
+		}
+	}
+	return 0
+}
+
+// setUpLog writes to helper.log in the helper's folder, and to the terminal when there is one.
+func setUpLog(dir string) {
+	path := filepath.Join(dir, "helper.log")
+	if info, err := os.Stat(path); err == nil && info.Size() > 1<<20 {
+		os.Rename(path, path+".1")
+	}
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
+	if err != nil {
+		return
+	}
+	if stderrIsUseful() {
+		log.SetOutput(io.MultiWriter(f, os.Stderr))
+	} else {
+		log.SetOutput(f)
 	}
 }
 
-// poll asks each connected server once for a job and opens what comes back. It returns the
-// browser, started if a job needed it.
-func poll(cfg *config, b *Browser) *Browser {
-	for server, sc := range cfg.Servers {
-		client := &Client{Server: server, Token: sc.Token}
-		var open []int64
-		if b != nil && !b.isClosed() {
-			open = b.OpenJobs(server)
-		}
-		job, err := client.Next(open)
-		if errors.Is(err, errSignedOut) {
-			log.Printf("%s: %v. Connect again with a new code.", server, err)
-			delete(cfg.Servers, server)
-			must(saveConfig(*cfg))
-			continue
-		}
-		if err != nil {
-			log.Printf("%s: %v", server, err)
-			continue
-		}
-		if job == nil {
-			continue
-		}
-		if b == nil || b.isClosed() {
-			if b, err = openBrowser(); err != nil {
-				log.Printf("couldn't start Chrome: %v", err)
-				client.post(fmt.Sprintf("/runner/api/jobs/%d/cancel", job.ID), nil, nil)
-				b = nil
-				continue
-			}
-		}
-		log.Printf("%s: opening %s job %d (%s / %s)", server, job.Kind, job.ID, job.PayerName, job.TemplateName)
-		if err := b.Open(newJobSession(server, *job), client); err != nil {
-			log.Printf("couldn't open job %d: %v", job.ID, err)
-		}
+func executable() (string, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return "", err
 	}
-	return b
+	if resolved, err := filepath.EvalSymlinks(exe); err == nil {
+		return resolved, nil
+	}
+	return exe, nil
 }

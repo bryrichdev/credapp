@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CredCloud Helper · CredCloud</title><link rel="stylesheet" th:href="@{/css/app.css}"><link rel="icon" th:href="@{/favicon.ico}"></head>
+<body><div th:replace="~{fragments/layout :: topbar(${user}, 'account')}"></div>
+<main class="page">
+<div class="alert alert--info" th:if="${message}" th:text="${message}"></div>
+
+<a class="backlink" th:href="@{/account}">&larr; Back to my account</a>
+<div class="page__header"><h1>CredCloud Helper</h1>
+<p class="page__subtitle">A small program on your computer that fills payer portals in Chrome with provider data from CredCloud.
+You set it up once; after that, Fill and Teach in CredCloud open the portal for you, and it keeps itself up to date.
+It never submits a form, and your portal sign-ins stay on your computer.</p></div>
+
+<section class="card" th:unless="${macCommand}">
+<h2>Set it up on this computer</h2>
+<p>It takes a minute. You'll paste one line into
+<th:block th:switch="${system}"><span th:case="'mac'">Terminal</span><span th:case="'windows'">PowerShell</span><span th:case="*">Terminal (Mac) or PowerShell (Windows)</span></th:block>,
+and it installs and connects itself to your account (<span th:text="${user.email}"></span>). It needs Google Chrome or Microsoft Edge.</p>
+<p class="field__hint" th:unless="${buildsAvailable}">This CredCloud has no CredCloud Helper builds to install yet.</p>
+<form method="post" th:action="@{/helper/setup}"><div class="form-actions">
+<button class="button" type="submit">Get my install command</button></div></form>
+</section>
+
+<section class="card" th:if="${macCommand}">
+<h2>Set it up on this computer</h2>
+<p>Your command works once, until <time data-local-time th:datetime="${expiresAt}" th:text="${expiresAt}"></time>. Don't share it: it connects a computer to your account.</p>
+
+<div class="helper-setup" th:classappend="${system == 'windows'} ? 'helper-setup--windows-first'">
+<div class="helper-setup__system">
+<h3>On a Mac</h3>
+<ol class="helper-steps">
+<li>Open <strong>Terminal</strong>: press <kbd>⌘</kbd> <kbd>Space</kbd>, type <em>Terminal</em>, and press <kbd>Return</kbd>.</li>
+<li>Paste this line and press <kbd>Return</kbd>:
+<div class="command"><code th:text="${macCommand}"></code>
+<button class="button button--quiet button--small" type="button" th:attr="data-copy=${macCommand}">Copy</button></div></li>
+<li>When it says <em>Done</em>, come back here. You can close Terminal.</li>
+</ol>
+</div>
+<div class="helper-setup__system">
+<h3>On Windows</h3>
+<ol class="helper-steps">
+<li>Open <strong>PowerShell</strong>: press the <kbd>Windows</kbd> key, type <em>PowerShell</em>, and press <kbd>Enter</kbd>.</li>
+<li>Paste this line and press <kbd>Enter</kbd>:
+<div class="command"><code th:text="${windowsCommand}"></code>
+<button class="button button--quiet button--small" type="button" th:attr="data-copy=${windowsCommand}">Copy</button></div></li>
+<li>When it says <em>Done</em>, come back here. You can close PowerShell.</li>
+</ol>
+<p class="field__hint" th:if="${buildsAvailable}">Or <a th:href="@{/helper/download/windows}">download CredCloud Helper for Windows</a> and open it.
+If Windows says it protected your PC, choose <em>More info</em>, then <em>Run anyway</em>. It asks you to connect it in your browser.</p>
+</div>
+</div>
+</section>
+
+<section class="card">
+<h2>Your computers</h2>
+<p th:if="${#lists.isEmpty(computers)}">None yet.</p>
+<div class="application-template" th:each="c : ${computers}"><div><strong th:text="${c.name}"></strong>
+<span class="badge" th:classappend="${c.revokedAt != null} ? 'badge--pending' : 'badge--active'" th:text="${c.state()}"></span>
+<p class="field__hint">Connected <time data-local-time th:datetime="${c.createdAt}" th:text="${c.createdAt}"></time><th:block th:if="${c.lastSeenAt != null}"> · last used <time data-local-time th:datetime="${c.lastSeenAt}" th:text="${c.lastSeenAt}"></time></th:block></p></div>
+<form th:if="${c.revokedAt == null}" method="post" th:action="@{/helper/computers/{id}/revoke(id=${c.id})}">
+<button class="button button--quiet" type="submit">Disconnect</button></form></div>
+<p class="field__hint">Installed it already, but it isn't connected? <a th:href="@{/helper/connect}">Connect it</a>.
+To remove it: on a Mac, drag <em>CredCloud Helper</em> from your Applications folder to the Trash; on Windows, uninstall it in Settings &gt; Apps.</p>
+</section>
+</main><div th:replace="~{fragments/layout :: footer}"></div>
+<script th:src="@{/js/copy-answers.js}"></script><script th:src="@{/js/local-time.js}"></script></body></html>
