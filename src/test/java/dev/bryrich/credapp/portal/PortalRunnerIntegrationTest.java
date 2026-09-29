@@ -48,11 +48,13 @@ class PortalRunnerIntegrationTest {
     private static final String PASSWORD = "test-password-1234";
     private static final JsonMapper JSON = JsonMapper.builder().build();
     private static final Pattern TOKEN = Pattern.compile("data-token=\"([A-Za-z0-9_-]{43})\"");
+    private static final Pattern CODE = Pattern.compile("go run \\. pair \\S+ ([A-Za-z0-9_-]{43})");
 
     @Autowired MockMvc mvc;
     @Autowired RegistrationService registration;
     @Autowired OnboardingImportService imports;
     @Autowired JdbcTemplate jdbc;
+    @Autowired RunnerService runners;
 
     @AfterEach
     void clear() {
@@ -152,6 +154,65 @@ class PortalRunnerIntegrationTest {
         mvc.perform(post("/account/browsers/" + browser + "/revoke").with(signedIn(admin)).with(csrf()))
                 .andExpect(status().is3xxRedirection());
         mvc.perform(get("/runner/api/jobs/next").with(bearer(token))).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void aHelperConnectsOnceWithACodeFromASignedInPage() throws Exception {
+        User admin = practice();
+        mvc.perform(post("/helper/code")).andExpect(status().is3xxRedirection());
+        String page = mvc.perform(post("/helper/code").with(signedIn(admin)).with(csrf()))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        Matcher matcher = CODE.matcher(page);
+        assertThat(matcher.find()).as("the page shows the code").isTrue();
+        String code = matcher.group(1);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM runner_pairing_codes WHERE code_hash = ?",
+                Long.class, (Object) RunnerService.hash(code))).as("only its hash is kept").isOne();
+
+        String body = mvc.perform(post("/runner/api/pair").contentType(MediaType.APPLICATION_JSON)
+                        .content(JSON.writeValueAsString(Map.of("code", code, "name", "Front desk iMac (Mac)"))))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        JsonNode paired = JSON.readTree(body);
+        assertThat(paired.path("email").asString()).isEqualTo(admin.getEmail());
+        String token = paired.path("token").asString();
+        mvc.perform(get("/runner/api/jobs/next").with(bearer(token))).andExpect(status().isNoContent());
+        assertThat(jdbc.queryForObject("SELECT name FROM runners WHERE user_id = ?", String.class, admin.getId()))
+                .isEqualTo("Front desk iMac (Mac)");
+
+        // A code works once.
+        mvc.perform(post("/runner/api/pair").contentType(MediaType.APPLICATION_JSON)
+                        .content(JSON.writeValueAsString(Map.of("code", code, "name", "Another"))))
+                .andExpect(status().isBadRequest());
+        // And not after 30 minutes.
+        String stale = runners.pairingCode(admin).code();
+        jdbc.update("UPDATE runner_pairing_codes SET expires_at = now() - interval '1 minute' WHERE code_hash = ?",
+                (Object) RunnerService.hash(stale));
+        String refused = mvc.perform(post("/runner/api/pair").contentType(MediaType.APPLICATION_JSON)
+                        .content(JSON.writeValueAsString(Map.of("code", stale, "name", "Late"))))
+                .andExpect(status().isBadRequest()).andReturn().getResponse().getContentAsString();
+        assertThat(JSON.readTree(refused).path("error").asString()).contains("expired");
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM runners WHERE user_id = ?", Long.class, admin.getId()))
+                .isOne();
+    }
+
+    @Test
+    void aHelperSkipsJobsItAlreadyHasOpen() throws Exception {
+        User admin = practice();
+        long payer = jdbc.queryForObject("SELECT min(id) FROM payers WHERE user_group_id = ?", Long.class,
+                admin.getUserGroupId());
+        String token = connected(admin);
+        for (String name : List.of("Enrollment", "Revalidation")) {
+            mvc.perform(post("/payers/" + payer + "/portals").with(signedIn(admin)).with(csrf())
+                            .param("name", name).param("startUrl", "https://portal.example.com/" + name))
+                    .andExpect(status().is3xxRedirection());
+        }
+        long first = next(token).path("id").asLong();
+        assertThat(next(token).path("id").asLong()).as("a claimed job comes back after a restart").isEqualTo(first);
+        String body = mvc.perform(get("/runner/api/jobs/next").param("skip", first + ",junk").with(bearer(token)))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        long second = JSON.readTree(body).path("id").asLong();
+        assertThat(second).isNotEqualTo(first);
+        mvc.perform(get("/runner/api/jobs/next").param("skip", first + "," + second).with(bearer(token)))
+                .andExpect(status().isNoContent());
     }
 
     @Test

@@ -22,10 +22,10 @@ import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 /**
- * Connected browsers and their side of the jobs. The CredCloud extension connects with one
- * click on a page its owner is signed in to, and gets a device token for the runner API. Only
- * a hash of the token is stored. A browser only ever sees its own owner's jobs in its own
- * workspace. (The table is still called runners, after the first design.)
+ * Connected computers and their side of the jobs. CredCloud Helper connects with a one-time
+ * code from a page its owner is signed in to, and gets a device token for the runner API. Only
+ * hashes of the code and the token are stored. A helper only ever sees its own owner's jobs in
+ * its own workspace.
  */
 @Service
 public class RunnerService {
@@ -40,6 +40,19 @@ public class RunnerService {
             return revokedAt != null ? "Revoked" : "Connected";
         }
     }
+
+    /** A one-time code that connects CredCloud Helper to an account. */
+    public record PairingCode(String code, Instant expiresAt) {
+    }
+
+    /** What a helper gets for a good code: its token, and whose account it's connected to. */
+    public record Paired(String token, String email) {
+    }
+
+    static final java.time.Duration PAIRING_CODE_LIFETIME = java.time.Duration.ofMinutes(30);
+
+    private static final String BAD_CODE =
+            "That code has expired or was already used. Get a new one from CredCloud.";
 
     /** A job as the runner gets it. answers is empty for learn jobs; sources and formats for fill jobs. */
     public record JobForRunner(long id, String kind, long templateId, String templateName, String payerName,
@@ -89,6 +102,53 @@ public class RunnerService {
         return token;
     }
 
+    /**
+     * A new one-time code for connecting CredCloud Helper to this account. It's shown once, to
+     * the signed-in user, and works for 30 minutes.
+     */
+    @Transactional
+    public PairingCode pairingCode(User owner) {
+        jdbc.update("DELETE FROM runner_pairing_codes WHERE user_id = ? AND expires_at < now()", owner.getId());
+        String code = token();
+        Instant expires = Instant.now().plus(PAIRING_CODE_LIFETIME);
+        jdbc.update("INSERT INTO runner_pairing_codes (code_hash, user_id, expires_at) VALUES (?, ?, ?)",
+                hash(code), owner.getId(), java.sql.Timestamp.from(expires));
+        return new PairingCode(code, expires);
+    }
+
+    /**
+     * Swaps a one-time code for a device token. The code is used up either way.
+     *
+     * @throws IllegalArgumentException with a message for the coordinator, if the code is no good
+     */
+    @Transactional
+    public Paired pair(String code, String name) {
+        if (code == null || code.isBlank()) {
+            throw new IllegalArgumentException(BAD_CODE);
+        }
+        record Owner(long userId, long workspace, String email) {
+        }
+        Owner owner = jdbc.query("""
+                        WITH used AS (
+                            DELETE FROM runner_pairing_codes WHERE code_hash = ? RETURNING user_id, expires_at)
+                        SELECT u.id, u.user_group_id, u.email FROM used JOIN users u ON u.id = used.user_id
+                        WHERE used.expires_at > now() AND u.is_enabled""",
+                (r, i) -> new Owner(r.getLong("id"), r.getLong("user_group_id"), r.getString("email")),
+                (Object) hash(code.trim())).stream().findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(BAD_CODE));
+        String token = token();
+        jdbc.update("""
+                        INSERT INTO runners (user_group_id, user_id, name, token_hash, paired_at)
+                        VALUES (?, ?, ?, ?, now())""",
+                owner.workspace(), owner.userId(), computerName(name), hash(token));
+        return new Paired(token, owner.email());
+    }
+
+    private static String computerName(String name) {
+        String cleaned = name == null || name.isBlank() ? "Computer" : name.trim();
+        return cleaned.length() > 100 ? cleaned.substring(0, 100) : cleaned;
+    }
+
     @Transactional
     public void revoke(User owner, long runnerId) {
         jdbc.update("""
@@ -115,12 +175,20 @@ public class RunnerService {
                 hash(token)).stream().findFirst();
     }
 
+    /** The runner's next job, when it has none open. */
+    public Optional<JobForRunner> next(Identity runner) {
+        return next(runner, java.util.Set.of());
+    }
+
     /**
      * The runner's next job: one it claimed and hasn't finished (it restarted), or the oldest
      * waiting one for its owner. Jobs left waiting a day are dropped.
+     *
+     * @param open jobs the runner already has open in a tab, which it doesn't need again
      */
     @Transactional
-    public Optional<JobForRunner> next(Identity runner) {
+    public Optional<JobForRunner> next(Identity runner, java.util.Set<Long> open) {
+        Long[] skip = open.toArray(Long[]::new);
         jdbc.update("""
                 UPDATE runner_jobs SET status = 'cancelled', answers = NULL, finished_at = now()
                 WHERE user_group_id = ? AND user_id = ? AND status = 'waiting' AND created_at < now() - interval '1 day'""",
@@ -131,10 +199,17 @@ public class RunnerService {
                         SELECT id, kind, template_id, template_revision, provider_id, answers FROM runner_jobs
                         WHERE user_group_id = ? AND user_id = ?
                           AND (status = 'waiting' OR (status = 'claimed' AND runner_id = ?))
+                          AND id <> ALL (?)
                         ORDER BY (status = 'claimed') DESC, id LIMIT 1 FOR UPDATE SKIP LOCKED""",
+                ps -> {
+                    ps.setLong(1, runner.workspace());
+                    ps.setLong(2, runner.userId());
+                    ps.setLong(3, runner.runnerId());
+                    ps.setArray(4, ps.getConnection().createArrayOf("bigint", skip));
+                },
                 (r, i) -> new Row(r.getLong("id"), r.getString("kind"), r.getLong("template_id"),
-                        r.getInt("template_revision"), r.getObject("provider_id", Long.class), r.getBytes("answers")),
-                runner.workspace(), runner.userId(), runner.runnerId()).stream().findFirst();
+                        r.getInt("template_revision"), r.getObject("provider_id", Long.class), r.getBytes("answers")))
+                .stream().findFirst();
         if (row.isEmpty()) {
             return Optional.empty();
         }

@@ -31,16 +31,19 @@ public class PortalWebController {
     private final ApplicationDataService data;
     private final ProviderService providers;
     private final String installUrl;
+    private final String baseUrl;
 
     public PortalWebController(RunnerService browsers, PortalTemplateService portals, PdfApplicationService payers,
                                ApplicationDataService data, ProviderService providers,
-                               @Value("${credapp.extension.install-url:}") String installUrl) {
+                               @Value("${credapp.extension.install-url:}") String installUrl,
+                               @Value("${credapp.base-url}") String baseUrl) {
         this.browsers = browsers;
         this.portals = portals;
         this.payers = payers;
         this.data = data;
         this.providers = providers;
         this.installUrl = installUrl;
+        this.baseUrl = baseUrl.replaceAll("/+$", "");
     }
 
     @ModelAttribute
@@ -62,6 +65,18 @@ public class PortalWebController {
                           Model model) {
         model.addAttribute("token", browsers.connect(principal.getUser(), browserName(request.getHeader("User-Agent"))));
         return "portal/connect";
+    }
+
+    // --- Connecting CredCloud Helper ---
+
+    /** A one-time code that connects CredCloud Helper on a computer to this account. */
+    @PostMapping("/helper/code")
+    public String helperCode(@AuthenticationPrincipal CredAppUserDetails principal, Model model) {
+        var code = browsers.pairingCode(principal.getUser());
+        model.addAttribute("code", code.code());
+        model.addAttribute("expiresAt", code.expiresAt());
+        model.addAttribute("server", baseUrl);
+        return "portal/helper-code";
     }
 
     @GetMapping("/account/browsers")

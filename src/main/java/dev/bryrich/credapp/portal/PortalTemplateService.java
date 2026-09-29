@@ -58,13 +58,21 @@ public class PortalTemplateService {
     private final DocumentCipher cipher;
     private final ApplicationDataService data;
     private final SsnAccessService ssns;
+    private final boolean allowLocalHttp;
 
+    /**
+     * @param allowLocalHttp accept plain-http portals on this computer (localhost, 127.0.0.1),
+     *                       for CredCloud Helper's test portal in development. Never in production.
+     */
     public PortalTemplateService(JdbcTemplate jdbc, DocumentCipher cipher, ApplicationDataService data,
-                                 SsnAccessService ssns) {
+                                 SsnAccessService ssns,
+                                 @org.springframework.beans.factory.annotation.Value("${credapp.portal.allow-local-http:false}")
+                                 boolean allowLocalHttp) {
         this.jdbc = jdbc;
         this.cipher = cipher;
         this.data = data;
         this.ssns = ssns;
+        this.allowLocalHttp = allowLocalHttp;
     }
 
     @Transactional(readOnly = true)
@@ -109,7 +117,7 @@ public class PortalTemplateService {
         long id = jdbc.queryForObject("""
                         INSERT INTO portal_templates (user_group_id, payer_id, name, start_url, created_by)
                         VALUES (?, ?, ?, ?, ?) RETURNING id""",
-                Long.class, workspace(), payerId, name.trim(), checkUrl(startUrl), user.getEmail());
+                Long.class, workspace(), payerId, name.trim(), checkUrl(startUrl, allowLocalHttp), user.getEmail());
         if (forExtension) {
             learn(user, id, 0);
         }
@@ -305,7 +313,7 @@ public class PortalTemplateService {
                         VALUES (?, ?, ?, ?::jsonb, ?)""",
                 workspace, templateId, next, JSON.writeValueAsString(fields), savedBy);
         jdbc.update("UPDATE portal_templates SET revision = ?, start_url = coalesce(?, start_url) WHERE user_group_id = ? AND id = ?",
-                next, startUrl == null || startUrl.isBlank() ? null : checkUrl(startUrl), workspace, templateId);
+                next, startUrl == null || startUrl.isBlank() ? null : checkUrl(startUrl, allowLocalHttp), workspace, templateId);
     }
 
     Template template(long workspace, long id, int revision) {
@@ -346,10 +354,16 @@ public class PortalTemplateService {
 
     /** Only https pages; a portal on plain http would send the provider's answers in the clear. */
     static String checkUrl(String url) {
+        return checkUrl(url, false);
+    }
+
+    static String checkUrl(String url, boolean allowLocalHttp) {
         String trimmed = url == null ? "" : url.trim();
         try {
             URI uri = URI.create(trimmed);
-            if ("https".equalsIgnoreCase(uri.getScheme()) && uri.getHost() != null && trimmed.length() <= 2000) {
+            boolean local = allowLocalHttp && "http".equalsIgnoreCase(uri.getScheme())
+                    && ("localhost".equalsIgnoreCase(uri.getHost()) || "127.0.0.1".equals(uri.getHost()));
+            if (("https".equalsIgnoreCase(uri.getScheme()) || local) && uri.getHost() != null && trimmed.length() <= 2000) {
                 return trimmed;
             }
         } catch (IllegalArgumentException ignored) {

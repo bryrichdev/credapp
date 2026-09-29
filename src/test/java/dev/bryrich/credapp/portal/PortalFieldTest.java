@@ -56,5 +56,9 @@ class PortalFieldTest {
         assertThatThrownBy(() -> PortalTemplateService.checkUrl("http://portal.example.com")).hasMessageContaining("https://");
         assertThatThrownBy(() -> PortalTemplateService.checkUrl("javascript:alert(1)")).hasMessageContaining("https://");
         assertThatThrownBy(() -> PortalTemplateService.checkUrl("")).hasMessageContaining("https://");
+        // Development only: CredCloud Helper's test portal on this computer.
+        assertThat(PortalTemplateService.checkUrl("http://127.0.0.1:8181/enroll", true)).isEqualTo("http://127.0.0.1:8181/enroll");
+        assertThatThrownBy(() -> PortalTemplateService.checkUrl("http://127.0.0.1:8181/enroll")).hasMessageContaining("https://");
+        assertThatThrownBy(() -> PortalTemplateService.checkUrl("http://portal.example.com", true)).hasMessageContaining("https://");
     }
 }

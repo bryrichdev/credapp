@@ -57,8 +57,9 @@ public class SecurityConfig {
                     || request.getParameter("edit") != null;
 
     /**
-     * The API the CredCloud extension calls. Signed in by device token only (RunnerTokenFilter);
-     * no session, no form login, and a token grants nothing outside /runner/api.
+     * The API CredCloud Helper calls. Signed in by device token only (RunnerTokenFilter); no
+     * session, no form login, and a token grants nothing outside /runner/api. Pairing is the one
+     * open call: the one-time code in it is the proof.
      */
     @Bean
     @Order(0)
@@ -69,6 +70,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.POST, "/runner/api/pair").permitAll()
                         .anyRequest().hasRole("RUNNER"))
                 .addFilterBefore(new dev.bryrich.credapp.portal.RunnerTokenFilter(runners), AuthorizationFilter.class)
                 .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(

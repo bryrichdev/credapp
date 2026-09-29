@@ -10,6 +10,11 @@
 <div class="page__header"><h1>Connected browsers</h1>
 <p class="page__subtitle">Browsers where CredCloud for Chrome fills payer portals for you. Your portal sign-ins stay in each browser; CredCloud never sees them.</p></div>
 
+<section class="card"><h2>CredCloud Helper</h2>
+<p>Connect a computer where CredCloud Helper is set up. You get a one-time code to give it.</p>
+<form method="post" th:action="@{/helper/code}"><div class="form-actions">
+<button class="button" type="submit">Get a connection code</button></div></form></section>
+
 <section class="card">
 <p th:if="${#lists.isEmpty(browsers)}">None yet. The first time you fill a portal, CredCloud asks to connect the browser you're using.</p>
 <div class="application-template" th:each="b : ${browsers}"><div><strong th:text="${b.name}"></strong>

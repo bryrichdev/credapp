@@ -8,15 +8,18 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * What the CredCloud extension calls. Under /runner/api, not /api: Cloudflare blocks /api/*,
- * which is the app's own JSON API. Only GET and POST, which Cloudflare lets through. See
- * SecurityConfig for how requests here are signed in.
+ * What CredCloud Helper calls. Under /runner/api, not /api: Cloudflare blocks /api/*, which is
+ * the app's own JSON API. Only GET and POST, which Cloudflare lets through. Everything but
+ * pairing needs the helper's device token; see SecurityConfig.
  */
 @RestController
 @RequestMapping("/runner/api")
@@ -28,16 +31,52 @@ public class RunnerApiController {
     public record LearnResult(String startUrl, List<PortalField> fields) {
     }
 
+    public record PairRequest(String code, String name) {
+    }
+
     private final RunnerService runners;
 
     public RunnerApiController(RunnerService runners) {
         this.runners = runners;
     }
 
-    /** 204 when there's nothing to do. The runner asks again every few seconds. */
+    /**
+     * Connects a helper with a one-time code from CredCloud. Open to anyone: the code is what
+     * proves who it's for.
+     */
+    @PostMapping("/pair")
+    public RunnerService.Paired pair(@RequestBody PairRequest request) {
+        return runners.pair(request.code(), request.name());
+    }
+
+    /**
+     * 204 when there's nothing to do. The helper asks again every couple of seconds, listing the
+     * jobs it already has open in skip (such as skip=12,15).
+     */
     @GetMapping("/jobs/next")
-    public ResponseEntity<RunnerService.JobForRunner> next(@AuthenticationPrincipal RunnerService.Identity runner) {
-        return runners.next(runner).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
+    public ResponseEntity<RunnerService.JobForRunner> next(@AuthenticationPrincipal RunnerService.Identity runner,
+                                                           @RequestParam(required = false) String skip) {
+        return runners.next(runner, open(skip)).map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
+    /** At most 50 job ids; anything that isn't one is ignored. */
+    static Set<Long> open(String skip) {
+        if (skip == null || skip.isBlank()) {
+            return Set.of();
+        }
+        Set<Long> ids = new HashSet<>();
+        for (String part : skip.split(",", 51)) {
+            try {
+                ids.add(Long.parseLong(part.trim()));
+            } catch (NumberFormatException ignored) {
+                // not a job id
+            }
+            if (ids.size() == 50) {
+                break;
+            }
+        }
+        return ids;
     }
 
     @PostMapping("/jobs/{id}/filled")
@@ -59,7 +98,7 @@ public class RunnerApiController {
         return ResponseEntity.noContent().build();
     }
 
-    /** The coordinator reads this in the extension's panel, so it's written for her. */
+    /** The coordinator reads this in the helper's panel, so it's written for her. */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> invalid(IllegalArgumentException e) {
         return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
